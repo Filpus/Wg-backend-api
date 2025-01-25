@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.DependencyInjection;
 using Wg_backend_api.Models;
 
@@ -18,10 +19,14 @@ namespace Wg_backend_api.Data
         public DbSet<TradeAgreement> TradeAgreement { get; set; }
         public DbSet<OfferedResource> OfferedResources { get; set; }
         public DbSet<WantedResource> WantedResource { get; set; }
+        public DbSet<Assignment> Assignment { get; set; }
+        public DbSet<User> User { get; set; }
+        public DbSet<Population> Population { get; set; }
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=Filip1234;Database=wg");
+            optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=admin;Database=wg");
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -61,7 +66,11 @@ namespace Wg_backend_api.Data
                 .Property(w => w.Id)
                 .ValueGeneratedOnAdd();
 
+            modelBuilder.Entity<Assignment>()
+                .Property(e => e.DateAcquired)
+                .HasColumnType("date");
             base.OnModelCreating(modelBuilder);
         }
+        public DbSet<Wg_backend_api.Models.Localisation> Localisation { get; set; } = default!;
     }
 }

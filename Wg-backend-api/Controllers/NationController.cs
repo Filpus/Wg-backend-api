@@ -7,7 +7,7 @@ using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Nations")]
     [ApiController]
     public class NationController : Controller
     {
@@ -21,7 +21,7 @@ namespace Wg_backend_api.Controllers
         // GET: api/Religions
         // GET: api/Religions/5
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<Nation>>> GetReligions(int? id)
+        public async Task<ActionResult<IEnumerable<Nation>>> GetNations(int? id)
         {
             if (id.HasValue)
             {
@@ -38,9 +38,17 @@ namespace Wg_backend_api.Controllers
             }
         }
 
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Nation>>> GetNations()
+        {  
+           return await _context.Nations.ToListAsync();
+            
+        }
+
         // PUT: api/Religions
         [HttpPut]
-        public async Task<IActionResult> PutReligions([FromBody] List<Nation> nations)
+        public async Task<IActionResult> PutNations([FromBody] List<Nation> nations)
         {
             if (nations == null || nations.Count == 0)
             {
@@ -66,7 +74,7 @@ namespace Wg_backend_api.Controllers
 
         // POST: api/Religions
         [HttpPost]
-        public async Task<ActionResult<Nation>> PostReligions([FromBody] List<Nation> nations)
+        public async Task<ActionResult<Nation>> PostNations([FromBody] List<Nation> nations)
         {
             if (nations == null || nations.Count == 0)
             {
@@ -81,12 +89,12 @@ namespace Wg_backend_api.Controllers
             _context.Nations.AddRange(nations);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetReligions", new { id = nations[0].Id }, nations);
+            return CreatedAtAction("GetNations", new { id = nations[0].Id }, nations);
         }
 
         // DELETE: api/Religions
         [HttpDelete]
-        public async Task<ActionResult> DeleteReligions([FromBody] List<int?> ids)
+        public async Task<ActionResult> DeleteNations([FromBody] List<int?> ids)
         {
             if (ids == null || ids.Count == 0)
             {
@@ -97,7 +105,7 @@ namespace Wg_backend_api.Controllers
 
             if (nations.Count == 0)
             {
-                return NotFound("Nie znaleziono religii do usunięcia.");
+                return NotFound("Nie znaleziono panstwa do usunięcia.");
             }
 
             _context.Nations.RemoveRange(nations);
