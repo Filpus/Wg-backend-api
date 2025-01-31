@@ -36,7 +36,7 @@ namespace Wg_backend_api.Controllers
             }
             else
             {
-                return await _context.Religions.ToListAsync();
+                return Ok(await _context.Religions.ToListAsync());
             }
         }
 
@@ -75,8 +75,13 @@ namespace Wg_backend_api.Controllers
                 return BadRequest("Brak danych do zapisania.");
             }
 
+
             foreach (Religion religion in religions)
-            {
+            {   
+                if(religion.Name == null)
+                {
+                    return BadRequest("Brak nazwy religii.");
+                }
                 religion.Id = null;
             }
 

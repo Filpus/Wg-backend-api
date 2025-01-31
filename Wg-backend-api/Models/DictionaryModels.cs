@@ -12,6 +12,7 @@ namespace Wg_backend_api.Models
         public int? Id { get; set; }
 
         [Column("name")]
+        
         [Required] // Pole wymagane
         [MaxLength(255)] // Opcjonalne ograniczenie długości
         public string Name { get; set; }

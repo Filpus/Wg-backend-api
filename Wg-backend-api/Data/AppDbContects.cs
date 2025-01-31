@@ -24,10 +24,7 @@ namespace Wg_backend_api.Data
         public DbSet<Population> Population { get; set; }
 
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=admin;Database=wg");
-        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Konfiguracja dla SocialGroup
@@ -39,7 +36,9 @@ namespace Wg_backend_api.Data
             modelBuilder.Entity<Religion>()
                 .Property(r => r.Id)
                 .ValueGeneratedOnAdd();
-
+            modelBuilder.Entity<Religion>()
+                .HasIndex(r => new { r.Id, r.Name })
+                .IsUnique();
             // Konfiguracja dla Culture
             modelBuilder.Entity<Culture>()
                 .Property(c => c.Id)
@@ -72,5 +71,6 @@ namespace Wg_backend_api.Data
             base.OnModelCreating(modelBuilder);
         }
         public DbSet<Wg_backend_api.Models.Localisation> Localisation { get; set; } = default!;
+
     }
 }
