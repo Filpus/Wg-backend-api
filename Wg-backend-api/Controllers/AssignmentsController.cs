@@ -78,8 +78,16 @@ namespace Wg_backend_api.Controllers
             foreach (var assignment in assignments)
             {
                 assignment.Id = null;
-                _context.Assignment.Add(assignment);
-                await _context.SaveChangesAsync();
+
+                if (assignment.UserId >= 0 && assignment.NationId >= 0)
+                {
+
+                    _context.Assignment.Add(assignment);
+                    await _context.SaveChangesAsync();
+                }
+                else {
+                    return BadRequest();
+                }
             }
             return Ok();
         }
