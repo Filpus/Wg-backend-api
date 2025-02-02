@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Rejestracja DbContext z po³¹czeniem do bazy danych PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Host=localhost;Username=postgres;Password=Filip1234;Database=wg")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Host=localhost;Username=postgres;Password=admin;Database=wg")));
 
 
 builder.Services.AddCors(options =>
@@ -20,7 +20,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -34,7 +36,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseHttpsRedirection();  
 
 app.UseCors("AllowAll");
 
