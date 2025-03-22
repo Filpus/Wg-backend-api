@@ -17,6 +17,7 @@ namespace Wg_backend_api.Models
         [MaxLength(255)] // Opcjonalne ograniczenie długości
         public string Name { get; set; }
 
+        [Required]
         [Column("ismain")]
         public bool IsMain { get; set; } // Typ logiczny
     }
@@ -67,29 +68,40 @@ namespace Wg_backend_api.Models
     }
 
 
-    [Table("locations")]
-    public class Localisation
+    [Table("usedResources")]
+    public class UsedResource
     {
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        [Key] // Oznaczenie klucza głównego
+        [Key]
         public int? Id { get; set; }
-
-        [Column("name")]
-        [Required] // Pole wymagane
-        [MaxLength(255)] // Opcjonalne ograniczenie długości
-        public string Name { get; set; }
-
-        [Column("size")]
-        public int Size { get; set; }
-
-        [Column("fortifications")]
-        public int Fortification { get; set; }
-
-        [Column("fk_nations")]
-        public int NationId { get; set; }
-
+        [Required]
+        [Column("fk_SocialGroups")]
+        public int SocialGroupId { get; set; }
+        [Required]
+        [Column("fk_Resources")]
+        public int ResourceId { get; set; }
+        [Required]
+        [Column("amount")]
+        public int Amount { get; set; }
     }
 
+    [Table("productionShares")]
+    public class ProductionShare
+    {
+        [Column("id")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
+        public int? Id { get; set; }
+        [Required]
+        [Column("fk_SocialGroups")]
+        public int SocialGroupId { get; set; }
+        [Required]
+        [Column("fk_Resources")]
+        public int ResourceId { get; set; }
+        [Required]
+        [Column("coefficient")]
+        public int Coefficient { get; set; }
+    }
 
 }

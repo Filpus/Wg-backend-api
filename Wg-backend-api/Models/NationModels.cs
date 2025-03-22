@@ -13,8 +13,10 @@ namespace Wg_backend_api.Models
         [Column("name")]
         [Required]
         public string Name { get; set; }
+        [Required]
         [Column("fk_religions")]
         public int ReligionId { get; set; }
+        [Required]
         [Column("fk_cultures")]
         public int CultureId { get; set; }
 
