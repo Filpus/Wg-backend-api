@@ -11,12 +11,15 @@ namespace Wg_backend_api.Models
         [Key]
         public int? Id { get; set; }
 
+        [Required]
         [Column("fk_nations")]
         public int NationId { get; set; }
 
+        [Required]
         [Column("fk_users")]
         public int UserId { get; set; }
 
+        [Required]
         [Column("dateacquired")]
         public DateTime DateAcquired { get; set; }
 

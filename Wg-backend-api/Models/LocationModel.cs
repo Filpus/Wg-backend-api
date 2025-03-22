@@ -1,0 +1,50 @@
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+
+namespace Wg_backend_api.Models
+{
+    [Table("locations")]
+    public class Localisation
+    {
+        [Column("id")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key] // Oznaczenie klucza głównego
+        public int? Id { get; set; }
+
+        [Column("name")]
+        [Required] // Pole wymagane
+        [MaxLength(255)] // Opcjonalne ograniczenie długości
+        public string Name { get; set; }
+
+        [Required]
+        [Column("size")]
+        public int Size { get; set; }
+
+        [Required]
+        [Column("fortifications")]
+        public int Fortification { get; set; }
+
+        [Required]
+        [Column("fk_nations")]
+        public int NationId { get; set; }
+
+    }
+
+    [Table("locationsResources")]
+    public class LocalisationResource
+    {
+        [Column("id")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key] // Oznaczenie klucza głównego
+        public int? Id { get; set; }
+        [Required]
+        [Column("fk_locations")]
+        public int LocationId { get; set; }
+        [Required]
+        [Column("fk_resources")]
+        public int ResourceId { get; set; }
+        [Required]
+        [Column("amount")]
+        public int Amount { get; set; }
+    }
+}
