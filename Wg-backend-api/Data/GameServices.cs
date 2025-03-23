@@ -13,6 +13,8 @@ namespace Wg_backend_api.Data
     public class GameService
     {
 
+
+        // Podaj adres do initate.sql
         public static void GenerateNewGame(string connectionString, string sqlScriptPath, string schema)
         {
             string script = File.ReadAllText(sqlScriptPath);
@@ -35,6 +37,7 @@ namespace Wg_backend_api.Data
             }
         }
 
+//      Podaj adres pliku globalInitalize
         public static void GenerateGlobalSchema(string connectionString, string sqlScriptPath)
         {
             GenerateNewGame(connectionString, sqlScriptPath, "Global");
