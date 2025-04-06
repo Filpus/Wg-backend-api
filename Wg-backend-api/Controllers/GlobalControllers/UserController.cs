@@ -7,7 +7,7 @@ using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
 using Wg_backend_api.Models;
 
-namespace Wg_backend_api.Controllers
+namespace Wg_backend_api.Controllers.GlobalControllers
 {
     [ApiController]
     [Route("api/[controller]")]

@@ -7,7 +7,7 @@ using Wg_backend_api.Data;
 using Wg_backend_api.Models;
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace Wg_backend_api.Controllers
+namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/[controller]")]
     [ApiController]

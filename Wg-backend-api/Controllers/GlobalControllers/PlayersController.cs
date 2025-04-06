@@ -7,7 +7,7 @@ using System.Security.Claims;
 using Wg_backend_api.Data;
 using Wg_backend_api.Models;
 
-namespace Wg_backend_api.Controllers
+namespace Wg_backend_api.Controllers.GlobalControllers
 {
     [Authorize]
     [ApiController]
@@ -26,8 +26,6 @@ namespace Wg_backend_api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPlayers(int gameId)
         {
-
-
             //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             //var user = await _globalDbContext.Users.FindAsync(ClaimTypes.NameIdentifier);
@@ -41,7 +39,7 @@ namespace Wg_backend_api.Controllers
 
             var access = await _globalDbContext.GameAccesses
                 .FirstOrDefaultAsync(a => a.GameId == gameId && a.UserId == userId);
-            Console.WriteLine($"Access: {access}");
+            
             if (access == null) {
                 return Forbid();
             }
