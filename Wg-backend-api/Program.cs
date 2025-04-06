@@ -95,8 +95,10 @@
 //        initializer.InitializeDatabase();
 //    }
 //}
-using System;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Wg_backend_api.Data
 {
@@ -104,12 +106,71 @@ namespace Wg_backend_api.Data
     {
         static void Main(string[] args)
         {
-            var options = new DbContextOptionsBuilder<GameDbContext>()
-                .UseNpgsql("Host=localhost;Username=postgres;Password=Filip1234;Database=wg")
-                .Options;
+            
+            var builder = WebApplication.CreateBuilder(args);
 
-            string connectionString = "Host=localhost;Username=postgres;Password=Filip1234;Database=wg";
-            GameService.GenerateNewGame(connectionString, "C:\\Users\\FilipPuszko(272731)\\source\\repos\\Wg-backend-api\\Wg-backend-api\\Migrations\\globalInitalize", "Global");
+            builder.Services.AddDbContext<GameDbContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("Host=localhost;Username=postgres;Password=postgres;Database=wg")));
+
+
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("TwójSekretnyKluczJWT")),
+                        ValidateIssuer = false,
+                        ValidateAudience = false
+                    };
+                });
+
+
+
+            builder.Services.AddAuthorization();
+
+            //builder.Services.AddCors(options =>
+            //{
+            //    options.AddPolicy("AllowAll", builder =>
+            //    {
+            //        builder.AllowAnyOrigin()  // Zezwala na dostêp z ka¿dego Ÿród³a
+            //               .AllowAnyMethod()  // Zezwala na wszystkie metody HTTP
+            //               .AllowAnyHeader(); // Zezwala na wszystkie nag³ówki
+            //    });
+            //});
+
+
+            builder.Services.AddControllers();
+
+
+            var app = builder.Build();
+
+            //// Configure the HTTP request pipeline.
+
+
+            app.UseHttpsRedirection();
+
+            //app.UseCors("AllowAll");
+
+            //app.UseAuthorization();
+
+            app.MapControllers();
+
+            app.Run();
+
+
+            // TO ponie¿ej by³o do tworzenia \/\/\/\/\/\/\/\/\/
+
+            //var options = new DbContextOptionsBuilder<GameDbContext>()
+            //    .UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg")
+            //    .Options;
+
+            //string connectionString = "Host=localhost;Username=postgres;Password=postgres;Database=wg";
+
+
+
+            //GameService.GenerateNewGame(connectionString, Directory.GetCurrentDirectory() + "\\Migrations\\initate.sql", "tmp_game");
+            //GameService.GenerateGlobalSchema(connectionString, Directory.GetCurrentDirectory() + "\\Migrations\\globalInitalize");
         }
     }
 }

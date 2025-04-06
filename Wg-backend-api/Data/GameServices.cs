@@ -50,7 +50,7 @@ namespace Wg_backend_api.Data
         {
             // Konfiguracja opcji DbContext
             var optionsBuilder = new DbContextOptionsBuilder<GameDbContext>();
-            optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=Filip1234;Database=wg");
+            optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg");
 
             // Domyślny schemat na potrzeby design-time
             string defaultSchema = "default_schema";
@@ -72,7 +72,7 @@ namespace Wg_backend_api.Data
                 .Build();
 
             // Pobranie connection stringa z konfiguracji
-            var connectionString = configuration.GetConnectionString("Host=localhost;Username=postgres;Password=Filip1234;Database=wg");
+            var connectionString = configuration.GetConnectionString("Host=localhost;Username=postgres;Password=postgres;Database=wg");
 
             // Konfiguracja DbContextOptions
             var optionsBuilder = new DbContextOptionsBuilder<GlobalDbContext>();
