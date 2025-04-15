@@ -12,9 +12,10 @@ namespace Wg_backend_api.Data
 
         private readonly string _schema;
 
-        public GameDbContext(DbContextOptions<GameDbContext> options, string schema )
+        public GameDbContext(DbContextOptions<GameDbContext> options, string schema = "" ) // Fuszera drut this default schema name
             : base(options)
         {
+            
             _schema = schema  ?? throw new ArgumentNullException(nameof(schema));
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -23,7 +24,7 @@ namespace Wg_backend_api.Data
 
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=Filip1234;Database=wg");
+                optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg");
 
             }
         }
@@ -60,6 +61,12 @@ namespace Wg_backend_api.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+            if (!string.IsNullOrEmpty(_schema))
+            {
+                modelBuilder.HasDefaultSchema(_schema);  // Set the schema dynamically based on the provided schema
+            }
+
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 entityType.SetTableName(entityType.GetTableName());
@@ -262,7 +269,7 @@ namespace Wg_backend_api.Data
                 .WithMany()
                 .HasForeignKey(wr => wr.TradeAgreementId);
 
-            modelBuilder.HasDefaultSchema(_schema);
+            //modelBuilder.HasDefaultSchema(_schema);
         }
     }
 }

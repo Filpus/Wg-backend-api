@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Wg_backend_api.Data;
 using Wg_backend_api.Models;
 
-namespace Wg_backend_api.Controllers
+namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/Religions")]
     [ApiController]

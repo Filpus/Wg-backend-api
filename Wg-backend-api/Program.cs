@@ -95,8 +95,11 @@
 //        initializer.InitializeDatabase();
 //    }
 //}
-using System;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Configuration;
 
 namespace Wg_backend_api.Data
 {
@@ -104,12 +107,160 @@ namespace Wg_backend_api.Data
     {
         static void Main(string[] args)
         {
-            var options = new DbContextOptionsBuilder<GameDbContext>()
-                .UseNpgsql("Host=localhost;Username=postgres;Password=Filip1234;Database=wg")
-                .Options;
+            var builder = WebApplication.CreateBuilder(args);
 
-            string connectionString = "Host=localhost;Username=postgres;Password=Filip1234;Database=wg";
-            GameService.GenerateNewGame(connectionString, "C:\\Users\\FilipPuszko(272731)\\source\\repos\\Wg-backend-api\\Wg-backend-api\\Migrations\\globalInitalize", "Global");
+            // Add DbContexts
+            builder.Services.AddDbContext<GlobalDbContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddDbContext<GameDbContext>((serviceProvider, options) =>
+            {
+                var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+                options.UseNpgsql(connectionString);
+            });
+
+
+            // Add Scoped GameDbContextFactory
+            builder.Services.AddScoped<IGameDbContextFactory, GameDbContextFactory>();
+
+            // Authentication and Authorization setup
+            builder.Services.AddAuthentication("MyCookieAuth")
+                .AddCookie("MyCookieAuth", options =>
+                {
+                    options.LoginPath = "/api/auth/login";
+                    options.Cookie.Name = "MyAppAuth";
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.SameSite = SameSiteMode.None;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                });
+
+            builder.Services.AddAuthorization();
+
+            // CORS setup to allow access from Angular frontend
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAngular", builder =>
+                {
+                    builder.WithOrigins("http://localhost:4200")
+                           .AllowCredentials()
+                           .AllowAnyHeader()
+                           .AllowAnyMethod();
+                });
+            });
+
+            // Add Controllers (API endpoints)
+            builder.Services.AddControllers();
+
+            var app = builder.Build();
+
+            // Configure the HTTP request pipeline
+            app.UseHttpsRedirection();
+            app.UseAuthentication();
+            app.UseAuthorization();
+            app.UseCors("AllowAngular");
+
+            app.MapControllers(); // Map controller routes
+
+            app.Run();
         }
     }
 }
+
+//namespace Wg_backend_api.Data
+//{
+//    class Program
+//    {
+//        static void Main(string[] args)
+//        {
+
+//            var builder = WebApplication.CreateBuilder(args);
+
+//            //builder.Services.AddDbContext<GameDbContext>(options =>
+//            //    options.UseNpgsql(builder.Configuration.GetConnectionString("Host=localhost;Username=postgres;Password=postgres;Database=wg")));
+
+
+//            builder.Services.AddDbContext<GlobalDbContext>(options =>
+//            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+//            builder.Services.AddDbContext<GameDbContext>(options =>
+//            {
+//                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")); 
+//            });
+
+//            //builder.Services.AddDbContextFactory<GameDbContext>(options =>
+//            //    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+//            builder.Services.AddScoped<IGameDbContextFactory, GameDbContextFactory>();
+
+
+//            builder.Services.AddAuthentication("MyCookieAuth")
+//            .AddCookie("MyCookieAuth", options =>
+//            {
+//                options.LoginPath = "/api/auth/login";
+//                options.Cookie.Name = "MyAppAuth";
+//                options.Cookie.HttpOnly = true;
+//                options.Cookie.SameSite = SameSiteMode.None;
+//                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+//            });
+
+//            builder.Services.AddAuthorization();
+
+//            builder.Services.AddCors(options =>
+//            {
+//                options.AddPolicy("AllowAngular", builder =>
+//                {
+//                    builder.WithOrigins("http://localhost:4200")
+//                           .AllowCredentials()
+//                           .AllowAnyHeader()
+//                           .AllowAnyMethod();
+//                });
+//            });
+
+
+//            //builder.Services.AddCors(options =>
+//            //{
+//            //    options.AddPolicy("AllowAll", builder =>
+//            //    {
+//            //        builder.AllowAnyOrigin()  // Zezwala na dostêp z ka¿dego Ÿród³a
+//            //               .AllowAnyMethod()  // Zezwala na wszystkie metody HTTP
+//            //               .AllowAnyHeader(); // Zezwala na wszystkie nag³ówki
+//            //    });
+//            //});
+
+
+//            builder.Services.AddControllers();
+
+
+//            var app = builder.Build();
+
+//            //// Configure the HTTP request pipeline.
+
+
+//            app.UseHttpsRedirection();
+
+//            app.UseAuthentication();
+//            app.UseAuthorization();
+//            app.UseCors("AllowAngular");
+
+
+//            //app.UseCors("AllowAll");
+
+//            //app.UseAuthorization();
+
+//            app.MapControllers();
+
+//            app.Run();
+
+
+//            // TO ponie¿ej by³o do tworzenia \/\/\/\/\/\/\/\/\/
+
+//            //var options = new DbContextOptionsBuilder<GameDbContext>()
+//            //    .UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg")
+//            //    .Options;
+
+//            //string connectionString = "Host=localhost;Username=postgres;Password=postgres;Database=wg";
+
+
+//            //GameService.GenerateNewGame(connectionString, Directory.GetCurrentDirectory() + "\\Migrations\\initate.sql", "tmp_game");
+//            //GameService.GenerateGlobalSchema(connectionString, Directory.GetCurrentDirectory() + "\\Migrations\\globalInitalize");
+//        }
+//    }
+//}

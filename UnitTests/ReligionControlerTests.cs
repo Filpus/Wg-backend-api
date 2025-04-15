@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
-using Wg_backend_api.Controllers;
+using Wg_backend_api.Controllers.GameControllers;
 using Wg_backend_api.Data;
 using Wg_backend_api.Models;
 using Xunit;

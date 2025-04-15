@@ -15,7 +15,7 @@ namespace Wg_backend_api.Data
 
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=Filip1234;Database=wg");
+                optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg");
 
             }
         }
