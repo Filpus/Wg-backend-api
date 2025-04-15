@@ -19,6 +19,7 @@ namespace Wg_backend_api.Models
         [Column("mapLocation")]
         public string MapLocation { get; set; }
 
+        public ICollection<MapAccess> MapAccesses { get; set; }
     }
 
 
@@ -28,9 +29,13 @@ namespace Wg_backend_api.Models
         [Column("fk_Users")]
         [Key]
         public int UserId { get; set; }
+        [ForeignKey("UserId")]
+        public Player User { get; set; }
+
         [Column("fk_Maps")]
         [Key]
         public int MapId { get; set; }
-
+        [ForeignKey("MapId")]
+        public Map Map { get; set; }
     }
 }

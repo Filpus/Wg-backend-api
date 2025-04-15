@@ -12,7 +12,6 @@ namespace Wg_backend_api.Models
         public int? Id { get; set; }
 
         [Column("name")]
-        
         [Required] // Pole wymagane
         [MaxLength(255)] // Opcjonalne ograniczenie długości
         public string Name { get; set; }
@@ -20,6 +19,14 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("ismain")]
         public bool IsMain { get; set; } // Typ logiczny
+
+        public ICollection<ProductionCost> ProductionCosts { get; set; }
+        public ICollection<MaintenaceCosts> MaintenaceCosts { get; set; }
+        public ICollection<UsedResource> UsedResources { get; set; }
+        public ICollection<ProductionShare> ProductionShares { get; set; }
+        public ICollection<Modifiers> Modifiers { get; set; }
+        public ICollection<OfferedResource> OfferedResources { get; set; }
+        public ICollection<WantedResource> WantedResources { get; set; }
     }
 
     [Table("cultures")]
@@ -30,11 +37,13 @@ namespace Wg_backend_api.Models
         [Key]
         public int? Id { get; set; }
 
-
         [Column("name")]
         [Required]
         [MaxLength(255)]
         public string Name { get; set; }
+
+        public ICollection<Modifiers> Modifiers { get; set; }
+        public ICollection<Population> Populations { get; set; }
     }
     [Table("religions")]
     public class Religion
@@ -43,10 +52,14 @@ namespace Wg_backend_api.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Key]
         public int? Id { get; set; }
+
         [Column("name")]
         [Required]
         [MaxLength(25)]
         public string Name { get; set; }
+
+        public ICollection<Modifiers> Modifiers { get; set; }
+        public ICollection<Population> Populations { get; set; }
     }
     [Table("socialgroups")]
     public class SocialGroup
@@ -55,16 +68,24 @@ namespace Wg_backend_api.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Key]
         public int? Id { get; set; }
+
         [Column("name")]
         [Required]
         [MaxLength(100)]
         public string Name { get; set; }
+
         [Column("basehappiness")]
         [Required]
         public float BaseHappiness { get; set; } // Typ float do przechowywania wartości zmiennoprzecinkowych
+
         [Column("volunteers")]
         [Required]
         public int Volunteers { get; set; } // Typ int do przechowywania liczby
+
+        public ICollection<UsedResource> UsedResources { get; set; }
+        public ICollection<ProductionShare> ProductionShares { get; set; }
+        public ICollection<Modifiers> Modifiers { get; set; }
+        public ICollection<Population> Populations { get; set; }
     }
 
 
@@ -75,12 +96,21 @@ namespace Wg_backend_api.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Key]
         public int? Id { get; set; }
+
         [Required]
         [Column("fk_SocialGroups")]
         public int SocialGroupId { get; set; }
+
+        [ForeignKey("SocialGroupId")]
+        public SocialGroup SocialGroup { get; set; }
+
         [Required]
         [Column("fk_Resources")]
         public int ResourceId { get; set; }
+
+        [ForeignKey("ResourceId")]
+        public Resource Resource { get; set; }
+
         [Required]
         [Column("amount")]
         public int Amount { get; set; }
@@ -93,12 +123,21 @@ namespace Wg_backend_api.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Key]
         public int? Id { get; set; }
+
         [Required]
         [Column("fk_SocialGroups")]
         public int SocialGroupId { get; set; }
+
+        [ForeignKey("SocialGroupId")]
+        public SocialGroup SocialGroup { get; set; }
+
         [Required]
         [Column("fk_Resources")]
         public int ResourceId { get; set; }
+
+        [ForeignKey("ResourceId")]
+        public Resource Resource { get; set; }
+
         [Required]
         [Column("coefficient")]
         public int Coefficient { get; set; }

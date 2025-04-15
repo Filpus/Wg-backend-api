@@ -10,6 +10,7 @@ namespace Wg_backend_api.Models
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int? Id { get; set; }
+
         [Column("name")]
         [Required]
         public string Name { get; set; }
@@ -17,6 +18,8 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("fk_Nations")]
         public int NationId { get; set; }
+        [ForeignKey("NationId")]
+        public Nation Nation { get; set; }
 
         [Required]
         [Column("power")]

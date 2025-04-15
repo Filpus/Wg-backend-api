@@ -20,6 +20,7 @@ namespace Wg_backend_api.Models
         [Column("ownerId")]
         [Required]
         public int OwnerId { get; set; }
+        public ICollection<GameAccess> GameAccesses { get; set; }
     }
 
     [Table("gameaccess")]
@@ -29,11 +30,15 @@ namespace Wg_backend_api.Models
         [Required]
         [Key]
         public int UserId { get; set; }
+        [ForeignKey("UserId")]
+        public Player User { get; set; }
 
         [Column("fk_Games")]
         [Required]
         [Key]
         public int GameId { get; set; }
+        [ForeignKey("GameId")]
+        public Game Game { get; set; }
 
         [Required]
         [Column("accessType")]
@@ -42,6 +47,5 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("isArchived")]
         public bool IsArchived { get; set; }
-
     }
 }

@@ -10,16 +10,33 @@ namespace Wg_backend_api.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Key]
         public int? Id { get; set; }
+
         [Column("name")]
         [Required]
         public string Name { get; set; }
+
         [Required]
         [Column("fk_religions")]
         public int ReligionId { get; set; }
+
+        [ForeignKey("ReligionId")]
+        public Religion Religion { get; set; }
+
         [Required]
         [Column("fk_cultures")]
         public int CultureId { get; set; }
 
+        [ForeignKey("CultureId")]
+        public Culture Culture { get; set; }
+
+        public ICollection<Army> Armies { get; set; }
+        public ICollection<UnitOrder> UnitOrders { get; set; }
+        public ICollection<Action> Actions { get; set; }
+        public ICollection<Assignment> Assignments { get; set; }
+        public ICollection<RelatedEvents> RelatedEvents { get; set; }
+        public ICollection<Faction> Factions { get; set; }
+        public ICollection<Localisation> Localisations { get; set; }
+        public ICollection<TradeAgreement> TradeAgreements { get; set; }
     }
 
 }

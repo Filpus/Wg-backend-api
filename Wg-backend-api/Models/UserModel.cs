@@ -33,7 +33,6 @@ namespace Wg_backend_api.Models
     [Table("players")]
     public class Player
     {
-
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Key] // Oznaczenie klucza głównego
@@ -42,9 +41,11 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("fk_User")]
         public int UserId { get; set; }
+        [ForeignKey("UserId")]
+        public User User { get; set; }
 
         [Required]
         [Column("playerType")]
-        UserRole Role { get; set; }
+        public UserRole Role { get; set; }
     }
 }

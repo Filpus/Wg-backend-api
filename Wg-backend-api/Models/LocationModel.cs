@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Wg_backend_api.Models
 {
-    [Table("locations")]
-    public class Localisation
+    [Table("locations")] 
+  public class Localisation
     {
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -28,6 +28,8 @@ namespace Wg_backend_api.Models
         [Column("fk_nations")]
         public int NationId { get; set; }
 
+        [ForeignKey("NationId")]
+        public Nation Nation { get; set; }
     }
 
     [Table("locationsResources")]
@@ -40,9 +42,13 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("fk_locations")]
         public int LocationId { get; set; }
+        [ForeignKey("LocationId")]
+        public Localisation Location { get; set; }
         [Required]
         [Column("fk_resources")]
         public int ResourceId { get; set; }
+        [ForeignKey("ResourceId")]
+        public Resource Resource { get; set; }
         [Required]
         [Column("amount")]
         public int Amount { get; set; }
