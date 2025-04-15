@@ -9,10 +9,14 @@ namespace Wg_backend_api.Controllers.GameControllers
     [ApiController]
     public class TradeController : Controller
     {
-        private readonly AppDbContext _context;
-        public TradeController(AppDbContext context)
+        private readonly IGameDbContextFactory _gameDbContextFactory;
+        private GameDbContext _context;
+        public TradeController(IGameDbContextFactory gameDbFactory)
         {
-            _context = context;
+            _gameDbContextFactory = gameDbFactory;
+
+            string schema = HttpContext.Session.GetString("Schema");
+            _context = _gameDbContextFactory.Create(schema);
         }
 
         [HttpPost("TradeAgreement")]
@@ -24,10 +28,10 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             tradeAgreement.Id = null;
-            _context.TradeAgreement.Add(tradeAgreement);
+            _context.TradeAgreements.Add(tradeAgreement);
             await _context.SaveChangesAsync();
 
-            var latestTradeAgreement = await _context.TradeAgreement
+            var latestTradeAgreement = await _context.TradeAgreements
                 .OrderByDescending(t => t.Id)
                 .FirstOrDefaultAsync();
 
@@ -68,7 +72,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 resource.Id = null;
             }
 
-            _context.WantedResource.AddRange(wantedResources);
+            _context.WantedResources.AddRange(wantedResources);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetWantedResources", new { id = wantedResources[0].Id }, wantedResources);

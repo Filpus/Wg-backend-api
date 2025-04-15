@@ -11,11 +11,14 @@ namespace Wg_backend_api.Controllers.GameControllers
     [ApiController]
     public class NationController : Controller
     {
-        private readonly AppDbContext _context;
-
-        public NationController(AppDbContext context)
+        private readonly IGameDbContextFactory _gameDbContextFactory;
+        private GameDbContext _context;
+        public NationController(IGameDbContextFactory gameDbFactory)
         {
-            _context = context;
+            _gameDbContextFactory = gameDbFactory;
+
+            string schema = HttpContext.Session.GetString("Schema")
+            _context = _gameDbContextFactory.Create(schema);
         }
 
         // GET: api/Religions
@@ -41,9 +44,9 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Nation>>> GetNations()
-        {  
-           return await _context.Nations.ToListAsync();
-            
+        {
+            return await _context.Nations.ToListAsync();
+
         }
 
         // PUT: api/Religions

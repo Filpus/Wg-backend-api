@@ -14,25 +14,28 @@ namespace Wg_backend_api.Controllers.GameControllers
     [ApiController]
     public class PopulationsController : ControllerBase
     {
-        private readonly AppDbContext _context;
-
-        public PopulationsController(AppDbContext context)
+        private readonly IGameDbContextFactory _gameDbContextFactory;
+        private GameDbContext _context;
+        public PopulationsController(IGameDbContextFactory gameDbFactory)
         {
-            _context = context;
+            _gameDbContextFactory = gameDbFactory;
+
+            string schema = HttpContext.Session.GetString("Schema");
+            _context = _gameDbContextFactory.Create(schema);
         }
 
         // GET: api/Populations
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Population>>> GetPopulation()
         {
-            return await _context.Population.ToListAsync();
+            return await _context.Populations.ToListAsync();
         }
 
         // GET: api/Populations/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Population>> GetPopulation(int? id)
         {
-            var population = await _context.Population.FindAsync(id);
+            var population = await _context.Populations.FindAsync(id);
 
             if (population == null)
             {
@@ -75,7 +78,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         public async Task<ActionResult<Population>> PostPopulation(Population population)
         {
             population.Id = null;
-            _context.Population.Add(population);
+            _context.Populations.Add(population);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetPopulation", new { id = population.Id }, population);
@@ -87,13 +90,13 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             foreach (var id in ids)
             {
-                var population = await _context.Population.FindAsync(id);
+                var population = await _context.Populations.FindAsync(id);
                 if (population == null)
                 {
                     return NotFound();
                 }
 
-                _context.Population.Remove(population);
+                _context.Populations.Remove(population);
                 await _context.SaveChangesAsync();
             }
 
@@ -105,7 +108,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         private bool PopulationExists(int? id)
         {
-            return _context.Population.Any(e => e.Id == id);
+            return _context.Populations.Any(e => e.Id == id);
         }
     }
 }

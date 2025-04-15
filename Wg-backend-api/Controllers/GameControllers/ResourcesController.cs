@@ -13,11 +13,14 @@ namespace Wg_backend_api.Controllers.GameControllers
     [ApiController]
     public class ResourcesController : ControllerBase
     {
-        private readonly AppDbContext _context;
-
-        public ResourcesController(AppDbContext context)
+        private readonly IGameDbContextFactory _gameDbContextFactory;
+        private GameDbContext _context;
+        public ResourcesController(IGameDbContextFactory gameDbFactory)
         {
-            _context = context;
+            _gameDbContextFactory = gameDbFactory;
+
+            string schema = HttpContext.Session.GetString("Schema");
+            _context = _gameDbContextFactory.Create(schema);
         }
 
         // GET: api/Resources

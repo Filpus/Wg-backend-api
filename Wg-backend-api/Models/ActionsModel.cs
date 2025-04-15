@@ -10,7 +10,7 @@ namespace Wg_backend_api.Models
         [Key]
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+        public int? Id { get; set; }
 
         [Required]
         [Column("fk_Nations")]

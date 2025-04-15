@@ -12,13 +12,15 @@ namespace Wg_backend_api.Controllers.GameControllers
     [ApiController]
     public class SocialGroupsController : Controller
     {
-        private readonly AppDbContext _context;
-
-        public SocialGroupsController(AppDbContext context)
+        private readonly IGameDbContextFactory _gameDbContextFactory;
+        private GameDbContext _context;
+        public SocialGroupsController(IGameDbContextFactory gameDbFactory)
         {
-            _context = context;
-        }
+            _gameDbContextFactory = gameDbFactory;
 
+            string schema = HttpContext.Session.GetString("Schema");
+            _context = _gameDbContextFactory.Create(schema);
+        }
         // GET: api/SocialGroups
         // GET: api/SocialGroups/5
         [HttpGet("{id?}")]

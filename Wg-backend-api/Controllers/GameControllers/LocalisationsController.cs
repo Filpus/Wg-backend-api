@@ -15,25 +15,29 @@ namespace Wg_backend_api.Controllers.GameControllers
     [ApiController]
     public class LocalisationsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IGameDbContextFactory _gameDbContextFactory;
+        private GameDbContext _context;
 
-        public LocalisationsController(AppDbContext context)
+        public LocalisationsController(IGameDbContextFactory gameDbFactory)
         {
-            _context = context;
+            _gameDbContextFactory = gameDbFactory;
+
+            string schema = HttpContext.Session.GetString("Schema");
+            _context = _gameDbContextFactory.Create(schema);
         }
 
         // GET: api/Localisations
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Localisation>>> GetLocalisation()
         {
-            return await _context.Localisation.ToListAsync();
+            return await _context.Localisations.ToListAsync();
         }
 
         // GET: api/Localisations/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Localisation>> GetLocalisation(int? id)
         {
-            var localisation = await _context.Localisation.FindAsync(id);
+            var localisation = await _context.Localisations.FindAsync(id);
 
             if (localisation == null)
             {
@@ -81,7 +85,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
 
             localisation.Id = null;
-            _context.Localisation.Add(localisation);
+            _context.Localisations.Add(localisation);
             await _context.SaveChangesAsync();
 
 
@@ -92,13 +96,13 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLocalisation(int? id)
         {
-            var localisation = await _context.Localisation.FindAsync(id);
+            var localisation = await _context.Localisations.FindAsync(id);
             if (localisation == null)
             {
                 return NotFound();
             }
 
-            _context.Localisation.Remove(localisation);
+            _context.Localisations.Remove(localisation);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -106,7 +110,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         private bool LocalisationExists(int? id)
         {
-            return _context.Localisation.Any(e => e.Id == id);
+            return _context.Localisations.Any(e => e.Id == id);
         }
     }
 }

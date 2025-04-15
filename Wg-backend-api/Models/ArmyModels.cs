@@ -39,6 +39,10 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("isNaval")]
         public bool IsNaval { get; set; }
+
+        public ICollection<ProductionCost> ProductionCost { get; set; }
+        public ICollection<MaintenaceCosts> MaintenaceCosts { get; set; }
+    
     }
 
 
@@ -52,9 +56,13 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("fk_Users")]
         public int UserId { get; set; }
+        [ForeignKey("UserId")]
+        public Player User { get; set; }
         [Required]
         [Column("fk_UnitTypes")]
         public int UnitTypeId { get; set; }
+        [ForeignKey("UnitTypeId")]
+        public UnitType UnitType { get; set; }
     }
 
     [Table("unitOrders")]
@@ -67,14 +75,16 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("fk_UnitTypes")]
         public int UnitTypeId { get; set; }
+        [ForeignKey("UnitTypeId")]
+        public UnitType UnitType { get; set; }
         [Required]
         [Column("fk_Nations")]
         public int NationId { get; set; }
-
+        [ForeignKey("NationId")]
+        public Nation Nation { get; set; }
         [Required]
         [Column("quantity")]
         public int Quantity { get; set; }
-
     }
 
     [Table("productionCost")]
@@ -87,11 +97,13 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("fk_UnitTypes")]
         public int UnitTypeId { get; set; }
-
+        [ForeignKey("UnitTypeId")]
+        public UnitType UnitType { get; set; }
         [Required]
         [Column("fk_Resources")]
         public int ResourceId { get; set; }
-
+        [ForeignKey("ResourceId")]
+        public Resource Resource { get; set; }
         [Required]
         [Column("amount")]
         public int Amount { get; set; }
@@ -107,11 +119,13 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("fk_UnitTypes")]
         public int UnitTypeId { get; set; }
-
+        [ForeignKey("UnitTypeId")]
+        public UnitType UnitType { get; set; }
         [Required]
         [Column("fk_Resources")]
         public int ResourceId { get; set; }
-
+        [ForeignKey("ResourceId")]
+        public Resource Resource { get; set; }
         [Required]
         [Column("amount")]
         public int Amount { get; set; }
@@ -127,9 +141,13 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("fk_UnitTypes")]
         public int UnitTypeId { get; set; }
+        [ForeignKey("UnitTypeId")]
+        public UnitType UnitType { get; set; }
         [Required]
         [Column("fk_Armies")]
-        public int Army { get; set; }
+        public int ArmyId { get; set; }
+        [ForeignKey("ArmyId")]
+        public Army Army { get; set; }
         [Required]
         [Column("quantity")]
         public int Quantity { get; set; }
@@ -148,8 +166,14 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("fk_Nations")]
         public int NationId { get; set; }
+        [ForeignKey("NationId")]
+        public Nation Nation { get; set; }
         [Required]
         [Column("fk_Locations")]
         public int LocationId { get; set; }
+        [ForeignKey("LocationId")]
+        public Localisation Location { get; set; }
+
+        public ICollection<Troop> Troops { get; set; }
     }
 }

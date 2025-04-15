@@ -14,10 +14,14 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("fk_nations")]
         public int NationId { get; set; }
+        [ForeignKey("NationId")]
+        public Nation Nation { get; set; }
 
         [Required]
         [Column("fk_users")]
         public int UserId { get; set; }
+        [ForeignKey("UserId")]
+        public Player User { get; set; }
 
         [Required]
         [Column("dateacquired")]
@@ -26,6 +30,5 @@ namespace Wg_backend_api.Models
         [Column("isactive")]
         [Required]
         public bool IsActive { get; set; }
-
     }
 }

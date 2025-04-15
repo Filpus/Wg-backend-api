@@ -12,12 +12,18 @@ namespace Wg_backend_api.Controllers.GameControllers
     [ApiController]
     public class CulturesController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IGameDbContextFactory _gameDbContextFactory;
+        private GameDbContext _context;
 
-        public CulturesController(AppDbContext context)
+        public CulturesController(IGameDbContextFactory gameDbFactory)
         {
-            _context = context;
+            _gameDbContextFactory = gameDbFactory;
+
+            string schema = HttpContext.Session.GetString("Schema");
+            _context = _gameDbContextFactory.Create(schema);
         }
+
+
 
         // GET: api/Cultures
         // GET: api/Cultures/5

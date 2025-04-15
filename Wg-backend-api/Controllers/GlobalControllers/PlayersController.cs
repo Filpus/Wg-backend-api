@@ -46,12 +46,14 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             var game = await _globalDbContext.Games.FindAsync(gameId);
 
+
             if (game == null)
             {
                 return NotFound("Game not found");
             }
 
             var schema = game.Name;
+            HttpContext.Session.SetString("Schema", schema); //TO DO Tymczasowe ograniczenie!!!!!!!!!!!
             using var gameDb = _gameDbContextFactory.Create(schema);
 
             var players = await gameDb.Players.ToListAsync();

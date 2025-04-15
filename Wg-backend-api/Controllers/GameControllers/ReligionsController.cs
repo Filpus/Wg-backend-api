@@ -13,11 +13,14 @@ namespace Wg_backend_api.Controllers.GameControllers
     [ApiController]
     public class ReligionsControler : Controller
     {
-        private readonly AppDbContext _context;
-
-        public ReligionsControler(AppDbContext context)
+        private readonly IGameDbContextFactory _gameDbContextFactory;
+        private GameDbContext _context;
+        public ReligionsControler(IGameDbContextFactory gameDbFactory)
         {
-            _context = context;
+            _gameDbContextFactory = gameDbFactory;
+
+            string schema = HttpContext.Session.GetString("Schema");
+            _context = _gameDbContextFactory.Create(schema);
         }
 
         // GET: api/Religions

@@ -14,25 +14,35 @@ namespace Wg_backend_api.Controllers.GameControllers
     [ApiController]
     public class AssignmentsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IGameDbContextFactory _gameDbContextFactory;
+        private GameDbContext _context;
 
-        public AssignmentsController(AppDbContext context)
+        public AssignmentsController(IGameDbContextFactory gameDbFactory)
         {
-            _context = context;
-        }
+            _gameDbContextFactory = gameDbFactory;
+            string schema = HttpContext.Session.GetString("Schema");
 
+            _context = _gameDbContextFactory.Create("schema");
+        }
         // GET: api/Assignments
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Assignment>>> GetAssignment()
         {
-            return await _context.Assignment.ToListAsync();
+            return await _context.Assignments.ToListAsync();
         }
 
         // GET: api/Assignments/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Assignment>> GetAssignment(int? id)
         {
-            var assignment = await _context.Assignment.FindAsync(id);
+            string schema = HttpContext.Session.GetString("Shema");
+            if (string.IsNullOrEmpty(schema))
+            {
+                return BadRequest("Schema is null or empty");
+            }
+            var _context = _gameDbContextFactory.Create(schema);
+            var assignment = await _context.Assignments.FindAsync(id);
+
 
             if (assignment == null)
             {
@@ -82,7 +92,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 if (assignment.UserId >= 0 && assignment.NationId >= 0)
                 {
 
-                    _context.Assignment.Add(assignment);
+                    _context.Assignments.Add(assignment);
                     await _context.SaveChangesAsync();
                 }
                 else {
@@ -99,13 +109,13 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var id in ids)
             {
-                var assignment = await _context.Assignment.FindAsync(id);
+                var assignment = await _context.Assignments.FindAsync(id);
                 if (assignment == null)
                 {
                     return NotFound();
                 }
 
-                _context.Assignment.Remove(assignment);
+                _context.Assignments.Remove(assignment);
                 await _context.SaveChangesAsync();
             }
             return NoContent();
@@ -113,7 +123,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         private bool AssignmentExists(int? id)
         {
-            return _context.Assignment.Any(e => e.Id == id);
+            return _context.Assignments.Any(e => e.Id == id);
         }
     }
 }
