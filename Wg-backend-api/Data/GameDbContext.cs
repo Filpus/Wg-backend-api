@@ -51,6 +51,7 @@ namespace Wg_backend_api.Data
         public DbSet<Modifiers> Modifiers { get; set; }
         public DbSet<Faction> Factions { get; set; }
         public DbSet<Localisation> Localisations { get; set; }
+        public DbSet<LocalisationResource> LocalisationResources { get; set; }
         public DbSet<Map> Maps { get; set; }
         public DbSet<MapAccess> MapAccesses { get; set; }
         public DbSet<Nation> Nations { get; set; }
@@ -205,6 +206,13 @@ namespace Wg_backend_api.Data
                 .HasOne<Nation>()
                 .WithMany()
                 .HasForeignKey(l => l.NationId);
+
+            modelBuilder.Entity<LocalisationResource>()
+                .HasKey(lr => lr.Id);
+            modelBuilder.Entity<LocalisationResource>()
+                .HasOne<Localisation>()
+                .WithMany()
+                .HasForeignKey(lr => lr.LocationId);    
 
             modelBuilder.Entity<MapAccess>()
                 .HasKey(ma => new { ma.UserId, ma.MapId });

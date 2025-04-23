@@ -52,21 +52,29 @@ namespace Wg_backend_api.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Key]
         public int? Id { get; set; }
+
         [Required]
         [Column("fk_nationoffering")]
         public int OferingNationId { get; set; }
         [ForeignKey("OferingNationId")]
         public Nation OfferingNation { get; set; }
+
         [Required]
         [Column("fk_nationreceiving")]
         public int ReceivingNationId { get; set; }
         [ForeignKey("ReceivingNationId")]
         public Nation ReceivingNation { get; set; }
+
         [Required]
         [Column("isaccepted")]
         public bool isAccepted { get; set; }
+
         [Required]
         [Column("duration")]
         public int Duration { get; set; }
+
+        // Powiązania z innymi modelami  
+        public ICollection<OfferedResource> OfferedResources { get; set; }
+        public ICollection<WantedResource> WantedResources { get; set; }
     }
 }

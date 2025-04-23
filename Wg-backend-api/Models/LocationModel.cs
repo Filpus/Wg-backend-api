@@ -4,16 +4,16 @@ using System.ComponentModel.DataAnnotations;
 namespace Wg_backend_api.Models
 {
     [Table("locations")] 
-  public class Localisation
+public class Localisation
     {
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        [Key] // Oznaczenie klucza głównego
+        [Key] // Oznaczenie klucza głównego  
         public int? Id { get; set; }
 
         [Column("name")]
-        [Required] // Pole wymagane
-        [MaxLength(255)] // Opcjonalne ograniczenie długości
+        [Required] // Pole wymagane  
+        [MaxLength(255)] // Opcjonalne ograniczenie długości  
         public string Name { get; set; }
 
         [Required]
@@ -30,6 +30,13 @@ namespace Wg_backend_api.Models
 
         [ForeignKey("NationId")]
         public Nation Nation { get; set; }
+
+        // Powiązanie z populacjami  
+        public ICollection<Population> Populations { get; set; }
+
+        // Powiązanie z armiami  
+        public ICollection<Army> Armies { get; set; }
+        public ICollection<LocalisationResource> LocalisationResources { get; set; } 
     }
 
     [Table("locationsResources")]
