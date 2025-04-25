@@ -123,6 +123,15 @@ namespace Wg_backend_api.Data
             // Add Scoped GameDbContextFactory
             builder.Services.AddScoped<IGameDbContextFactory, GameDbContextFactory>();
 
+            // Session setup
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(10); // TODO how many minutes we need?
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+
             // Authentication and Authorization setup
             builder.Services.AddAuthentication("MyCookieAuth")
                 .AddCookie("MyCookieAuth", options =>
@@ -158,6 +167,7 @@ namespace Wg_backend_api.Data
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseCors("AllowAngular");
+            app.UseSession();
 
             app.MapControllers(); // Map controller routes
 
