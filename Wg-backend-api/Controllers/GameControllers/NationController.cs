@@ -17,7 +17,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             _gameDbContextFactory = gameDbFactory;
 
-            string schema = HttpContext.Session.GetString("Schema")
+            string schema = HttpContext.Session.GetString("Schema");
             _context = _gameDbContextFactory.Create(schema);
         }
 

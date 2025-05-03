@@ -102,5 +102,18 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
+
+        [HttpGet("ByNation/{nationId}")]
+        public async Task<ActionResult<IEnumerable<Faction>>> GetFactionsByNation(int nationId)
+        {
+            var factions = await _context.Factions.Where(f => f.NationId == nationId).ToListAsync();
+
+            if (factions == null || factions.Count == 0)
+            {
+                return NotFound($"Nie znaleziono frakcji dla państwa o ID {nationId}.");
+            }
+
+            return Ok(factions);
+        }
     }
 }

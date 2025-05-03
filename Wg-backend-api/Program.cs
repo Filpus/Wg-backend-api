@@ -109,7 +109,7 @@ namespace Wg_backend_api.Data
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add DbContexts
+            // Add DbContexts  
             builder.Services.AddDbContext<GlobalDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -119,11 +119,10 @@ namespace Wg_backend_api.Data
                 options.UseNpgsql(connectionString);
             });
 
-
-            // Add Scoped GameDbContextFactory
+            // Add Scoped GameDbContextFactory  
             builder.Services.AddScoped<IGameDbContextFactory, GameDbContextFactory>();
 
-            // Authentication and Authorization setup
+            // Authentication and Authorization setup  
             builder.Services.AddAuthentication("MyCookieAuth")
                 .AddCookie("MyCookieAuth", options =>
                 {
@@ -136,7 +135,7 @@ namespace Wg_backend_api.Data
 
             builder.Services.AddAuthorization();
 
-            // CORS setup to allow access from Angular frontend
+            // CORS setup to allow access from Angular frontend  
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngular", builder =>
@@ -148,18 +147,28 @@ namespace Wg_backend_api.Data
                 });
             });
 
-            // Add Controllers (API endpoints)
+            // Add Controllers (API endpoints)  
             builder.Services.AddControllers();
+
+            // Add Swagger configuration  
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline
+            // Configure the HTTP request pipeline  
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseCors("AllowAngular");
 
-            app.MapControllers(); // Map controller routes
+            app.MapControllers(); // Map controller routes  
 
             app.Run();
         }
