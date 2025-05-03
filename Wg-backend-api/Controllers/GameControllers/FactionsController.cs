@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Controllers.GameControllers
@@ -21,33 +22,69 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<Faction>>> GetFactions(int? id)
+        public async Task<ActionResult<IEnumerable<FactionsDTO>>> GetFactions(int? id)
         {
             if (id.HasValue)
             {
-                var faction = await _context.Factions.FindAsync(id);
+                var faction = await _context.Factions
+                    .Where(f => f.Id == id)
+                    .Select(f => new FactionsDTO
+                    {
+                        Id = f.Id,
+                        Name = f.Name,
+                        Power = f.Power,
+                        Agenda = f.Agenda,
+                        Contentment = f.Contentment,
+                        Color = f.Color
+                    })
+                    .FirstOrDefaultAsync();
+
                 if (faction == null)
                 {
                     return NotFound();
                 }
-                return Ok(new List<Faction> { faction });
+                return Ok(new List<FactionsDTO> { faction });
             }
             else
             {
-                return await _context.Factions.ToListAsync();
+                var factions = await _context.Factions
+                    .Select(f => new FactionsDTO
+                    {
+                        Id = f.Id,
+                        Name = f.Name,
+                        Power = f.Power,
+                        Agenda = f.Agenda,
+                        Contentment = f.Contentment,
+                        Color = f.Color
+                    })
+                    .ToListAsync();
+
+                return Ok(factions);
             }
         }
 
         [HttpPut]
-        public async Task<IActionResult> PutFactions([FromBody] List<Faction> factions)
+        public async Task<IActionResult> PutFactions([FromBody] List<FactionsDTO> factionsDto)
         {
-            if (factions == null || factions.Count == 0)
+            if (factionsDto == null || factionsDto.Count == 0)
             {
                 return BadRequest("Brak danych do edycji.");
             }
 
-            foreach (var faction in factions)
+            foreach (var dto in factionsDto)
             {
+                var faction = await _context.Factions.FindAsync(dto.Id);
+                if (faction == null)
+                {
+                    return NotFound($"Nie znaleziono frakcji o ID {dto.Id}.");
+                }
+
+                faction.Name = dto.Name;
+                faction.Power = dto.Power;
+                faction.Agenda = dto.Agenda;
+                faction.Contentment = dto.Contentment;
+                faction.Color = dto.Color;
+
                 _context.Entry(faction).State = EntityState.Modified;
             }
 
@@ -64,22 +101,26 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Faction>> PostFactions([FromBody] List<Faction> factions)
+        public async Task<ActionResult<FactionsDTO>> PostFactions([FromBody] List<FactionsDTO> factionsDto)
         {
-            if (factions == null || factions.Count == 0)
+            if (factionsDto == null || factionsDto.Count == 0)
             {
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            foreach (Faction faction in factions)
+            var factions = factionsDto.Select(dto => new Faction
             {
-                faction.Id = null;
-            }
+                Name = dto.Name,
+                Power = dto.Power,
+                Agenda = dto.Agenda,
+                Contentment = dto.Contentment,
+                Color = dto.Color
+            }).ToList();
 
             _context.Factions.AddRange(factions);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetFactions", new { id = factions[0].Id }, factions);
+            return CreatedAtAction("GetFactions", new { id = factions[0].Id }, factionsDto);
         }
 
         [HttpDelete]
@@ -104,9 +145,20 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpGet("ByNation/{nationId}")]
-        public async Task<ActionResult<IEnumerable<Faction>>> GetFactionsByNation(int nationId)
+        public async Task<ActionResult<IEnumerable<FactionsDTO>>> GetFactionsByNation(int nationId)
         {
-            var factions = await _context.Factions.Where(f => f.NationId == nationId).ToListAsync();
+            var factions = await _context.Factions
+                .Where(f => f.NationId == nationId)
+                .Select(f => new FactionsDTO
+                {
+                    Id = f.Id,
+                    Name = f.Name,
+                    Power = f.Power,
+                    Agenda = f.Agenda,
+                    Contentment = f.Contentment,
+                    Color = f.Color
+                })
+                .ToListAsync();
 
             if (factions == null || factions.Count == 0)
             {
