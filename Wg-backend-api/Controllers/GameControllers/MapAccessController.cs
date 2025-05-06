@@ -84,7 +84,9 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usuniêcia.");
             }
 
-            var mapAccesses = await _context.MapAccesses.Where(ma => ids.Contains((ma.UserId, ma.MapId))).ToListAsync();
+            var mapAccesses = await _context.MapAccesses
+                .Where(ma => ids.Any(id => id.userId == ma.UserId && id.mapId == ma.MapId))
+                .ToListAsync();
 
             if (mapAccesses.Count == 0)
             {

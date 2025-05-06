@@ -38,12 +38,13 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 .Where(g => g.UserId == userId)
                 .ToListAsync();
 
-  
+ 
             if (games == null || games.Count == 0)
             {
                 return NotFound("No games found for this user");
             }
-
+            Console.WriteLine("Games found for user: " + games);
+            // TODO return DTO with games
             return Ok(games);
         }
 
@@ -76,7 +77,23 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             //var selectedGame = HttpContext.Session.GetString("SelectedGame");
 
             
-            return Ok(game);
+            return Ok(game.Id);
+        }
+
+        [Authorize]
+        [HttpGet("get-session-schema")]
+        public IActionResult GetSessionSchema()
+        {
+            var schemaValue = HttpContext.Session.GetString("Schema");
+
+            if (schemaValue != null)
+            {
+                return Ok(new { Schema = schemaValue });
+            }
+            else
+            {
+                return NotFound(new { Message = "Session value not found" });
+            }
         }
 
     }

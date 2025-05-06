@@ -20,6 +20,7 @@ namespace Wg_backend_api.Models
         [Column("ownerId")]
         [Required]
         public int OwnerId { get; set; }
+        public User Owner { get; set; }
         public ICollection<GameAccess> GameAccesses { get; set; }
     }
 
@@ -31,7 +32,7 @@ namespace Wg_backend_api.Models
         [Key]
         public int UserId { get; set; }
         [ForeignKey("UserId")]
-        public Player User { get; set; }
+        public User User { get; set; }
 
         [Column("fk_Games")]
         [Required]
