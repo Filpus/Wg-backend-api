@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Controllers.GameControllers
@@ -21,7 +22,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<Map>>> GetMaps(int? id)
+        public async Task<ActionResult<IEnumerable<MapDTO>>> GetMaps(int? id)
         {
             if (id.HasValue)
             {
@@ -30,24 +31,34 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<Map> { map });
+                return Ok(new List<MapDTO> { new MapDTO { Id = map.Id, Name = map.MapLocation, MapLocation = map.MapLocation } });
             }
             else
             {
-                return await _context.Maps.ToListAsync();
+                var maps = await _context.Maps
+                    .Select(map => new MapDTO { Id = map.Id, Name = map.MapLocation, MapLocation = map.MapLocation })
+                    .ToListAsync();
+                return Ok(maps);
             }
         }
 
         [HttpPut]
-        public async Task<IActionResult> PutMaps([FromBody] List<Map> maps)
+        public async Task<IActionResult> PutMaps([FromBody] List<MapDTO> mapDTOs)
         {
-            if (maps == null || maps.Count == 0)
+            if (mapDTOs == null || mapDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do edycji.");
             }
 
-            foreach (var map in maps)
+            foreach (var mapDTO in mapDTOs)
             {
+                var map = await _context.Maps.FindAsync(mapDTO.Id);
+                if (map == null)
+                {
+                    return NotFound($"Mapa o ID {mapDTO.Id} nie istnieje.");
+                }
+
+                map.MapLocation = mapDTO.MapLocation;
                 _context.Entry(map).State = EntityState.Modified;
             }
 
@@ -64,22 +75,29 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Map>> PostMaps([FromBody] List<Map> maps)
+        public async Task<ActionResult<MapDTO>> PostMaps([FromBody] List<MapDTO> mapDTOs)
         {
-            if (maps == null || maps.Count == 0)
+            if (mapDTOs == null || mapDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            foreach (Map map in maps)
+            var maps = mapDTOs.Select(dto => new Map
             {
-                map.Id = null;
-            }
+                MapLocation = dto.MapLocation
+            }).ToList();
 
             _context.Maps.AddRange(maps);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetMaps", new { id = maps[0].Id }, maps);
+            var createdDTOs = maps.Select(map => new MapDTO
+            {
+                Id = map.Id,
+                Name = map.MapLocation,
+                MapLocation = map.MapLocation
+            }).ToList();
+
+            return CreatedAtAction("GetMaps", new { id = createdDTOs.First().Id }, createdDTOs);
         }
 
         [HttpDelete]
@@ -101,6 +119,30 @@ namespace Wg_backend_api.Controllers.GameControllers
             await _context.SaveChangesAsync();
 
             return Ok();
+        }
+        [HttpGet("nation/{nationId}/maps")]
+        public async Task<ActionResult<IEnumerable<MapDTO>>> GetNationMaps(int nationId)
+        {
+            var nationMaps = await _context.MapAccesses
+                .Where(ma => _context.Localisations
+                    .Any(loc => loc.NationId == nationId && loc.Id == ma.MapId))
+                .Join(_context.Maps,
+                    ma => ma.MapId,
+                    map => map.Id,
+                    (ma, map) => new MapDTO
+                    {
+                        Id = map.Id,
+                        Name = map.Name, // Example name, adjust as needed  
+                        MapLocation = map.MapLocation
+                    })
+                .ToListAsync();
+
+            if (!nationMaps.Any())
+            {
+                return NotFound("Nie znaleziono map dla podanego pañstwa.");
+            }
+
+            return Ok(nationMaps);
         }
     }
 }
