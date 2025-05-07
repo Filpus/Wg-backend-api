@@ -50,22 +50,22 @@ namespace Wg_backend_api.Data
 
             // Konfiguracja relacji między User a GameAccess
             modelBuilder.Entity<GameAccess>()
-                .HasOne<User>()
-                .WithMany()
+                .HasOne(ga => ga.User)
+                .WithMany(u => u.GameAccesses)
                 .HasForeignKey(ga => ga.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Konfiguracja relacji między Game a GameAccess
             modelBuilder.Entity<GameAccess>()
-                .HasOne<Game>()
-                .WithMany()
+                .HasOne(ga => ga.Game)
+                .WithMany(u => u.GameAccesses)
                 .HasForeignKey(ga => ga.GameId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Konfiguracja relacji jeden-do-wielu między User a Game
             modelBuilder.Entity<Game>()
-                .HasOne<User>()
-                .WithMany()
+                .HasOne(ga => ga.Owner)
+                .WithMany(u => u.OwnedGames)
                 .HasForeignKey(g => g.OwnerId)
                 .OnDelete(DeleteBehavior.Cascade);
         }

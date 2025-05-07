@@ -24,7 +24,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         {
             var user = _context.Users.FirstOrDefault(p => p.Name == request.Name);
 
-            //if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
+            //if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password)) TODO 
             if (user == null || user.IsArchived || request.Password!= user.Password)
             {
                 return Unauthorized();
