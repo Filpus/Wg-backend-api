@@ -5,7 +5,7 @@
 
 //// Add services to the container.
 
-//// Rejestracja DbContext z po³¹czeniem do bazy danych PostgreSQL
+//// Rejestracja DbContext z poÂ³Â¹czeniem do bazy danych PostgreSQL
 //builder.Services.AddDbContext<AppDbContext>(options =>
 //    options.UseNpgsql(builder.Configuration.GetConnectionString("Host=localhost;Username=postgres;Password=admin;Database=wg")));
 
@@ -14,9 +14,9 @@
 //{
 //    options.AddPolicy("AllowAll", builder =>
 //    {
-//        builder.AllowAnyOrigin()  // Zezwala na dostêp z ka¿dego Ÿród³a
+//        builder.AllowAnyOrigin()  // Zezwala na dostÃªp z kaÂ¿dego Å¸rÃ³dÂ³a
 //               .AllowAnyMethod()  // Zezwala na wszystkie metody HTTP
-//               .AllowAnyHeader(); // Zezwala na wszystkie nag³ówki
+//               .AllowAnyHeader(); // Zezwala na wszystkie nagÂ³Ã³wki
 //    });
 //});
 
@@ -58,10 +58,10 @@
 ////        {
 ////            var resources = context.Resources.ToList();
 
-////            // Sprawdzamy, czy s¹ jakieœ zasoby, a nastêpnie wypisujemy je
+////            // Sprawdzamy, czy sÂ¹ jakieÅ“ zasoby, a nastÃªpnie wypisujemy je
 ////            if (resources.Any())
 ////            {
-////                Console.WriteLine("Lista zasobów:");
+////                Console.WriteLine("Lista zasobÃ³w:");
 ////                foreach (var resource in resources)
 ////                {
 ////                    Console.WriteLine($"ID: {resource.Id}, Name: {resource.Name}, IsMain: {resource.IsMain}");
@@ -69,7 +69,7 @@
 ////            }
 ////            else
 ////            {
-////                Console.WriteLine("Brak zasobów w bazie.");
+////                Console.WriteLine("Brak zasobÃ³w w bazie.");
 ////            }
 ////        }
 ////    }
@@ -80,7 +80,7 @@
 //{
 //    static void Main(string[] args)
 //    {
-//        // Tworzenie IServiceProvider (np. za pomoc¹ Dependency Injection)
+//        // Tworzenie IServiceProvider (np. za pomocÂ¹ Dependency Injection)
 //        var serviceProvider = new ServiceCollection()
 //            .AddDbContext<GameDbContext>() // Rejestracja DbContext w DI
 //            .BuildServiceProvider();
@@ -109,7 +109,7 @@ namespace Wg_backend_api.Data
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add DbContexts
+            // Add DbContexts  
             builder.Services.AddDbContext<GlobalDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -119,9 +119,9 @@ namespace Wg_backend_api.Data
                 options.UseNpgsql(connectionString);
             });
 
-
-            // Add Scoped GameDbContextFactory
+            // Add Scoped GameDbContextFactory  
             builder.Services.AddScoped<IGameDbContextFactory, GameDbContextFactory>();
+
 
             // Session setup
             builder.Services.AddDistributedMemoryCache();
@@ -132,7 +132,7 @@ namespace Wg_backend_api.Data
                 options.Cookie.IsEssential = true;
             });
 
-            // Authentication and Authorization setup
+            // Authentication and Authorization setup  
             builder.Services.AddAuthentication("MyCookieAuth")
                 .AddCookie("MyCookieAuth", options =>
                 {
@@ -145,7 +145,7 @@ namespace Wg_backend_api.Data
 
             builder.Services.AddAuthorization();
 
-            // CORS setup to allow access from Angular frontend
+            // CORS setup to allow access from Angular frontend  
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngular", builder =>
@@ -157,19 +157,29 @@ namespace Wg_backend_api.Data
                 });
             });
 
-            // Add Controllers (API endpoints)
+            // Add Controllers (API endpoints)  
             builder.Services.AddControllers();
+
+            // Add Swagger configuration  
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline
+            // Configure the HTTP request pipeline  
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseCors("AllowAngular");
             app.UseSession();
 
-            app.MapControllers(); // Map controller routes
+            app.MapControllers(); // Map controller routes  
 
             app.Run();
         }
@@ -229,9 +239,9 @@ namespace Wg_backend_api.Data
 //            //{
 //            //    options.AddPolicy("AllowAll", builder =>
 //            //    {
-//            //        builder.AllowAnyOrigin()  // Zezwala na dostêp z ka¿dego Ÿród³a
+//            //        builder.AllowAnyOrigin()  // Zezwala na dostÃªp z kaÂ¿dego Å¸rÃ³dÂ³a
 //            //               .AllowAnyMethod()  // Zezwala na wszystkie metody HTTP
-//            //               .AllowAnyHeader(); // Zezwala na wszystkie nag³ówki
+//            //               .AllowAnyHeader(); // Zezwala na wszystkie nagÂ³Ã³wki
 //            //    });
 //            //});
 
@@ -260,7 +270,7 @@ namespace Wg_backend_api.Data
 //            app.Run();
 
 
-//            // TO ponie¿ej by³o do tworzenia \/\/\/\/\/\/\/\/\/
+//            // TO ponieÂ¿ej byÂ³o do tworzenia \/\/\/\/\/\/\/\/\/
 
 //            //var options = new DbContextOptionsBuilder<GameDbContext>()
 //            //    .UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg")
