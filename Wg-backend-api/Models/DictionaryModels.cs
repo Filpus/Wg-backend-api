@@ -140,7 +140,7 @@ namespace Wg_backend_api.Models
 
         [Required]
         [Column("coefficient")]
-        public int Coefficient { get; set; }
+        public float Coefficient { get; set; }
     }
 
 }

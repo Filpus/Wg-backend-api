@@ -58,6 +58,6 @@ public class Localisation
         public Resource Resource { get; set; }
         [Required]
         [Column("amount")]
-        public int Amount { get; set; }
+        public float Amount { get; set; }
     }
 }

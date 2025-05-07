@@ -22,13 +22,13 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<FactionsDTO>>> GetFactions(int? id)
+        public async Task<ActionResult<IEnumerable<FactionDTO>>> GetFactions(int? id)
         {
             if (id.HasValue)
             {
                 var faction = await _context.Factions
                     .Where(f => f.Id == id)
-                    .Select(f => new FactionsDTO
+                    .Select(f => new FactionDTO
                     {
                         Id = f.Id,
                         Name = f.Name,
@@ -43,12 +43,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<FactionsDTO> { faction });
+                return Ok(new List<FactionDTO> { faction });
             }
             else
             {
                 var factions = await _context.Factions
-                    .Select(f => new FactionsDTO
+                    .Select(f => new FactionDTO
                     {
                         Id = f.Id,
                         Name = f.Name,
@@ -64,7 +64,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> PutFactions([FromBody] List<FactionsDTO> factionsDto)
+        public async Task<IActionResult> PutFactions([FromBody] List<FactionDTO> factionsDto)
         {
             if (factionsDto == null || factionsDto.Count == 0)
             {
@@ -101,7 +101,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<FactionsDTO>> PostFactions([FromBody] List<FactionsDTO> factionsDto)
+        public async Task<ActionResult<FactionDTO>> PostFactions([FromBody] List<FactionDTO> factionsDto)
         {
             if (factionsDto == null || factionsDto.Count == 0)
             {
@@ -145,11 +145,11 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpGet("ByNation/{nationId}")]
-        public async Task<ActionResult<IEnumerable<FactionsDTO>>> GetFactionsByNation(int nationId)
+        public async Task<ActionResult<IEnumerable<FactionDTO>>> GetFactionsByNation(int nationId)
         {
             var factions = await _context.Factions
                 .Where(f => f.NationId == nationId)
-                .Select(f => new FactionsDTO
+                .Select(f => new FactionDTO
                 {
                     Id = f.Id,
                     Name = f.Name,
