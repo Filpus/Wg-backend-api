@@ -2,8 +2,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Security.Claims;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
+using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
@@ -34,18 +37,30 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return NotFound("User not found");
             }
 
-            var games = await _globalDbContext.GameAccesses
+            var gamesAccess = await _globalDbContext.GameAccesses
                 .Where(g => g.UserId == userId)
                 .ToListAsync();
 
  
-            if (games == null || games.Count == 0)
+            if (gamesAccess == null || gamesAccess.Count == 0)
             {
                 return NotFound("No games found for this user");
             }
-            Console.WriteLine("Games found for user: " + games);
-            // TODO return DTO with games
-            return Ok(games);
+
+            var games = await _globalDbContext.Games.ToListAsync();
+            var users = await _globalDbContext.Games.ToListAsync();
+            var gamesDTOs = gamesAccess.
+                Join(games, 
+                access => access.GameId, 
+                game=> game.Id, 
+                (access, game) => new {access, game})
+                .Join(users,
+                    ga => ga.access.UserId,
+                    user => user.Id,
+                    (ga, user) => new GamesDTO(ga.game.Id,ga.game.Name,ga.game.Description,ga.game.Image,((UserRole)ga.access.Role).ToString())
+                ).ToList();
+
+            return Ok(gamesDTOs);
         }
 
         [Authorize]
