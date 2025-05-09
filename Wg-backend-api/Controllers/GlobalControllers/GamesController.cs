@@ -48,19 +48,15 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
 
             var games = await _globalDbContext.Games.ToListAsync();
-            var users = await _globalDbContext.Games.ToListAsync();
             var gamesDTOs = gamesAccess.
                 Join(games, 
                 access => access.GameId, 
-                game=> game.Id, 
-                (access, game) => new {access, game})
-                .Join(users,
-                    ga => ga.access.UserId,
-                    user => user.Id,
-                    (ga, user) => new GamesDTO(ga.game.Id,ga.game.Name,ga.game.Description,ga.game.Image,((UserRole)ga.access.Role).ToString())
+                game=> game.Id,
+                (access, game) => new GameDTO(game.Id, game.Name, game.Description, game.Image)
                 ).ToList();
 
-            return Ok(gamesDTOs);
+            
+            return Ok(new PlayerGamesDTO().PlayerGames = gamesDTOs);
         }
 
         [Authorize]
