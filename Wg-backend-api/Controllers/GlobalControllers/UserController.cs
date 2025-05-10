@@ -25,20 +25,19 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int? id)
         {
-            //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
 
             if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
             {
-                return Unauthorized();
+                return Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
             }
 
             var user = await _context.Users.FindAsync(id);
 
             if (user == null)
             {
-                return NotFound();
+                return NotFound(new { message = "User not found." });
             }
 
             return Ok(user); 
@@ -50,18 +49,16 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         public async Task<IActionResult> PutUser(int? id, User user)
         {
 
-            //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
 
             if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
             {
-                return Unauthorized();
+                return Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
             }
 
             if (id != user.Id || id == null || user == null)
             {
-                return BadRequest();
+                return BadRequest(new { message = "Bad request: ID mismatch or invalid user data." });
             }
 
             _context.Entry(user).State = EntityState.Modified;
@@ -74,7 +71,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 if (!UserExists(id))
                 {
-                    return NotFound();
+                    return NotFound(new { message = "User not found." });
                 }
                 else
                 {
@@ -102,19 +99,17 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int? id)
         {
-            //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
 
             if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
             {
-                return Unauthorized();
+                return Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
             }
 
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                return NotFound();
+                return NotFound(new { message = "User not found." });
             }
             user.IsArchived = true;
 

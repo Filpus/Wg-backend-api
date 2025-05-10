@@ -25,9 +25,20 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             var user = _context.Users.FirstOrDefault(p => p.Name == request.Name);
 
             //if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password)) TODO 
-            if (user == null || user.IsArchived || request.Password!= user.Password)
+            if (user == null || request.Password!= user.Password)
             {
-                return Unauthorized();
+                return Unauthorized(new
+                {
+                    error = "Unauthorized",
+                    message = "Wrong username or password"
+                });
+            }
+            if (user.IsArchived) {
+                return Unauthorized(new
+                {
+                    error = "Unauthorized",
+                    message = "User has been archived"
+                });
             }
 
             var claims = new List<Claim>
@@ -41,14 +52,23 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             await HttpContext.SignInAsync("MyCookieAuth", principal);
 
-            return Ok();
+            return Ok(new
+            {
+                message = "Login successful"
+            });
         }
 
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync("MyCookieAuth");
-            return Ok();
+            HttpContext.Session.Remove("Schema");
+
+
+            return Ok(new
+            {
+                message = "Logout successful"
+            });
         }
     }
 }

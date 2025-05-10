@@ -31,7 +31,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             var selectedGameStr = HttpContext.Session.GetString("Schema");
 
-            if (!int.TryParse(selectedGameStr, out int gameId))
+            if (string.IsNullOrEmpty(selectedGameStr) || !int.TryParse(selectedGameStr, out int gameId))
             {
                 return BadRequest("No game selected in session.");
             }
@@ -43,9 +43,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             if (!int.TryParse(userIdStr, out int userId))
             {
-                return Unauthorized();
+                return Unauthorized("User not authenticated or invalid user ID");
             }
-
 
             var access = await _globalDbContext.GameAccesses
                 .FirstOrDefaultAsync(a => a.GameId == gameId && a.UserId == userId);
@@ -55,7 +54,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
 
             var game = await _globalDbContext.Games.FindAsync(gameId);
-
 
             if (game == null)
             {
