@@ -95,11 +95,14 @@
 //        initializer.InitializeDatabase();
 //    }
 //}
+
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Configuration;
+using Wg_backend_api.Data.Seeders;
 
 namespace Wg_backend_api.Data
 {
@@ -181,10 +184,20 @@ namespace Wg_backend_api.Data
 
             app.MapControllers(); // Map controller routes  
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                var dbContext = services.GetRequiredService<GlobalDbContext>();
+                var seeder = new GlobalSeeder(dbContext);
+                seeder.Seed();
+            }
+
+
             app.Run();
         }
     }
 }
+
 
 //namespace Wg_backend_api.Data
 //{
