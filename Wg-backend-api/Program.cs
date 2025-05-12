@@ -103,6 +103,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Configuration;
 using Wg_backend_api.Data.Seeders;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Wg_backend_api.Data
 {
@@ -136,15 +137,30 @@ namespace Wg_backend_api.Data
             });
 
             // Authentication and Authorization setup  
-            builder.Services.AddAuthentication("MyCookieAuth")
-                .AddCookie("MyCookieAuth", options =>
-                {
-                    options.LoginPath = "/api/auth/login";
-                    options.Cookie.Name = "MyAppAuth";
-                    options.Cookie.HttpOnly = true;
-                    options.Cookie.SameSite = SameSiteMode.None;
-                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                });
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = "MyCookieAuth";
+                options.DefaultChallengeScheme = "Google";
+            })
+            .AddCookie("MyCookieAuth", options =>
+            {
+                options.LoginPath = "/api/auth/login";
+                options.Cookie.Name = "MyAppAuth";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            })
+            .AddGoogle("Google", options =>
+            {
+                options.ClientId = "";
+                options.ClientSecret = "";
+
+                options.ClaimActions.MapJsonKey("picture", "picture");
+                options.ClaimActions.MapJsonKey("locale", "locale");
+
+                options.SaveTokens = true;
+                options.CallbackPath = "/signin-google"; 
+            });
 
             builder.Services.AddAuthorization();
 
@@ -184,6 +200,7 @@ namespace Wg_backend_api.Data
 
             app.MapControllers(); // Map controller routes  
 
+            // Insert mock data
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;

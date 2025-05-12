@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Wg_backend_api.Data;
 using Wg_backend_api.Auth;
+using Wg_backend_api.Models;
 
 
 namespace Wg_backend_api.Controllers.GlobalControllers
@@ -70,5 +71,61 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 message = "Logout successful"
             });
         }
+
+        [HttpGet("google-login")]
+        public IActionResult GoogleLogin(string returnUrl = "http://localhost:4200/loggedin")
+        {
+            var props = new AuthenticationProperties
+            {
+                RedirectUri = Url.Action(nameof(GoogleCallback), new { returnUrl })
+            };
+
+            return Challenge(props, "Google");
+        }
+        
+        [HttpGet("google-callback")]
+        public async Task<IActionResult> GoogleCallback(string returnUrl)
+        {
+            var result = await HttpContext.AuthenticateAsync("Google");
+
+            if (!result.Succeeded) return Unauthorized();
+
+            var externalUser = result.Principal;
+            var email = externalUser.FindFirst(ClaimTypes.Email)?.Value;
+            var name = externalUser.Identity.Name; // TODO change name for prefix of email
+
+            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+
+            if (user == null)
+            {
+                user = new User
+                {
+                    Name = name,
+                    Email = email,
+                    Password = ""
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+
+            if (user.IsArchived)
+            {
+                return Unauthorized(new { error = "User is archived" });
+            }
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Name),
+            };
+
+            var identity = new ClaimsIdentity(claims, "MyCookieAuth");
+            var principal = new ClaimsPrincipal(identity);
+            await HttpContext.SignInAsync("MyCookieAuth", principal);
+
+            return Redirect(returnUrl);
+        }
+
+
     }
 }
