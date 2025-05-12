@@ -62,8 +62,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [Authorize]
-        [HttpPost]
-        public async Task<IActionResult> SelectGame([FromBody] int gameId)
+        [HttpPost("{gameId}/select")]
+        public async Task<IActionResult> SelectGame(int gameId)
         {
             var game = await _globalDbContext.Games.FindAsync(gameId);
 
@@ -97,7 +97,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             HttpContext.Session.SetString("Schema", game.Id.ToString());
             //var selectedGame = HttpContext.Session.GetString("SelectedGame");
             
-            return Ok(game.Id);
+            return Ok(new { selectedGameId = game.Id });
         }
 
         [Authorize]
@@ -129,7 +129,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return Unauthorized(new
                 {
                     error = "Unauthorized",
-                    message = "Missing user claims: user ID or user name."
+                    message = "Missing user cookies"
                 });
             }
 
@@ -188,7 +188,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             var gameAcces = new GameAccess
             {
                 UserId = int.Parse(userClaimId),
-                GameId = newGame.Id.Value,
+                GameId = newGame.Id,
                 Role = UserRole.GameMaster,
                 IsArchived = false
             };
