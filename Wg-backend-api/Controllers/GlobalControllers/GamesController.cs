@@ -53,7 +53,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
 
             var games = await _globalDbContext.Games
-                .Where(g => gamesAccess.Contains((int)g.Id)) // Casting from nullable int (int?) to int because Game.Id is nullable
+                .Where(g => gamesAccess.Contains((int)g.Id))
                 .ToListAsync();
 
             var gamesDTOs = games.Select(game => new GameDTO(game.Id, game.Name, game.Description, game.Image)).ToList();
@@ -62,8 +62,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [Authorize]
-        [HttpPost("{gameId}/select")]
-        public async Task<IActionResult> SelectGame(int gameId)
+        [HttpPost("select")]
+        public async Task<IActionResult> SelectGame([FromBody] int gameId)
         {
             var game = await _globalDbContext.Games.FindAsync(gameId);
 
@@ -94,7 +94,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
-            HttpContext.Session.SetString("Schema", game.Id.ToString());
+            HttpContext.Session.SetString("Schema", $"game_{game.Id.ToString()}");
             //var selectedGame = HttpContext.Session.GetString("SelectedGame");
             
             return Ok(new { selectedGameId = game.Id });
@@ -117,7 +117,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [Authorize]
-        [HttpPost("create-game")]
+        [HttpPost]
         public async Task<IActionResult> CreateGame([FromBody] CreateGameDTO creteGame)
         {
 
@@ -137,7 +137,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 .Where(g => g.OwnerId == int.Parse(userClaimId))
                 .ToListAsync();
 
-            if (userGames.Count >= 2) // TODO: allow multiple games in the future
+            if (userGames.Count >= 2 && userClaimName != "admin") // TODO: allow multiple games in the future
             {
                 return Conflict(new
                 {
@@ -158,21 +158,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
-            var created_game = GameService.GenerateNewGame(
-                "Host=localhost;Username=postgres;Password=postgres;Database=wg",
-                 Path.Combine(Directory.GetCurrentDirectory(), "Migrations", "initate.sql"),
-                 creteGame.Name    
-            );
-
-            if (!created_game)
-            {
-                return StatusCode(500, new
-                {
-                    error = "Internal Server Error",
-                    message = "Failed to create game database."
-                });
-            }
-
             var newGame = new Game
             {
                 Name = creteGame.Name,
@@ -184,6 +169,23 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             _globalDbContext.Games.Add(newGame);
             await _globalDbContext.SaveChangesAsync();
 
+            var created_game = GameService.GenerateNewGame(
+                "Host=localhost;Username=postgres;Password=postgres;Database=wg",
+                 Path.Combine(Directory.GetCurrentDirectory(), "Migrations", "initate.sql"),
+                 $"game_{newGame.Id}"
+            );
+
+            if (!created_game)
+            {
+                _globalDbContext.Games.Remove(newGame);
+                await _globalDbContext.SaveChangesAsync();
+
+                return StatusCode(500, new
+                {
+                    error = "Internal Server Error",
+                    message = "Failed to create game database."
+                });
+            }
 
             var gameAcces = new GameAccess
             {
@@ -196,9 +198,11 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             _globalDbContext.GameAccesses.Add(gameAcces);
             await _globalDbContext.SaveChangesAsync();
 
-            // return Created($"/games/{game.Id}", null);
-            // TODO return something 
-            return Created();
+            return Ok(new
+            {
+                message = "Game created successfully",
+                game = new GameDTO(newGame.Id, newGame.Name, newGame.Description, newGame.Image)
+            });
         }
 
     }

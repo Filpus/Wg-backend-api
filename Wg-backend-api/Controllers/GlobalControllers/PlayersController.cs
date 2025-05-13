@@ -31,9 +31,15 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             var selectedGameStr = HttpContext.Session.GetString("Schema");
 
-            if (string.IsNullOrEmpty(selectedGameStr) || !int.TryParse(selectedGameStr, out int gameId))
+            if (string.IsNullOrEmpty(selectedGameStr) || !selectedGameStr.StartsWith("game_"))
             {
                 return BadRequest("No game selected in session.");
+            }
+
+            var idPart = selectedGameStr.Replace("game_", "");
+            if (!int.TryParse(idPart, out int gameId))
+            {
+                return BadRequest("Invalid game ID in session.");
             }
 
             //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -59,8 +65,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 return NotFound("Game not found");
             }
-
-            var schema = game.Name;
+            
+            var schema = $"game_{game.Name}";
             //HttpContext.Session.SetString("Schema", schema); //TO DO Tymczasowe ograniczenie!!!!!!!!!!!
             using var gameDb = _gameDbContextFactory.Create(schema);
 
