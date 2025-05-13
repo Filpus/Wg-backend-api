@@ -70,5 +70,25 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 message = "Logout successful"
             });
         }
+
+        [HttpGet("status")]
+        public IActionResult Status()
+        {
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                return Ok(new
+                {
+                    isAuthenticated = true,
+                    username = User.Identity.Name
+                });
+            }
+
+            return Ok(new
+            {
+                isAuthenticated = false
+            });
+
+        }
+
     }
 }
