@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Controllers.GameControllers
@@ -56,7 +57,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                return StatusCode(500, "B³¹d podczas aktualizacji.");
+                return StatusCode(500, "BÂ³Â¹d podczas aktualizacji.");
             }
 
             return NoContent();
@@ -81,16 +82,17 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (ids == null || ids.Count == 0)
             {
-                return BadRequest("Brak ID do usuniêcia.");
+                return BadRequest("Brak ID do usuniÃªcia.");
             }
 
             var mapAccesses = await _context.MapAccesses
-               .Where(ma => ids.Any(id => id.userId == ma.UserId && id.mapId == ma.MapId))
-               .ToListAsync();
+                .Where(ma => ids.Any(id => id.userId == ma.UserId && id.mapId == ma.MapId))
+                .ToListAsync();
+
 
             if (mapAccesses.Count == 0)
             {
-                return NotFound("Nie znaleziono dostêpu do map do usuniêcia.");
+                return NotFound("Nie znaleziono dostÃªpu do map do usuniÃªcia.");
             }
 
             _context.MapAccesses.RemoveRange(mapAccesses);
@@ -98,5 +100,6 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
+
     }
 }

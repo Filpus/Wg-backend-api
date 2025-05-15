@@ -11,7 +11,9 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 {
     [Authorize]
     [ApiController]
-    [Route("api/games/{gameId}/[controller]")]
+    //[Route("api/games/{gameId}/[controller]")]
+    [Route("api/games/[controller]")]
+
     public class PlayersController : ControllerBase
     {
         private readonly GlobalDbContext _globalDbContext;
@@ -24,8 +26,16 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetPlayers(int gameId)
+        public async Task<IActionResult> GetPlayers()
         {
+
+            var selectedGameStr = HttpContext.Session.GetString("Schema");
+
+            if (!int.TryParse(selectedGameStr, out int gameId))
+            {
+                return BadRequest("No game selected in session.");
+            }
+
             //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             //var user = await _globalDbContext.Users.FindAsync(ClaimTypes.NameIdentifier);
@@ -53,12 +63,26 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
 
             var schema = game.Name;
-            HttpContext.Session.SetString("Schema", schema); //TO DO Tymczasowe ograniczenie!!!!!!!!!!!
+            //HttpContext.Session.SetString("Schema", schema); //TO DO Tymczasowe ograniczenie!!!!!!!!!!!
             using var gameDb = _gameDbContextFactory.Create(schema);
 
             var players = await gameDb.Players.ToListAsync();
 
             return Ok(players);
+        }
+
+
+        /// <summary>
+        /// Get selected game ID from session.
+        /// </summary>
+        /// <returns>Returns gameId otherwise null</returns>
+        private int? GetSelectedGameId()
+        {
+            var selectedGameStr = HttpContext.Session.GetString("SelectedGame");
+            if (int.TryParse(selectedGameStr, out int gameId))
+                return gameId;
+
+            return null;
         }
     }
 }

@@ -5,7 +5,7 @@
 
 //// Add services to the container.
 
-//// Rejestracja DbContext z po³¹czeniem do bazy danych PostgreSQL
+//// Rejestracja DbContext z poÂ³Â¹czeniem do bazy danych PostgreSQL
 //builder.Services.AddDbContext<AppDbContext>(options =>
 //    options.UseNpgsql(builder.Configuration.GetConnectionString("Host=localhost;Username=postgres;Password=admin;Database=wg")));
 
@@ -14,9 +14,9 @@
 //{
 //    options.AddPolicy("AllowAll", builder =>
 //    {
-//        builder.AllowAnyOrigin()  // Zezwala na dostêp z ka¿dego Ÿród³a
+//        builder.AllowAnyOrigin()  // Zezwala na dostÃªp z kaÂ¿dego Å¸rÃ³dÂ³a
 //               .AllowAnyMethod()  // Zezwala na wszystkie metody HTTP
-//               .AllowAnyHeader(); // Zezwala na wszystkie nag³ówki
+//               .AllowAnyHeader(); // Zezwala na wszystkie nagÂ³Ã³wki
 //    });
 //});
 
@@ -58,10 +58,10 @@
 ////        {
 ////            var resources = context.Resources.ToList();
 
-////            // Sprawdzamy, czy s¹ jakieœ zasoby, a nastêpnie wypisujemy je
+////            // Sprawdzamy, czy sÂ¹ jakieÅ“ zasoby, a nastÃªpnie wypisujemy je
 ////            if (resources.Any())
 ////            {
-////                Console.WriteLine("Lista zasobów:");
+////                Console.WriteLine("Lista zasobÃ³w:");
 ////                foreach (var resource in resources)
 ////                {
 ////                    Console.WriteLine($"ID: {resource.Id}, Name: {resource.Name}, IsMain: {resource.IsMain}");
@@ -69,7 +69,7 @@
 ////            }
 ////            else
 ////            {
-////                Console.WriteLine("Brak zasobów w bazie.");
+////                Console.WriteLine("Brak zasobÃ³w w bazie.");
 ////            }
 ////        }
 ////    }
@@ -80,7 +80,7 @@
 //{
 //    static void Main(string[] args)
 //    {
-//        // Tworzenie IServiceProvider (np. za pomoc¹ Dependency Injection)
+//        // Tworzenie IServiceProvider (np. za pomocÂ¹ Dependency Injection)
 //        var serviceProvider = new ServiceCollection()
 //            .AddDbContext<GameDbContext>() // Rejestracja DbContext w DI
 //            .BuildServiceProvider();
@@ -121,6 +121,16 @@ namespace Wg_backend_api.Data
 
             // Add Scoped GameDbContextFactory  
             builder.Services.AddScoped<IGameDbContextFactory, GameDbContextFactory>();
+
+
+            // Session setup
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(10); // TODO how many minutes we need?
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
 
             // Authentication and Authorization setup  
             builder.Services.AddAuthentication("MyCookieAuth")
@@ -167,6 +177,7 @@ namespace Wg_backend_api.Data
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseCors("AllowAngular");
+            app.UseSession();
 
             app.MapControllers(); // Map controller routes  
 
@@ -228,9 +239,9 @@ namespace Wg_backend_api.Data
 //            //{
 //            //    options.AddPolicy("AllowAll", builder =>
 //            //    {
-//            //        builder.AllowAnyOrigin()  // Zezwala na dostêp z ka¿dego Ÿród³a
+//            //        builder.AllowAnyOrigin()  // Zezwala na dostÃªp z kaÂ¿dego Å¸rÃ³dÂ³a
 //            //               .AllowAnyMethod()  // Zezwala na wszystkie metody HTTP
-//            //               .AllowAnyHeader(); // Zezwala na wszystkie nag³ówki
+//            //               .AllowAnyHeader(); // Zezwala na wszystkie nagÂ³Ã³wki
 //            //    });
 //            //});
 
@@ -259,7 +270,7 @@ namespace Wg_backend_api.Data
 //            app.Run();
 
 
-//            // TO ponie¿ej by³o do tworzenia \/\/\/\/\/\/\/\/\/
+//            // TO ponieÂ¿ej byÂ³o do tworzenia \/\/\/\/\/\/\/\/\/
 
 //            //var options = new DbContextOptionsBuilder<GameDbContext>()
 //            //    .UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg")

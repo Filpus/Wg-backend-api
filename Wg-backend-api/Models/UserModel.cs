@@ -27,6 +27,10 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("isarchived")]
         public bool IsArchived { get; set; }
+
+        public ICollection<Game> OwnedGames { get; set; }
+
+        public ICollection<GameAccess> GameAccesses { get; set; }
     }
 
 
