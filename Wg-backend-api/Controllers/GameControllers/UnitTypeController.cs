@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 namespace Wg_backend_api.Controllers.GameControllers
 {
@@ -106,6 +107,89 @@ namespace Wg_backend_api.Controllers.GameControllers
             await _context.SaveChangesAsync();
 
             return Ok();
+        }
+        [HttpGet("GetLandUnitTypeInfo/{nationId}")]
+        public async Task<ActionResult<IEnumerable<UnitTypeInfoDTO>>> GetLandUnitTypeInfo(int nationId)
+        {
+            var accessibleUnitTypeIds = await _context.AccessToUnits
+                .Where(atu => atu.NationId == nationId)
+                .Select(atu => atu.UnitTypeId)
+                .ToListAsync();
+
+            var unitTypes = await _context.UnitTypes
+                .Where(ut => !ut.IsNaval && accessibleUnitTypeIds.Contains(ut.Id.Value))
+                .Include(ut => ut.ProductionCosts)
+                .Include(ut => ut.MaintenaceCosts)
+                .ToListAsync();
+
+            var unitTypeInfoList = unitTypes.Select(ut => new UnitTypeInfoDTO
+            {
+                UnitId = ut.Id.Value,
+                UnitTypeName = ut.Name,
+                Description = ut.Description,
+                Quantity = ut.VolunteersNeeded,
+                Melee = ut.Melee,
+                Range = ut.Range,
+                Defense = ut.Defense,
+                Speed = ut.Speed,
+                Morale = ut.Morale,
+                IsNaval = ut.IsNaval,
+                ConsumedResources = GetConsumedResources(ut),
+                ProductionCost = GetProductionCost(ut)
+            }).ToList();
+
+            return Ok(unitTypeInfoList);
+        }
+        [HttpGet("GetNavalUnitTypeInfo/{nationId}")]
+        public async Task<ActionResult<IEnumerable<UnitTypeInfoDTO>>> GetNavalUnitTypeInfo(int nationId)
+        {
+            var accessibleUnitTypeIds = await _context.AccessToUnits
+                .Where(atu => atu.NationId == nationId)
+                .Select(atu => atu.UnitTypeId)
+                .ToListAsync();
+
+            var unitTypes = await _context.UnitTypes
+                .Where(ut => ut.IsNaval && accessibleUnitTypeIds.Contains(ut.Id.Value))
+                .Include(ut => ut.ProductionCosts)
+                .Include(ut => ut.MaintenaceCosts)
+                .ToListAsync();
+
+            var unitTypeInfoList = unitTypes.Select(ut => new UnitTypeInfoDTO
+            {
+                UnitId = ut.Id.Value,
+                UnitTypeName = ut.Name,
+                Description = ut.Description,
+                Quantity = ut.VolunteersNeeded,
+                Melee = ut.Melee,
+                Range = ut.Range,
+                Defense = ut.Defense,
+                Speed = ut.Speed,
+                Morale = ut.Morale,
+                IsNaval = ut.IsNaval,
+                ConsumedResources = GetConsumedResources(ut),
+                ProductionCost = GetProductionCost(ut)
+            }).ToList();
+
+            return Ok(unitTypeInfoList);
+        }
+        private List<ResourceAmountDto> GetConsumedResources(UnitType unitType)
+        {
+            return unitType.MaintenaceCosts.Select(mc => new ResourceAmountDto
+            {
+                ResourceId = mc.ResourceId,
+                ResourceName = mc.Resource.Name,
+                Amount = mc.Amount
+            }).ToList();
+        }
+
+        private List<ResourceAmountDto> GetProductionCost(UnitType unitType)
+        {
+            return unitType.ProductionCosts.Select(pc => new ResourceAmountDto
+            {
+                ResourceId = pc.ResourceId,
+                ResourceName = pc.Resource.Name,
+                Amount = pc.Amount
+            }).ToList();
         }
     }
 }
