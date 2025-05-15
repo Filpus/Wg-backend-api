@@ -11,14 +11,14 @@
     public class ResourceBalanceDto
     {
         public int ResourceId { get; set; }
-        public int CurrentAmount { get; set; }
-        public int ArmyMaintenanceExpenses { get; set; }
-        public int PopulationExpenses { get; set; }
-        public int TradeIncome { get; set; }
-        public int TradeExpenses { get; set; }
-        public int PopulationProduction { get; set; }
-        public int EventBalance { get; set; }
-        public int TotalBalance { get; set; }
+        public float CurrentAmount { get; set; }
+        public float ArmyMaintenanceExpenses { get; set; }
+        public float PopulationExpenses { get; set; }
+        public float TradeIncome { get; set; }
+        public float TradeExpenses { get; set; }
+        public float PopulationProduction { get; set; }
+        public float EventBalance { get; set; }
+        public float TotalBalance { get; set; }
     }
 
     public class NationResourceBalanceDto

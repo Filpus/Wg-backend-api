@@ -205,7 +205,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .ToListAsync();
         }
 
-        private int GetCurrentResourceAmount(Nation nation, int resourceId)
+        private float GetCurrentResourceAmount(Nation nation, int resourceId)
         {
             return nation.Localisations
                 .SelectMany(l => l.LocalisationResources)
@@ -213,7 +213,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Sum(lr => lr.Amount);
         }
 
-        private int GetArmyMaintenanceExpenses(Nation nation, int resourceId)
+        private float GetArmyMaintenanceExpenses(Nation nation, int resourceId)
         {
             return nation.Armies
                 .SelectMany(a => a.Troops)
@@ -223,7 +223,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Sum();
         }
 
-        private int GetPopulationExpenses(Nation nation, int resourceId)
+        private float GetPopulationExpenses(Nation nation, int resourceId)
         {
             return nation.Localisations
                 .SelectMany(l => l.Populations)
@@ -233,7 +233,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Sum();
         }
 
-        private int GetPopulationProduction(Nation nation, int resourceId)
+        private float GetPopulationProduction(Nation nation, int resourceId)
         {
             return nation.Localisations
                 .SelectMany(l => l.Populations)

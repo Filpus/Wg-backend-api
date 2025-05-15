@@ -23,7 +23,7 @@ namespace Wg_backend_api.DTO
         public int? Id { get; set; }
         public int LocationId { get; set; }
         public int ResourceId { get; set; }
-        public int Amount { get; set; }
+        public float Amount { get; set; }
     }
 
     public class LocalisationResourceInfoDTO
