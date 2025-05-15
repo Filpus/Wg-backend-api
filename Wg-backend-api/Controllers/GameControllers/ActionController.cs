@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Controllers.GameControllers
@@ -21,7 +22,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<Models.Action>>> GetActions(int? id)
+        public async Task<ActionResult<IEnumerable<ActionDTO>>> GetActions(int? id)
         {
             if (id.HasValue)
             {
@@ -30,24 +31,32 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<Models.Action> { action });
+                return Ok(new List<ActionDTO> { MapToDTO(action) });
             }
             else
             {
-                return await _context.Actions.ToListAsync();
+                var actions = await _context.Actions.ToListAsync();
+                return Ok(actions.Select(MapToDTO));
             }
         }
 
         [HttpPut]
-        public async Task<IActionResult> PutActions([FromBody] List<Models.Action> actions)
+        public async Task<IActionResult> PutActions([FromBody] List<ActionDTO> actionDTOs)
         {
-            if (actions == null || actions.Count == 0)
+            if (actionDTOs == null || actionDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do edycji.");
             }
 
-            foreach (var action in actions)
+            foreach (var actionDTO in actionDTOs)
             {
+                var action = await _context.Actions.FindAsync(actionDTO.Id);
+                if (action == null)
+                {
+                    return NotFound($"Nie znaleziono akcji o ID {actionDTO.Id}.");
+                }
+
+                UpdateModelFromDTO(action, actionDTO);
                 _context.Entry(action).State = EntityState.Modified;
             }
 
@@ -64,22 +73,18 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Models.Action>> PostActions([FromBody] List<Models.Action> actions)
+        public async Task<ActionResult<List<ActionDTO>>> PostActions([FromBody] List<ActionDTO> actionDTOs)
         {
-            if (actions == null || actions.Count == 0)
+            if (actionDTOs == null || actionDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            foreach (Models.Action action in actions)
-            {
-                action.Id = null;
-            }
-
+            var actions = actionDTOs.Select(dto => MapFromDTO(dto)).ToList();
             _context.Actions.AddRange(actions);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetActions", new { id = actions[0].Id }, actions);
+            return CreatedAtAction("GetActions", new { id = actions[0].Id }, actions.Select(MapToDTO));
         }
 
         [HttpDelete]
@@ -101,6 +106,78 @@ namespace Wg_backend_api.Controllers.GameControllers
             await _context.SaveChangesAsync();
 
             return Ok();
+        }
+
+        [HttpGet("settled")]
+        public async Task<ActionResult> GetSettledAndUnsettledActions()
+        {
+            var settledActions = await _context.Actions
+                .Where(a => a.IsSettled)
+                .ToListAsync();
+
+            var unsettledActions = await _context.Actions
+                .Where(a => !a.IsSettled)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                SettledActions = settledActions.Select(MapToDTO),
+                UnsettledActions = unsettledActions.Select(MapToDTO)
+            });
+        }
+
+        [HttpGet("settled/{nationId}")]
+        public async Task<ActionResult> GetSettledActionsForNation(int nationId)
+        {
+            var settledActions = await _context.Actions
+                .Where(a => a.IsSettled && a.NationId == nationId)
+                .ToListAsync();
+
+            return Ok(settledActions.Select(MapToDTO));
+        }
+
+        [HttpGet("unsettled/{nationId}")]
+        public async Task<ActionResult> GetUnsettledActionsForNation(int nationId)
+        {
+            var unsettledActions = await _context.Actions
+                .Where(a => !a.IsSettled && a.NationId == nationId)
+                .ToListAsync();
+
+            return Ok(unsettledActions.Select(MapToDTO));
+        }
+
+        private ActionDTO MapToDTO(Models.Action action)
+        {
+            return new ActionDTO
+            {
+                Id = action.Id,
+                NationId = action.NationId,
+                Name = action.Name,
+                Description = action.Description,
+                Result = action.Result,
+                IsSettled = action.IsSettled
+            };
+        }
+
+        private Models.Action MapFromDTO(ActionDTO dto)
+        {
+            return new Models.Action
+            {
+                NationId = dto.NationId,
+                Name = dto.Name,
+                Description = dto.Description,
+                Result = dto.Result,
+                IsSettled = dto.IsSettled
+            };
+        }
+
+        private void UpdateModelFromDTO(Models.Action action, ActionDTO dto)
+        {
+            action.NationId = dto.NationId;
+            action.Name = dto.Name;
+            action.Description = dto.Description;
+            action.Result = dto.Result;
+            action.IsSettled = dto.IsSettled;
         }
     }
 }
