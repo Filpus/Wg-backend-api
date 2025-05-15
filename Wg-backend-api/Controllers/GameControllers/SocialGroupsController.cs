@@ -25,7 +25,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         // GET: api/SocialGroups
         // GET: api/SocialGroups/5
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<SocialGroup>>> GetSocialGroups(int? id)
+        public async Task<ActionResult<IEnumerable<SocialGroupDTO>>> GetSocialGroups(int? id)
         {
             if (id.HasValue)
             {
@@ -34,25 +34,48 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<SocialGroup> { socialGroup });
+                var socialGroupDTO = new SocialGroupDTO
+                {
+                    Id = socialGroup.Id,
+                    Name = socialGroup.Name,
+                    BaseHappiness = socialGroup.BaseHappiness,
+                    Volunteers = socialGroup.Volunteers
+                };
+                return Ok(new List<SocialGroupDTO> { socialGroupDTO });
             }
             else
             {
-                return await _context.SocialGroups.ToListAsync();
+                var socialGroups = await _context.SocialGroups.ToListAsync();
+                var socialGroupDTOs = socialGroups.Select(sg => new SocialGroupDTO
+                {
+                    Id = sg.Id,
+                    Name = sg.Name,
+                    BaseHappiness = sg.BaseHappiness,
+                    Volunteers = sg.Volunteers
+                }).ToList();
+                return Ok(socialGroupDTOs);
             }
         }
 
         // PUT: api/SocialGroups
         [HttpPut]
-        public async Task<IActionResult> PutSocialGroups([FromBody] List<SocialGroup> socialGroups)
+        public async Task<IActionResult> PutSocialGroups([FromBody] List<SocialGroupDTO> socialGroupDTOs)
         {
-            if (socialGroups == null || socialGroups.Count == 0)
+            if (socialGroupDTOs == null || socialGroupDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do edycji.");
             }
 
-            foreach (var socialGroup in socialGroups)
+            foreach (var socialGroupDTO in socialGroupDTOs)
             {
+                var socialGroup = await _context.SocialGroups.FindAsync(socialGroupDTO.Id);
+                if (socialGroup == null)
+                {
+                    return NotFound($"Nie znaleziono grupy społecznej o ID {socialGroupDTO.Id}.");
+                }
+                socialGroup.Name = socialGroupDTO.Name;
+                socialGroup.BaseHappiness = socialGroupDTO.BaseHappiness;
+                socialGroup.Volunteers = socialGroupDTO.Volunteers;
                 _context.Entry(socialGroup).State = EntityState.Modified;
             }
 
@@ -70,21 +93,32 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         // POST: api/SocialGroups
         [HttpPost]
-        public async Task<ActionResult<SocialGroup>> PostSocialGroups([FromBody] List<SocialGroup> socialGroups)
+        public async Task<ActionResult<IEnumerable<SocialGroupDTO>>> PostSocialGroups([FromBody] List<SocialGroupDTO> socialGroupDTOs)
         {
-            if (socialGroups == null || socialGroups.Count == 0)
+            if (socialGroupDTOs == null || socialGroupDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do zapisania.");
             }
-            foreach (SocialGroup group in socialGroups)
+
+            var socialGroups = socialGroupDTOs.Select(dto => new SocialGroup
             {
-                group.Id = null;
-            }
+                Name = dto.Name,
+                BaseHappiness = dto.BaseHappiness,
+                Volunteers = dto.Volunteers
+            }).ToList();
 
             _context.SocialGroups.AddRange(socialGroups);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSocialGroups", new { id = socialGroups[0].Id }, socialGroups);
+            var createdDTOs = socialGroups.Select(sg => new SocialGroupDTO
+            {
+                Id = sg.Id,
+                Name = sg.Name,
+                BaseHappiness = sg.BaseHappiness,
+                Volunteers = sg.Volunteers
+            }).ToList();
+
+            return CreatedAtAction("GetSocialGroups", new { id = createdDTOs[0].Id }, createdDTOs);
         }
 
         // DELETE: api/SocialGroups
