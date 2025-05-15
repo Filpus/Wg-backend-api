@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Controllers.GameControllers
@@ -75,7 +76,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 return BadRequest("Brak danych do zapisania.");
             }
-            foreach( SocialGroup group in socialGroups)
+            foreach (SocialGroup group in socialGroups)
             {
                 group.Id = null;
             }
@@ -107,5 +108,57 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
+        [HttpGet("info")]
+        public async Task<ActionResult<IEnumerable<SocialGroupInfoDTO>>> GetSocialGroupInfo()
+        {
+            var socialGroups = await _context.SocialGroups
+                .Include(sg => sg.UsedResources)
+                .Include(sg => sg.ProductionShares)
+                .ToListAsync();
+
+            var socialGroupInfoList = socialGroups.Select(sg => new SocialGroupInfoDTO
+            {
+                Name = sg.Name,
+                BaseHappiness = CalculateBaseHappiness(sg),
+                Volunteers = CalculateVolunteers(sg),
+                ConsumedResources = GetConsumedResources(sg),
+                ProducedResources = GetProducedResources(sg)
+            }).ToList();
+
+            return Ok(socialGroupInfoList);
+        }
+
+        private float CalculateBaseHappiness(SocialGroup socialGroup)
+        {
+            // Placeholder logic for calculating base happiness
+            return socialGroup.BaseHappiness;
+        }
+
+        private int CalculateVolunteers(SocialGroup socialGroup)
+        {
+            // Placeholder logic for calculating volunteers
+            return socialGroup.Volunteers;
+        }
+
+        private List<ResourceAmountDto> GetConsumedResources(SocialGroup socialGroup)
+        {
+            return socialGroup.UsedResources.Select(ur => new ResourceAmountDto
+            {
+                ResourceName = ur.Resource.Name,
+                ResourceId = ur.ResourceId,
+                Amount = ur.Amount // Use the actual amount from UsedResources
+            }).ToList();
+        }
+
+        private List<ResourceAmountDto> GetProducedResources(SocialGroup socialGroup)
+        {
+            return socialGroup.ProductionShares.Select(ps => new ResourceAmountDto
+            {
+                ResourceName = ps.Resource.Name,
+                ResourceId = ps.ResourceId,
+                Amount = ps.Coefficient // Calculate based on Coeficence
+            }).ToList();
+        }
+
     }
 }

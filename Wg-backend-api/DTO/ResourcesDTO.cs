@@ -5,7 +5,7 @@
         public int Id { get; set; }
         public string Name { get; set; }
         public bool IsMain { get; set; }
-        public string Icon { get; set; }
+        public string? Icon { get; set; }
     }
 
     public class ResourceBalanceDto
@@ -25,6 +25,14 @@
     {
         public List<ResourceDto> Resources { get; set; } = new();
         public List<ResourceBalanceDto> ResourceBalances { get; set; } = new();
+    }
+
+    public class ResourceAmountDto
+    {
+
+        public int ResourceId { get; set; }
+        public string? ResourceName { get; set; }
+        public float Amount { get; set; }
     }
 
 }

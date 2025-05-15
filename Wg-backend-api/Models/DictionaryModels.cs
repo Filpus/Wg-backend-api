@@ -113,7 +113,7 @@ namespace Wg_backend_api.Models
 
         [Required]
         [Column("amount")]
-        public int Amount { get; set; }
+        public float Amount { get; set; }
     }
 
     [Table("productionShares")]
