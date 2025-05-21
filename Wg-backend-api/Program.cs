@@ -103,6 +103,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Configuration;
 using Wg_backend_api.Data.Seeders;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Wg_backend_api.Auth;
 
 namespace Wg_backend_api.Data
 {
@@ -146,7 +149,13 @@ namespace Wg_backend_api.Data
                     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 });
 
-            builder.Services.AddAuthorization();
+            builder.Services.AddAuthorization(options =>
+            {
+                options.DefaultPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .RequireClaim(ClaimTypes.NameIdentifier)
+                    .Build();
+            });
 
             // CORS setup to allow access from Angular frontend  
             builder.Services.AddCors(options =>
@@ -176,21 +185,29 @@ namespace Wg_backend_api.Data
                 app.UseSwaggerUI();
             }
 
+            app.UseSession();
+
             app.UseHttpsRedirection();
+
+
             app.UseAuthentication();
+
+            app.UseMiddleware<ValidateUserIdMiddleware>(); 
+            app.UseMiddleware<GameAccessMiddleware>();  
+
             app.UseAuthorization();
             app.UseCors("AllowAngular");
-            app.UseSession();
 
             app.MapControllers(); // Map controller routes  
 
-            using (var scope = app.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-                var dbContext = services.GetRequiredService<GlobalDbContext>();
-                var seeder = new GlobalSeeder(dbContext);
-                seeder.Seed();
-            }
+            // uncomment this if you want to seed the global database on startup
+            //using (var scope = app.Services.CreateScope())
+            //{
+            //    var services = scope.ServiceProvider;
+            //    var dbContext = services.GetRequiredService<GlobalDbContext>();
+            //    var seeder = new GlobalSeeder(dbContext);
+            //    seeder.Seed();
+            //}
 
 
             app.Run();

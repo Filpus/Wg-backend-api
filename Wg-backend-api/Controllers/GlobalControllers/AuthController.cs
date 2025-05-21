@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Wg_backend_api.Data;
 using Wg_backend_api.Auth;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace Wg_backend_api.Controllers.GlobalControllers
@@ -19,6 +20,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             _context = context;
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] CustomLoginRequest request)
         {
@@ -71,6 +73,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             });
         }
 
+        [AllowAnonymous]
         [HttpGet("status")]
         public IActionResult Status()
         {
@@ -87,8 +90,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 isAuthenticated = false
             });
-
         }
-
     }
 }

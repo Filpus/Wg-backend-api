@@ -9,7 +9,6 @@ using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
-    [Authorize]
     [ApiController]
     //[Route("api/games/{gameId}/[controller]")]
     [Route("api/games/[controller]")]

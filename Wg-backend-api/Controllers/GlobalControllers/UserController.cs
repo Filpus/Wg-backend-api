@@ -21,7 +21,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         // get user data
-        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int? id)
         {
@@ -44,7 +43,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         // Edit user data 
-        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(int? id, User user)
         {
@@ -95,7 +93,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         // DELETE: api/Users/5
-        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int? id)
         {

@@ -11,7 +11,6 @@ using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class GamesController : ControllerBase
@@ -25,7 +24,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             _gameDbContextFactory = gameDbFactory;
         }
 
-        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetGames()
         {
@@ -61,7 +59,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             return Ok(gamesDTOs);
         }
 
-        [Authorize]
+
         [HttpPost("select")]
         public async Task<IActionResult> SelectGame([FromBody] int gameId)
         {
@@ -94,13 +92,41 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
+            // TODO remove in production
+            if (false) { 
+                var gameDbContext = _gameDbContextFactory.Create($"game_{game.Id.ToString()}");
+
+                var userInGame = await gameDbContext.Players.Where(u => u.UserId == userId).FirstOrDefaultAsync();
+                if (userInGame == null)
+                {
+                    return Unauthorized(new
+                    {
+                        error = "Unauthorized",
+                        message = "User is not game member"
+                    });
+                }
+                var accesToNation = await gameDbContext.Assignments
+                    .Where(a => a.UserId == userId && a.IsActive == true)
+                    .FirstOrDefaultAsync();
+
+                if (accesToNation == null)
+                {
+                    return Unauthorized(new
+                    {
+                        error = "Unauthorized",
+                        message = "User is not game member"
+                    });
+                }
+                HttpContext.Session.SetString("Nation", $"{accesToNation.NationId}");
+            
+            }
             HttpContext.Session.SetString("Schema", $"game_{game.Id.ToString()}");
             //var selectedGame = HttpContext.Session.GetString("SelectedGame");
             
             return Ok(new { selectedGameId = game.Id });
         }
 
-        [Authorize]
+
         [HttpGet("get-session-schema")]
         public IActionResult GetSessionSchema()
         {
@@ -116,7 +142,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
         }
 
-        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateGame([FromBody] CreateGameDTO creteGame)
         {
