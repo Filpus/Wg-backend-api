@@ -8,4 +8,10 @@ namespace Wg_backend_api.DTO
         public string Name { get; set; }
         public string MapLocation { get; set; }
     }
+    public class MapCreateDTO
+    {
+        public string Name { get; set; }
+        public IFormFile ImageFile { get; set; }
+    }
+
 }

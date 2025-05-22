@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
+using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GameControllers
 {
@@ -14,12 +15,19 @@ namespace Wg_backend_api.Controllers.GameControllers
     public class SocialGroupsController : Controller
     {
         private readonly IGameDbContextFactory _gameDbContextFactory;
+        private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
-        public SocialGroupsController(IGameDbContextFactory gameDbFactory)
+
+        public SocialGroupsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
             _gameDbContextFactory = gameDbFactory;
+            _sessionDataService = sessionDataService;
 
-            string schema = HttpContext.Session.GetString("Schema");
+            string schema = _sessionDataService.GetSchema();
+            if (string.IsNullOrEmpty(schema))
+            {
+                throw new InvalidOperationException("Brak schematu w sesji.");
+            }
             _context = _gameDbContextFactory.Create(schema);
         }
         // GET: api/SocialGroups

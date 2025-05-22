@@ -8,6 +8,7 @@ using System.Security.Claims;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
+using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
@@ -17,11 +18,14 @@ namespace Wg_backend_api.Controllers.GlobalControllers
     {
         private readonly GlobalDbContext _globalDbContext;
         private readonly IGameDbContextFactory _gameDbContextFactory;
+        private readonly ISessionDataService _sessionDataService;
 
-        public GamesController(GlobalDbContext globalDb, IGameDbContextFactory gameDbFactory)
+        public GamesController(GlobalDbContext globalDb, IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
             _globalDbContext = globalDb;
             _gameDbContextFactory = gameDbFactory;
+            _sessionDataService = sessionDataService;
+
         }
 
         [HttpGet]
@@ -60,6 +64,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
 
+
         [HttpPost("select")]
         public async Task<IActionResult> SelectGame([FromBody] int gameId)
         {
@@ -92,6 +97,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
+
             // TODO remove in production
             if (false) { 
                 var gameDbContext = _gameDbContextFactory.Create($"game_{game.Id.ToString()}");
@@ -120,7 +126,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 HttpContext.Session.SetString("Nation", $"{accesToNation.NationId}");
             
             }
-            HttpContext.Session.SetString("Schema", $"game_{game.Id.ToString()}");
+            _sessionDataService.SetSchema($"game_{game.Id.ToString()}");
+
             //var selectedGame = HttpContext.Session.GetString("SelectedGame");
             
             return Ok(new { selectedGameId = game.Id });

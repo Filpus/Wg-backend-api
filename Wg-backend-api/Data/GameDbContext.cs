@@ -122,13 +122,15 @@ namespace Wg_backend_api.Data
             modelBuilder.Entity<Troop>()
                 .HasKey(t => t.Id);
             modelBuilder.Entity<Troop>()
-                .HasOne<UnitType>()
+                .HasOne(t => t.UnitType)
                 .WithMany()
                 .HasForeignKey(t => t.UnitTypeId);
             modelBuilder.Entity<Troop>()
-                .HasOne<Army>()
-                .WithMany()
-                .HasForeignKey(t => t.Army);
+                .HasOne(t => t.Army)
+                .WithMany(a => a.Troops)
+                .HasForeignKey(t => t.ArmyId);
+
+
 
             modelBuilder.Entity<Army>()
                 .HasKey(a => a.Id);
@@ -276,6 +278,18 @@ namespace Wg_backend_api.Data
                 .HasOne<TradeAgreement>()
                 .WithMany()
                 .HasForeignKey(wr => wr.TradeAgreementId);
+            modelBuilder.Entity<Nation>()
+              .HasMany<TradeAgreement>()
+              .WithOne(ta => ta.OfferingNation)
+              .HasForeignKey(ta => ta.OferingNationId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            // Relacja: Nation -> TradeAgreements jako otrzymujący
+            modelBuilder.Entity<Nation>()
+                .HasMany<TradeAgreement>()
+                .WithOne(ta => ta.ReceivingNation)
+                .HasForeignKey(ta => ta.ReceivingNationId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             //modelBuilder.HasDefaultSchema(_schema);
         }

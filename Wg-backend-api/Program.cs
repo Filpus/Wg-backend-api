@@ -102,6 +102,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Configuration;
+using Wg_backend_api.Services;
 using Wg_backend_api.Data.Seeders;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
@@ -124,6 +125,7 @@ namespace Wg_backend_api.Data
                 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
                 options.UseNpgsql(connectionString);
             });
+
 
             // Add Scoped GameDbContextFactory  
             builder.Services.AddScoped<IGameDbContextFactory, GameDbContextFactory>();
@@ -175,6 +177,12 @@ namespace Wg_backend_api.Data
             // Add Swagger configuration  
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<ISessionDataService, SessionDataService>();
+
+
+            builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
+
 
             var app = builder.Build();
 
@@ -184,11 +192,39 @@ namespace Wg_backend_api.Data
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            var corsService = app.Services.GetRequiredService<ICorsService>();
+            var corsPolicyProvider = app.Services.GetRequiredService<ICorsPolicyProvider>();
+
+            // Konfiguracja plik�w statycznych z CORS
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                Path.Combine(app.Environment.ContentRootPath, "Resources", "Images")),
+                RequestPath = "/images",
+                OnPrepareResponse = ctx =>
+                {
+                    var policy = corsPolicyProvider.GetPolicyAsync(ctx.Context, "AllowAngular")
+                        .ConfigureAwait(false)
+                    .GetAwaiter().GetResult();
+
+                    var corsResult = corsService.EvaluatePolicy(ctx.Context, policy);
+                    corsService.ApplyResult(corsResult, ctx.Context.Response);
+
+                }
+
+            });
+
 
             app.UseSession();
 
             app.UseHttpsRedirection();
 
+            app.UseStaticFiles(); // Teraz z obs�ug� CORS
+
+            app.UseRouting(); // Jawnie dodane
+            app.UseSession(); // Tutaj dodajemy middleware sesji
+
+            app.UseCors("AllowAngular"); // Po routingu, przed autentykacj�
 
             app.UseAuthentication();
 
@@ -196,8 +232,6 @@ namespace Wg_backend_api.Data
             app.UseMiddleware<GameAccessMiddleware>();  
 
             app.UseAuthorization();
-            app.UseCors("AllowAngular");
-
             app.MapControllers(); // Map controller routes  
 
             // uncomment this if you want to seed the global database on startup
