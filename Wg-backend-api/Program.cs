@@ -5,6 +5,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Configuration;
 using Wg_backend_api.Data;
+using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.Extensions.FileProviders;
+using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Data
 {
@@ -23,6 +26,7 @@ namespace Wg_backend_api.Data
                 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
                 options.UseNpgsql(connectionString);
             });
+
 
             // Add Scoped GameDbContextFactory  
             builder.Services.AddScoped<IGameDbContextFactory, GameDbContextFactory>();
@@ -68,6 +72,12 @@ namespace Wg_backend_api.Data
             // Add Swagger configuration  
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<ISessionDataService, SessionDataService>();
+
+
+            builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
+
 
             var app = builder.Build();
 
@@ -77,12 +87,41 @@ namespace Wg_backend_api.Data
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            var corsService = app.Services.GetRequiredService<ICorsService>();
+            var corsPolicyProvider = app.Services.GetRequiredService<ICorsPolicyProvider>();
+
+            // Konfiguracja plików statycznych z CORS
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                Path.Combine(app.Environment.ContentRootPath, "Resources", "Images")),
+                RequestPath = "/images",
+                OnPrepareResponse = ctx =>
+                {
+                    var policy = corsPolicyProvider.GetPolicyAsync(ctx.Context, "AllowAngular")
+                        .ConfigureAwait(false)
+                    .GetAwaiter().GetResult();
+
+                    var corsResult = corsService.EvaluatePolicy(ctx.Context, policy);
+                    corsService.ApplyResult(corsResult, ctx.Context.Response);
+
+                }
+
+            });
+
 
             app.UseHttpsRedirection();
+            app.UseStaticFiles(); // Teraz z obs³ug¹ CORS
+
+            app.UseRouting(); // Jawnie dodane
+            app.UseSession(); // Tutaj dodajemy middleware sesji
+
+            app.UseCors("AllowAngular"); // Po routingu, przed autentykacj¹
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseCors("AllowAngular");
-            app.UseSession();
+
+
+
 
             app.MapControllers(); // Map controller routes  
 

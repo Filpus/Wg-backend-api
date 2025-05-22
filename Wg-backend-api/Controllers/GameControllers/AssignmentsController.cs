@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
 using Wg_backend_api.Models;
+using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GameControllers
 {
@@ -15,14 +16,20 @@ namespace Wg_backend_api.Controllers.GameControllers
     public class AssignmentsController : ControllerBase
     {
         private readonly IGameDbContextFactory _gameDbContextFactory;
+        private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
 
-        public AssignmentsController(IGameDbContextFactory gameDbFactory)
+        public AssignmentsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
             _gameDbContextFactory = gameDbFactory;
-            string schema = HttpContext.Session.GetString("Schema");
+            _sessionDataService = sessionDataService;
 
-            _context = _gameDbContextFactory.Create("schema");
+            string schema = _sessionDataService.GetSchema();
+            if (string.IsNullOrEmpty(schema))
+            {
+                throw new InvalidOperationException("Brak schematu w sesji.");
+            }
+            _context = _gameDbContextFactory.Create(schema);
         }
         // GET: api/Assignments
         [HttpGet]

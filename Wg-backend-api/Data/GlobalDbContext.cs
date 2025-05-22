@@ -46,7 +46,7 @@ namespace Wg_backend_api.Data
                 .IsUnique();
 
             modelBuilder.Entity<GameAccess>()
-                .HasKey(ga => new { ga.UserId, ga.GameId });
+                .HasKey(ga => ga.Id);
 
             // Konfiguracja relacji między User a GameAccess
             modelBuilder.Entity<GameAccess>()

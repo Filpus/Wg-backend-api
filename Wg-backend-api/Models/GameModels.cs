@@ -27,16 +27,21 @@ namespace Wg_backend_api.Models
     [Table("gameaccess")]
     public class GameAccess
     {
+
+
+        [Column("id")]
+        [Key]
+        public int? Id { get; set; }
         [Column("fk_Users")]
         [Required]
-        [Key]
+
         public int UserId { get; set; }
         [ForeignKey("UserId")]
         public User User { get; set; }
 
         [Column("fk_Games")]
         [Required]
-        [Key]
+
         public int GameId { get; set; }
         [ForeignKey("GameId")]
         public Game Game { get; set; }
