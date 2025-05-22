@@ -15,7 +15,7 @@ namespace Wg_backend_api.Data
 
 
         // Podaj adres do initate.sql
-        public static void GenerateNewGame(string connectionString, string sqlScriptPath, string schema)
+        public static bool GenerateNewGame(string connectionString, string sqlScriptPath, string schema)
         {
             string script = File.ReadAllText(sqlScriptPath);
 
@@ -34,7 +34,9 @@ namespace Wg_backend_api.Data
             catch (Exception ex)
             {
                 Console.WriteLine($"Błąd podczas stosowania migracji dla schematu {schema}: {ex.Message}");
+                return false;
             }
+            return true;
         }
 
 //      Podaj adres pliku globalInitalize

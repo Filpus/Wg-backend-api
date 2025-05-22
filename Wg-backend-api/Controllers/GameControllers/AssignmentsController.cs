@@ -35,12 +35,6 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Assignment>> GetAssignment(int? id)
         {
-            string schema = HttpContext.Session.GetString("Shema");
-            if (string.IsNullOrEmpty(schema))
-            {
-                return BadRequest("Schema is null or empty");
-            }
-            var _context = _gameDbContextFactory.Create(schema);
             var assignment = await _context.Assignments.FindAsync(id);
 
 

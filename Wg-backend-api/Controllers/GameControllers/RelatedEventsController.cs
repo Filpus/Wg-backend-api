@@ -16,10 +16,6 @@ namespace Wg_backend_api.Controllers.GameControllers
             _gameDbContextFactory = gameDbFactory;
 
             string schema = HttpContext.Session.GetString("Schema");
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new ArgumentNullException(nameof(schema), "Schema cannot be null or empty.");
-            }
             _context = _gameDbContextFactory.Create(schema);
         }
 

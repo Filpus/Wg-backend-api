@@ -9,7 +9,6 @@ using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
-    [Authorize]
     [ApiController]
     //[Route("api/games/{gameId}/[controller]")]
     [Route("api/games/[controller]")]
@@ -31,9 +30,15 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             var selectedGameStr = HttpContext.Session.GetString("Schema");
 
-            if (!int.TryParse(selectedGameStr, out int gameId))
+            if (string.IsNullOrEmpty(selectedGameStr) || !selectedGameStr.StartsWith("game_"))
             {
                 return BadRequest("No game selected in session.");
+            }
+
+            var idPart = selectedGameStr.Replace("game_", "");
+            if (!int.TryParse(idPart, out int gameId))
+            {
+                return BadRequest("Invalid game ID in session.");
             }
 
             //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -43,9 +48,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             if (!int.TryParse(userIdStr, out int userId))
             {
-                return Unauthorized();
+                return Unauthorized("User not authenticated or invalid user ID");
             }
-
 
             var access = await _globalDbContext.GameAccesses
                 .FirstOrDefaultAsync(a => a.GameId == gameId && a.UserId == userId);
@@ -56,13 +60,12 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             var game = await _globalDbContext.Games.FindAsync(gameId);
 
-
             if (game == null)
             {
                 return NotFound("Game not found");
             }
-
-            var schema = game.Name;
+            
+            var schema = $"game_{game.Name}";
             //HttpContext.Session.SetString("Schema", schema); //TO DO Tymczasowe ograniczenie!!!!!!!!!!!
             using var gameDb = _gameDbContextFactory.Create(schema);
 
