@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 namespace Wg_backend_api.Controllers.GameControllers
 {
@@ -107,5 +108,54 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
+        [HttpGet("GetUnitOrdersByNationId/{nationId}")]
+        public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetUnitOrdersByNationId(int nationId)
+        {
+            var unitOrders = await _context.UnitOrders
+                .Where(uo => uo.NationId == nationId)
+                .Select(uo => new UnitOrderInfoDTO
+                {
+                    Id = uo.Id,
+                    UnitTypeName = uo.UnitType.Name,
+                    Quantity = uo.Quantity
+                })
+                .ToListAsync();
+
+            return Ok(unitOrders);
+        }
+
+        [HttpPost("AddRecruitOrder/{nationId}")]
+        public async Task<IActionResult> AddRecruitOrder(int nationId, [FromBody] RecruitOrderDTO recruitOrder)
+        {
+            if (recruitOrder == null || recruitOrder.Count <= 0)
+            {
+                return BadRequest("Nieprawidłowe dane zlecenia rekrutacji.");
+            }
+
+            var nationExists = await _context.Nations.AnyAsync(n => n.Id == nationId);
+            if (!nationExists)
+            {
+                return NotFound("Nie znaleziono państwa o podanym ID.");
+            }
+
+            var unitTypeExists = await _context.UnitTypes.AnyAsync(ut => ut.Id == recruitOrder.TroopTypeId);
+            if (!unitTypeExists)
+            {
+                return NotFound("Nie znaleziono typu jednostki o podanym ID.");
+            }
+
+            var newUnitOrder = new UnitOrder
+            {
+                NationId = nationId,
+                UnitTypeId = recruitOrder.TroopTypeId,
+                Quantity = recruitOrder.Count
+            };
+
+            _context.UnitOrders.Add(newUnitOrder);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetUnitOrders", new { id = newUnitOrder.Id }, newUnitOrder);
+        }
+
     }
 }
