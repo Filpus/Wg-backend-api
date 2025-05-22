@@ -40,7 +40,7 @@ namespace Wg_backend_api.Models
         [Column("isNaval")]
         public bool IsNaval { get; set; }
 
-        public ICollection<ProductionCost> ProductionCost { get; set; }
+        public ICollection<ProductionCost> ProductionCosts { get; set; }
         public ICollection<MaintenaceCosts> MaintenaceCosts { get; set; }
     
     }
@@ -54,10 +54,10 @@ namespace Wg_backend_api.Models
         [Key]
         public int? Id { get; set; }
         [Required]
-        [Column("fk_Users")]
-        public int UserId { get; set; }
-        [ForeignKey("UserId")]
-        public Player User { get; set; }
+        [Column("fk_Nation")]
+        public int NationId { get; set; }
+        [ForeignKey("NationId")]
+        public Nation Nation { get; set; }
         [Required]
         [Column("fk_UnitTypes")]
         public int UnitTypeId { get; set; }
@@ -173,6 +173,10 @@ namespace Wg_backend_api.Models
         public int LocationId { get; set; }
         [ForeignKey("LocationId")]
         public Localisation Location { get; set; }
+       
+        [Required]
+        [Column("is_naval")]
+        public bool IsNaval {  get; set; }
 
         public ICollection<Troop> Troops { get; set; }
     }

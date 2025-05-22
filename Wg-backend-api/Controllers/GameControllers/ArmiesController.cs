@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
@@ -110,5 +111,64 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
+
+
+        [HttpGet("GetNavalArmiesByNationId/{nationId}")]
+        public async Task<ActionResult<IEnumerable<ArmiesInfoDTO>>> GetNavalArmiesByNationId(int nationId)
+        {
+            var navalArmies = await _context.Armies
+                .Where(a => a.NationId == nationId && a.IsNaval)
+                .Select(a => new ArmiesInfoDTO
+                {
+                    ArmyId = a.Id.Value,
+                    ArmyName = a.Name,
+                    Location = a.Location.Name,
+                    Nation = a.Nation.Id.ToString(),
+                    IsNaval = a.IsNaval,
+                    Units = AggregateUnits(a.Id.Value),
+                    TotalStrength = a.Troops.Sum(t => t.Quantity)
+                })
+                .ToListAsync();
+
+            return Ok(navalArmies);
+        }
+
+        [HttpGet("GetLandArmiesByNationId/{nationId}")]
+        public async Task<ActionResult<IEnumerable<ArmiesInfoDTO>>> GetLandArmiesByNationId(int nationId)
+        {
+            var armies = await _context.Armies
+                .Where(a => a.NationId == nationId && !a.IsNaval)
+                .Select(a => new ArmiesInfoDTO
+                {
+                    ArmyId = a.Id.Value,
+                    ArmyName = a.Name,
+                    Location = a.Location.Name,
+                    Nation = a.Nation.Id.ToString(),
+                    IsNaval = a.IsNaval,
+                    Units = AggregateUnits(a.Id.Value),
+                    TotalStrength = a.Troops.Sum(t => t.Quantity)
+                })
+                .ToListAsync();
+
+            return Ok(armies);
+        }
+
+        private List<TroopsAgregatedDTO> AggregateUnits(int armyId)
+        {
+            var troops = _context.Troops.Where(t => t.ArmyId == armyId).ToList();
+
+            return troops
+                .GroupBy(t => t.UnitTypeId)
+                .Select(g => new TroopsAgregatedDTO
+                {
+                    UnitTypeName = g.First().UnitType.Name,
+                    Quantity = g.Sum(t => t.Quantity),
+                    TroopCount = g.Count(),
+                }).ToList();
+        }
+        
+
+       
+
     }
 }

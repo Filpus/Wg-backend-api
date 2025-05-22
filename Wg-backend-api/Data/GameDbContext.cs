@@ -84,7 +84,7 @@ namespace Wg_backend_api.Data
             modelBuilder.Entity<AccessToUnit>()
                 .HasOne<Player>()
                 .WithMany()
-                .HasForeignKey(atu => atu.UserId);
+                .HasForeignKey(atu => atu.NationId);
 
             modelBuilder.Entity<UnitOrder>()
                 .HasKey(uo => uo.Id);

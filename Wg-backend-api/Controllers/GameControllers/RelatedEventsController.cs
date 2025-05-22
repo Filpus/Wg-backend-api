@@ -24,9 +24,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
         }
-
         // GET: api/RelatedEvents
         // GET: api/RelatedEvents/5
         [HttpGet("{id?}")]
