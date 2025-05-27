@@ -107,6 +107,8 @@ using Wg_backend_api.Data.Seeders;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Wg_backend_api.Auth;
+using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.Extensions.FileProviders;
 
 namespace Wg_backend_api.Data
 {
