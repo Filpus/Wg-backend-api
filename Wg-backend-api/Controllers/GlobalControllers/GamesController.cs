@@ -25,7 +25,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             _globalDbContext = globalDb;
             _gameDbContextFactory = gameDbFactory;
             _sessionDataService = sessionDataService;
-
         }
 
         [HttpGet]
@@ -97,8 +96,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
-
-            // TODO remove in production
+            // TODO test it
             if (false) { 
                 var gameDbContext = _gameDbContextFactory.Create($"game_{game.Id.ToString()}");
 
@@ -114,7 +112,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 var accesToNation = await gameDbContext.Assignments
                     .Where(a => a.UserId == userId && a.IsActive == true)
                     .FirstOrDefaultAsync();
-
                 if (accesToNation == null)
                 {
                     return Unauthorized(new
@@ -123,7 +120,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                         message = "User is not game member"
                     });
                 }
-                HttpContext.Session.SetString("Nation", $"{accesToNation.NationId}");
+                HttpContext.Session.SetString("Nation", $"{accesToNation.Nation.Id}");
             
             }
             _sessionDataService.SetSchema($"game_{game.Id.ToString()}");

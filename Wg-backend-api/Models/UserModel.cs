@@ -23,6 +23,11 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("password")]
         public string Password { get; set; }
+        [Required]
+        [Column("issso")]
+        public bool IsSSO { get; set; }
+        [Column("image")]
+        public string? Image { get; set; }
 
         [Required]
         [Column("isarchived")]

@@ -13,6 +13,15 @@ namespace Wg_backend_api.Auth
 
         public async Task InvokeAsync(HttpContext context)
         {
+            // If anonymous addnotation doesn't work
+
+            var endpoint = context.GetEndpoint();
+            if (endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute>() != null)
+            {
+                await _next(context);
+                return;
+            }
+
             if (context.User.Identity?.IsAuthenticated == true)
             {
                 var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
