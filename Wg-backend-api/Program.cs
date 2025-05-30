@@ -160,7 +160,7 @@ namespace Wg_backend_api.Data
             })
             //.AddGoogle("Google", options =>
             //{
-            //    options.ClientId = "";
+            //    options.ClientId = ""; 
             //    options.ClientSecret = "";
 
             //    options.ClaimActions.MapJsonKey("picture", "picture");

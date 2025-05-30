@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -79,24 +80,69 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         // POST: api/Resources
         [HttpPost]
-        public async Task<ActionResult<Resource>> PostResources([FromBody] List<Resource> resources)
+        public async Task<ActionResult<List<ResourceDto>>> PostResources([FromForm] List<CreateResourceDto> resources)
         {
-            if (resources == null || resources.Count == 0)
+            if (resources == null || !resources.Any())
             {
                 return BadRequest("Brak danych do zapisania.");
             }
 
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            const int maxFileSize = 5 * 1024 * 1024;
 
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "resources", "icons");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
 
-            foreach (Resource resource in resources)
+            var savedResources = new List<Resource>();
+
+            foreach (var dto in resources)
             {
-                resource.Id = null;
+                string? iconPath = null;
+
+                if (dto.IconFile != null)
+                {
+                    var extension = Path.GetExtension(dto.IconFile.FileName).ToLower();
+
+                    if (!allowedExtensions.Contains(extension))
+                        return BadRequest($"Nieprawidłowe rozszerzenie pliku: {dto.IconFile.FileName}");
+
+                    if (dto.IconFile.Length > maxFileSize)
+                        return BadRequest($"Plik {dto.IconFile.FileName} przekracza maksymalny rozmiar {maxFileSize / 1024 / 1024} MB");
+
+                    var uniqueFileName = $"{Guid.NewGuid()}{extension}";
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await dto.IconFile.CopyToAsync(stream);
+                    }
+
+                    iconPath = $"/images/{uniqueFileName}";
+                }
+
+                savedResources.Add(new Resource
+                {
+                    Name = dto.Name,
+                    IsMain = dto.IsMain,
+                    Icon = iconPath
+                });
             }
-            _context.Resources.AddRange(resources);
+
+            _context.Resources.AddRange(savedResources);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetResources", new { id = resources[0].Id }, resources);
+            var response = savedResources.Select(r => new ResourceDto
+            {
+                Id = (int)r.Id,
+                Name = r.Name,
+                IsMain = r.IsMain,
+                Icon = r.Icon != null ? $"{Request.Scheme}://{Request.Host}/{r.Icon}" : null
+            }).ToList();
+
+            return CreatedAtAction(nameof(PostResources), null, response);
         }
+
 
         // DELETE: api/Resources
         [HttpDelete]

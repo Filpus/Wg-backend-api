@@ -24,13 +24,13 @@
     {
         public string Name { get; set; }
         public string? Description { get; set; }
-        public string? Image { get; set; }
+        public IFormFile? ImageFile { get; set; }
 
-        public CreateGameDTO(string name, string? description, string? image)
+        public CreateGameDTO(string name, string? description, IFormFile? imageFile)
         {
             Name = name;
             Description = description;
-            Image = image;
+            ImageFile = imageFile;
         }
     }
 }

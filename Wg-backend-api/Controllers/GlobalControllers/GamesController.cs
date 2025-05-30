@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Validations;
+using System;
 using System.Linq;
 using System.Security.Claims;
 using Wg_backend_api.Data;
@@ -153,15 +154,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             var userClaimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userClaimName = User.FindFirst(ClaimTypes.Name)?.Value;
 
-            if (userClaimId == null || userClaimName == null)
-            {
-                return Unauthorized(new
-                {
-                    error = "Unauthorized",
-                    message = "Missing user cookies"
-                });
-            }
-
             var userGames = await _globalDbContext.Games
                 .Where(g => g.OwnerId == int.Parse(userClaimId))
                 .ToListAsync();
@@ -187,11 +179,53 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
+            var gameImagePath = "";
+
+            if (creteGame.ImageFile != null) { 
+                try
+                {
+                    if (creteGame.ImageFile.Length == 0) { 
+                        //return 
+                    }
+
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                    var fileExtension = Path.GetExtension(creteGame.ImageFile.FileName).ToLower();
+
+                    if (!allowedExtensions.Contains(fileExtension))
+                        return BadRequest($"Nieobsługiwany format pliku. Dopuszczalne rozszerzenia: {string.Join(", ", allowedExtensions)}");
+
+                    const int maxFileSize = 20 * 1024 * 1024; // 5 MB
+                    if (creteGame.ImageFile.Length > maxFileSize)
+                        return BadRequest($"Maksymalny dopuszczalny rozmiar pliku to {maxFileSize / 1024 / 1024} MB");
+
+                    var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Images");
+
+                    if (!Directory.Exists(uploadsFolder))
+                        Directory.CreateDirectory(uploadsFolder);
+
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await creteGame.ImageFile.CopyToAsync(stream);
+                    }
+
+                    gameImagePath = $"/images/{uniqueFileName}";
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(
+                        StatusCodes.Status500InternalServerError,
+                        $"Wystąpił błąd podczas przetwarzania pliku: {ex.Message}"
+                    );
+                }
+            }
+
             var newGame = new Game
             {
                 Name = creteGame.Name,
                 Description = creteGame.Description,
-                Image = creteGame.Image,
+                Image = gameImagePath != "" ? gameImagePath : null,
                 OwnerId = int.Parse(userClaimId)
             };
 
