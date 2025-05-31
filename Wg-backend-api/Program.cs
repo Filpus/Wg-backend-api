@@ -126,8 +126,9 @@ namespace Wg_backend_api.Data
 
             builder.Services.AddDbContext<GameDbContext>((serviceProvider, options) =>
             {
-                options.UseNpgsql(connectionString).EnableSensitiveDataLogging()
-           .LogTo(Console.WriteLine, LogLevel.Debug) ;
+                options.UseNpgsql(connectionString);
+                //.EnableSensitiveDataLogging() //Enable for debug
+                //.LogTo(Console.WriteLine, LogLevel.Debug) ;
             });
 
 

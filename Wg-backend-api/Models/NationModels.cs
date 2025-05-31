@@ -32,7 +32,8 @@ namespace Wg_backend_api.Models
         public ICollection<Army> Armies { get; set; }
         public ICollection<UnitOrder> UnitOrders { get; set; }
         public ICollection<Action> Actions { get; set; }
-        public ICollection<Assignment> Assignments { get; set; }
+        public Assignment Assignment { get; set; }
+
         public ICollection<RelatedEvents> RelatedEvents { get; set; }
         public ICollection<Faction> Factions { get; set; }
         public ICollection<Localisation> Localisations { get; set; }

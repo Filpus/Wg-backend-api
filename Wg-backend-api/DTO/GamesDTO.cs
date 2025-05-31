@@ -26,11 +26,8 @@
         public string? Description { get; set; }
         public IFormFile? ImageFile { get; set; }
 
-        public CreateGameDTO(string name, string? description, IFormFile? imageFile)
+        public CreateGameDTO()
         {
-            Name = name;
-            Description = description;
-            ImageFile = imageFile;
         }
     }
 }

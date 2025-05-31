@@ -34,7 +34,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             //var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-
             if (!int.TryParse(userIdStr, out int userId))
             {
                 return Unauthorized(new
@@ -97,8 +96,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
-            // TODO test it
-            if (false) { 
+            // TODO remove if statement in production
+            if (true) { 
                 var gameDbContext = _gameDbContextFactory.Create($"game_{game.Id.ToString()}");
 
                 var userInGame = await gameDbContext.Players.Where(u => u.UserId == userId).FirstOrDefaultAsync();
@@ -111,7 +110,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                     });
                 }
                 var accesToNation = await gameDbContext.Assignments
-                    .Where(a => a.UserId == userId && a.IsActive == true)
+                    .Include(a => a.Nation)
+                    .Where(a => a.UserId == userId && a.IsActive)
                     .FirstOrDefaultAsync();
                 if (accesToNation == null)
                 {
@@ -121,12 +121,10 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                         message = "User is not game member"
                     });
                 }
-                HttpContext.Session.SetString("Nation", $"{accesToNation.Nation.Id}");
+                _sessionDataService.SetNation($"{accesToNation.Nation.Id}");
             
             }
             _sessionDataService.SetSchema($"game_{game.Id.ToString()}");
-
-            //var selectedGame = HttpContext.Session.GetString("SelectedGame");
             
             return Ok(new { selectedGameId = game.Id });
         }
@@ -135,7 +133,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpGet("get-session-schema")]
         public IActionResult GetSessionSchema()
         {
-            var schemaValue = HttpContext.Session.GetString("Schema");
+            var schemaValue = _sessionDataService.GetSchema();
 
             if (schemaValue != null)
             {
@@ -147,12 +145,37 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
         }
 
+        [HttpGet("get-session-nation")]
+        public IActionResult GetSessionNation()
+        {
+            var schemaValue = _sessionDataService.GetNation();
+
+            if (schemaValue != null)
+            {
+                return Ok(new { Nation = schemaValue });
+            }
+            else
+            {
+                return NotFound(new { Message = "Session value not found" });
+            }
+        }
+
         [HttpPost]
-        public async Task<IActionResult> CreateGame([FromBody] CreateGameDTO creteGame)
+        public async Task<IActionResult> CreateGame([FromForm] CreateGameDTO creteGame)
         {
 
             var userClaimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userClaimName = User.FindFirst(ClaimTypes.Name)?.Value;
+
+            // TODO remove after enable middleware
+            if (userClaimId == null || userClaimName == null)
+            {
+                return Unauthorized(new
+                {
+                    error = "Unauthorized",
+                    message = "User not authenticated or invalid user ID"
+                });
+            }
 
             var userGames = await _globalDbContext.Games
                 .Where(g => g.OwnerId == int.Parse(userClaimId))
