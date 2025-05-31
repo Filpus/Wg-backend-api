@@ -8,6 +8,13 @@
         public string? Icon { get; set; }
     }
 
+    public class CreateResourceDto
+    {
+        public string Name { get; set; }
+        public bool IsMain { get; set; }
+        public IFormFile? IconFile { get; set; }
+    }
+
     public class ResourceBalanceDto
     {
         public int ResourceId { get; set; }

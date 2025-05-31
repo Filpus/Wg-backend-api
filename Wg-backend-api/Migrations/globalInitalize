@@ -21,6 +21,8 @@ BEGIN
         name text NOT NULL,
         email text NOT NULL,
         password text NOT NULL,
+        issso bool NOT NULL,
+        image text,
         isarchived boolean NOT NULL,
         CONSTRAINT "PK_users" PRIMARY KEY (id)
     );

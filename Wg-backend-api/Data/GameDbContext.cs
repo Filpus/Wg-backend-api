@@ -150,16 +150,15 @@ namespace Wg_backend_api.Data
                 .WithMany()
                 .HasForeignKey(a => a.NationId);
 
-            modelBuilder.Entity<Assignment>()
-                .HasKey(a => a.Id);
-            modelBuilder.Entity<Assignment>()
-                .HasOne<Nation>()
-                .WithMany()
-                .HasForeignKey(a => a.NationId);
-            modelBuilder.Entity<Assignment>()
-                .HasOne<Player>()
-                .WithMany()
-                .HasForeignKey(a => a.UserId);
+            modelBuilder.Entity<Player>()
+            .HasOne(p => p.Assignment)
+            .WithOne(a => a.User)
+            .HasForeignKey<Assignment>(a => a.UserId);
+
+            modelBuilder.Entity<Nation>()
+                .HasOne(n => n.Assignment)
+                .WithOne(a => a.Nation)
+                .HasForeignKey<Assignment>(a => a.NationId);
 
             modelBuilder.Entity<RelatedEvents>()
                 .HasKey(re => re.Id);

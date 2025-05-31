@@ -109,6 +109,7 @@ using System.Security.Claims;
 using Wg_backend_api.Auth;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Wg_backend_api.Data
 {
@@ -117,15 +118,17 @@ namespace Wg_backend_api.Data
         static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
             // Add DbContexts  
             builder.Services.AddDbContext<GlobalDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(connectionString));
 
             builder.Services.AddDbContext<GameDbContext>((serviceProvider, options) =>
             {
-                var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
                 options.UseNpgsql(connectionString);
+                //.EnableSensitiveDataLogging() //Enable for debug
+                //.LogTo(Console.WriteLine, LogLevel.Debug) ;
             });
 
 
@@ -143,15 +146,32 @@ namespace Wg_backend_api.Data
             });
 
             // Authentication and Authorization setup  
-            builder.Services.AddAuthentication("MyCookieAuth")
-                .AddCookie("MyCookieAuth", options =>
-                {
-                    options.LoginPath = "/api/auth/login";
-                    options.Cookie.Name = "MyAppAuth";
-                    options.Cookie.HttpOnly = true;
-                    options.Cookie.SameSite = SameSiteMode.None;
-                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                });
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = "MyCookieAuth";
+                options.DefaultChallengeScheme = "Google";
+            })
+            .AddCookie("MyCookieAuth", options =>
+            {
+                options.LoginPath = "/api/auth/login";
+                options.Cookie.Name = "MyAppAuth";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            })
+            //.AddGoogle("Google", options =>
+            //{
+            //    options.ClientId = ""; 
+            //    options.ClientSecret = "";
+
+            //    options.ClaimActions.MapJsonKey("picture", "picture");
+            //    options.ClaimActions.MapJsonKey("locale", "locale");
+            //    options.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
+
+            //    options.SaveTokens = true;
+            //    options.CallbackPath = "/signin-google";
+            //})
+            ;
 
             builder.Services.AddAuthorization(options =>
             {
@@ -211,9 +231,7 @@ namespace Wg_backend_api.Data
 
                     var corsResult = corsService.EvaluatePolicy(ctx.Context, policy);
                     corsService.ApplyResult(corsResult, ctx.Context.Response);
-
                 }
-
             });
 
 
@@ -230,20 +248,39 @@ namespace Wg_backend_api.Data
 
             app.UseAuthentication();
 
-            app.UseMiddleware<ValidateUserIdMiddleware>(); 
+            app.UseMiddleware<ValidateUserIdMiddleware>();
             app.UseMiddleware<GameAccessMiddleware>();  
 
             app.UseAuthorization();
             app.MapControllers(); // Map controller routes  
 
-            // uncomment this if you want to seed the global database on startup
-            //using (var scope = app.Services.CreateScope())
-            //{
-            //    var services = scope.ServiceProvider;
-            //    var dbContext = services.GetRequiredService<GlobalDbContext>();
-            //    var seeder = new GlobalSeeder(dbContext);
-            //    seeder.Seed();
-            //}
+
+            if (args.Contains("--global")) {
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+                }
+                GameService.GenerateGlobalSchema(connectionString, Directory.GetCurrentDirectory() + "\\Migrations\\globalInitalize");
+            }
+            if (args.Contains("--tmp-game"))
+            {
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+                }
+                GameService.GenerateNewGame(connectionString, Directory.GetCurrentDirectory() + "\\Migrations\\initate.sql", "game_1");
+            }
+
+            if (args.Contains("--seeder"))
+            {
+                using (var scope = app.Services.CreateScope())
+                {
+                    var services = scope.ServiceProvider;
+                    var dbContext = services.GetRequiredService<GlobalDbContext>();
+                    var seeder = new GlobalSeeder(dbContext);
+                    seeder.Seed();
+                }
+            }
 
 
             app.Run();
