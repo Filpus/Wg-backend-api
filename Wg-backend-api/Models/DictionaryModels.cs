@@ -19,6 +19,8 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("ismain")]
         public bool IsMain { get; set; } // Typ logiczny
+        [Column("icon")]
+        public string? Icon { get; set; } 
 
         public ICollection<ProductionCost> ProductionCosts { get; set; }
         public ICollection<MaintenaceCosts> MaintenaceCosts { get; set; }
