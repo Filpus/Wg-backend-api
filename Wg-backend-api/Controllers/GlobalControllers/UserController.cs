@@ -47,7 +47,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(int? id, User user)
         {
-
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
@@ -77,6 +76,63 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                     throw;
                 }
             }
+
+            return NoContent();
+        }
+
+        [HttpPatch]
+        public async Task<IActionResult> PatchUser([FromBody] UserPathDTO userPathDTO) {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userId, out int parsedUserId))
+            {
+                return Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
+            }
+
+            var user = await _context.Users.FindAsync(parsedUserId);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found." });
+            }
+            if (user.IsArchived)
+            {
+                return BadRequest(new { message = "Cannot modify an archived user." });
+            }
+
+            var users = await _context.Users
+                .Where(u => u.Name == userPathDTO.Name || u.Email == userPathDTO.Email)
+                .ToListAsync();
+
+            if (users.Any(u => u.Id != parsedUserId))
+            {
+                return BadRequest(new { message = "User with the same name or email already exists." });
+            }
+
+            if (!string.IsNullOrEmpty(userPathDTO.Name))
+            {
+                user.Name = userPathDTO.Name;
+            }
+            if (!string.IsNullOrEmpty(userPathDTO.Email))
+            {
+                user.Email = userPathDTO.Email;
+            }
+            if (!string.IsNullOrEmpty(userPathDTO.Password))
+            {
+                user.Password = userPathDTO.Password; // TODO password encyrption
+            }
+            _context.Entry(user).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            // Change username in claim
+            var identity = (ClaimsIdentity)User.Identity;
+
+            var existingClaim = identity.FindFirst(ClaimTypes.Name);
+            if (existingClaim != null)
+            {
+                identity.RemoveClaim(existingClaim);
+            }
+            identity.AddClaim(new Claim(ClaimTypes.Name, user.Name));
+            await HttpContext.SignInAsync("MyCookieAuth", new ClaimsPrincipal(identity));
+
 
             return NoContent();
         }
@@ -193,6 +249,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 );
             }
         }
+
     }
 }
 

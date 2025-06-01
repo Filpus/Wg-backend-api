@@ -7,6 +7,7 @@ using Wg_backend_api.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Wg_backend_api.Models;
 using System.IO;
+using System.Threading.Tasks;
 
 
 
@@ -27,16 +28,24 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] CustomLoginRequest request)
-        {
+        {   
+            //TODO login via username and email
             var user = _context.Users.FirstOrDefault(p => p.Name == request.Name);
 
-            //if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password)) TODO 
-            if (user == null || user.IsSSO || request.Password!= user.Password)
+            //if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password)) // TODO Password encryption
+            if (user == null || request.Password!= user.Password)
             {
                 return Unauthorized(new
                 {
                     error = "Unauthorized",
                     message = "Wrong username or password"
+                });
+            }
+            if (user.IsSSO) {
+                return Unauthorized(new
+                {
+                    error = "Unauthorized",
+                    message = "User is SSO, please use SSO login"
                 });
             }
             if (user.IsArchived) {
@@ -79,7 +88,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
         [AllowAnonymous]
         [HttpGet("status")]
-        public IActionResult Status()
+        public async Task<IActionResult> Status()
         {
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
@@ -144,8 +153,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 }
                 // TODO else
             }
-
-            if (user.IsArchived)
+            else if (user.IsArchived)
             {
                 return Unauthorized(new { error = "User is archived" });
             }
@@ -155,10 +163,10 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Name),
             };
+            Console.WriteLine(user.Id.ToString());
 
             var identity = new ClaimsIdentity(claims, "MyCookieAuth");
-            var principal = new ClaimsPrincipal(identity);
-            await HttpContext.SignInAsync("MyCookieAuth", principal);
+            await HttpContext.SignInAsync("MyCookieAuth", new ClaimsPrincipal(identity));
 
             return Redirect(returnUrl);
         }
