@@ -15,6 +15,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+        private int? _nationId;
 
         public ArmiesController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -27,6 +28,9 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+            string nationIdStr = _sessionDataService.GetNation();
+            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
+
         }
 
         [HttpGet("{id?}")]
@@ -113,9 +117,13 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
 
-        [HttpGet("GetNavalArmiesByNationId/{nationId}")]
-        public async Task<ActionResult<IEnumerable<ArmiesInfoDTO>>> GetNavalArmiesByNationId(int nationId)
+        [HttpGet("GetNavalArmiesByNationId/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<ArmiesInfoDTO>>> GetNavalArmiesByNationId(int? nationId)
         {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
             var navalArmies = await _context.Armies
                 .Where(a => a.NationId == nationId && a.IsNaval)
                 .Select(a => new ArmiesInfoDTO
@@ -133,9 +141,14 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(navalArmies);
         }
 
-        [HttpGet("GetLandArmiesByNationId/{nationId}")]
-        public async Task<ActionResult<IEnumerable<ArmiesInfoDTO>>> GetLandArmiesByNationId(int nationId)
+        [HttpGet("GetLandArmiesByNationId/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<ArmiesInfoDTO>>> GetLandArmiesByNationId(int? nationId)
         {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
+
             var armies = await _context.Armies
                 .Where(a => a.NationId == nationId && !a.IsNaval)
                 .Select(a => new ArmiesInfoDTO

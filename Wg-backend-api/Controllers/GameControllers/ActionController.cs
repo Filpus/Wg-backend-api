@@ -15,6 +15,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+        private int? _nationId;
 
         public ActionController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -27,6 +28,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+            string nationIdStr = _sessionDataService.GetNation();
+            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         [HttpGet("{id?}")]
@@ -134,9 +137,13 @@ namespace Wg_backend_api.Controllers.GameControllers
             });
         }
 
-        [HttpGet("settled/{nationId}")]
-        public async Task<ActionResult> GetSettledActionsForNation(int nationId)
+        [HttpGet("settled/{nationId?}")]
+        public async Task<ActionResult> GetSettledActionsForNation(int? nationId)
         {
+            if (!nationId.HasValue)
+            {
+                nationId = _nationId;
+            }
             var settledActions = await _context.Actions
                 .Where(a => a.IsSettled && a.NationId == nationId)
                 .ToListAsync();
@@ -144,9 +151,13 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(settledActions.Select(MapToDTO));
         }
 
-        [HttpGet("unsettled/{nationId}")]
-        public async Task<ActionResult> GetUnsettledActionsForNation(int nationId)
+        [HttpGet("unsettled/{nationId?}")]
+        public async Task<ActionResult> GetUnsettledActionsForNation(int? nationId)
         {
+            if (!nationId.HasValue)
+            {
+                nationId = _nationId;
+            }
             var unsettledActions = await _context.Actions
                 .Where(a => !a.IsSettled && a.NationId == nationId)
                 .ToListAsync();

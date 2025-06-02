@@ -16,6 +16,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+        private int? _nationId;
 
         public MapController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -28,6 +29,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+            string nationIdStr = _sessionDataService.GetNation();
+            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         [HttpGet("{id?}")]
@@ -177,9 +180,14 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
-        [HttpGet("nation/{nationId}/maps")]
-        public async Task<ActionResult<IEnumerable<MapDTO>>> GetNationMaps(int nationId)
+        [HttpGet("nation/{nationId?}/maps")]
+        public async Task<ActionResult<IEnumerable<MapDTO>>> GetNationMaps(int? nationId)
         {
+
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
             var nationMaps = await _context.MapAccesses
                 .Where(ma => _context.Localisations
                     .Any(loc => loc.NationId == nationId && loc.Id == ma.MapId))

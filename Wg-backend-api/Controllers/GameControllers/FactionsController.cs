@@ -16,6 +16,9 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
 
+        private int? _nationId;
+       
+
         public FactionsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
             _gameDbContextFactory = gameDbFactory;
@@ -27,6 +30,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+            string nationIdStr = _sessionDataService.GetNation();
+            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         [HttpGet("{id?}")]
@@ -152,9 +157,13 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok();
         }
 
-        [HttpGet("ByNation/{nationId}")]
-        public async Task<ActionResult<IEnumerable<FactionDTO>>> GetFactionsByNation(int nationId)
+        [HttpGet("ByNation/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<FactionDTO>>> GetFactionsByNation(int? nationId)
         {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
             var factions = await _context.Factions
                 .Where(f => f.NationId == nationId)
                 .Select(f => new FactionDTO

@@ -20,6 +20,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+        private int? _nationId;
 
         public LocalisationsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -32,6 +33,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+            string nationIdStr = _sessionDataService.GetNation();
+            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
         // GET: api/Localisations  
         [HttpGet]
@@ -155,9 +158,13 @@ namespace Wg_backend_api.Controllers.GameControllers
             return _context.Localisations.Any(e => e.Id == id);
         }
 
-        [HttpGet("Nation/{nationId}/GeneralInfo")]
-        public async Task<ActionResult<IEnumerable<LocalisationGeneralInfoDTO>>> GetLocalisationsGeneralInfoByNation(int nationId)
+        [HttpGet("Nation/{nationId?}/GeneralInfo")]
+        public async Task<ActionResult<IEnumerable<LocalisationGeneralInfoDTO>>> GetLocalisationsGeneralInfoByNation(int? nationId)
         {
+            if (nationId == null)
+            {
+                nationId = _nationId ?? throw new InvalidOperationException("Brak ID narodu w sesji.");
+            }
             var localisations = await _context.Localisations
                 .Where(l => l.NationId == nationId)
                 .Select(l => new LocalisationGeneralInfoDTO

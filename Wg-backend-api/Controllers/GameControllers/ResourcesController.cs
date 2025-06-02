@@ -19,6 +19,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+        private int _nationId;
 
         public ResourcesController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -31,6 +32,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+            string nationIdStr = _sessionDataService.GetNation();
+            _nationId = int.Parse(nationIdStr);
         }
         // GET: api/Resources
         // GET: api/Resources/5
@@ -166,14 +169,21 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok();
         }
 
-        [HttpGet("nation/{nationId}/resource-balance")]
-        public async Task<ActionResult<NationResourceBalanceDto>> GetNationResourceBalance(int nationId)
+        [HttpGet("nation/{nationId?}/resource-balance")]
+        public async Task<ActionResult<NationResourceBalanceDto>> GetNationResourceBalance(int? nationId)
         {
+
+            if (!nationId.HasValue)
+            {
+                nationId = _nationId;
+            }
+
+
             var resources = await GetAllResourcesAsync();
-            var nation = await GetNationWithIncludesAsync(nationId);
+            var nation = await GetNationWithIncludesAsync((int)nationId);
             if (nation == null) return NotFound();
 
-            var acceptedTradeAgreements = await GetAcceptedTradeAgreementsAsync(nationId);
+            var acceptedTradeAgreements = await GetAcceptedTradeAgreementsAsync((int)nationId);
 
             var result = new NationResourceBalanceDto
             {
@@ -190,8 +200,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                     ArmyMaintenanceExpenses = GetArmyMaintenanceExpenses(nation, resource.Id),
                     PopulationExpenses = GetPopulationExpenses(nation, resource.Id),
                     PopulationProduction = GetPopulationProduction(nation, resource.Id),
-                    TradeIncome = GetTradeIncome(acceptedTradeAgreements, nationId, resource.Id),
-                    TradeExpenses = GetTradeExpenses(acceptedTradeAgreements, nationId, resource.Id),
+                    TradeIncome = GetTradeIncome(acceptedTradeAgreements, (int)nationId, resource.Id),
+                    TradeExpenses = GetTradeExpenses(acceptedTradeAgreements,(int) nationId, resource.Id),
                     EventBalance = 0
                 };
 

@@ -15,7 +15,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
-
+        private int? _nationId;
         public MapAccessController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
             _gameDbContextFactory = gameDbFactory;
@@ -27,6 +27,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+            string nationIdStr = _sessionDataService.GetNation();
+            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         [HttpGet("{userId}/{mapId}")]

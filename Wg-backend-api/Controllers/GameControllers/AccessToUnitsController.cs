@@ -26,11 +26,13 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+
         }
 
         [HttpGet("{id?}")]
         public async Task<ActionResult<IEnumerable<AccessToUnit>>> GetAccessToUnits(int? id)
         {
+
             if (id.HasValue)
             {
                 var accessToUnit = await _context.AccessToUnits.FindAsync(id);

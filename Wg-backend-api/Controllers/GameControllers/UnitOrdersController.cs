@@ -14,6 +14,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+        private int? _nationId;
 
         public UnitOrdersController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -26,6 +27,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+            string nationIdStr = _sessionDataService.GetNation();
+            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
         // GET: api/UnitOrders
         // GET: api/UnitOrders/5
@@ -114,9 +117,13 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
-        [HttpGet("GetUnitOrdersByNationId/{nationId}")]
-        public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetUnitOrdersByNationId(int nationId)
+        [HttpGet("GetUnitOrdersByNationId/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetUnitOrdersByNationId(int? nationId)
         {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
             var unitOrders = await _context.UnitOrders
                 .Where(uo => uo.NationId == nationId)
                 .Select(uo => new UnitOrderInfoDTO
@@ -130,9 +137,15 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(unitOrders);
         }
 
-        [HttpPost("AddRecruitOrder/{nationId}")]
-        public async Task<IActionResult> AddRecruitOrder(int nationId, [FromBody] RecruitOrderDTO recruitOrder)
+        [HttpPost("AddRecruitOrder/{nationId?}")]
+        public async Task<IActionResult> AddRecruitOrder(int? nationId, [FromBody] RecruitOrderDTO recruitOrder)
         {
+
+            if ( nationId == null)
+            {
+                nationId = _nationId;
+            }
+
             if (recruitOrder == null || recruitOrder.Count <= 0)
             {
                 return BadRequest("Nieprawidłowe dane zlecenia rekrutacji.");
@@ -152,7 +165,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             var newUnitOrder = new UnitOrder
             {
-                NationId = nationId,
+                NationId = (int)nationId,
                 UnitTypeId = recruitOrder.TroopTypeId,
                 Quantity = recruitOrder.Count
             };

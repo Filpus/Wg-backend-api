@@ -19,6 +19,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+        private int? _nationId;
 
         public PopulationsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -31,6 +32,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+            string nationIdStr = _sessionDataService.GetNation();
+            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         // GET: api/Populations
@@ -159,9 +162,13 @@ namespace Wg_backend_api.Controllers.GameControllers
             return _context.Populations.Any(e => e.Id == id);
         }
 
-        [HttpGet("nation/{nationId}/population-groups")]
-        public async Task<ActionResult<IEnumerable<PopulationGroupDTO>>> GetPopulationGroupsByNation(int nationId)
+        [HttpGet("nation/{nationId?}/population-groups")]
+        public async Task<ActionResult<IEnumerable<PopulationGroupDTO>>> GetPopulationGroupsByNation(int? nationId)
         {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
             var populationGroups = await _context.Populations
                 .Where(p => _context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
                 .GroupBy(p => new { p.ReligionId, p.CultureId, p.SocialGroupId })
@@ -178,9 +185,13 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(populationGroups);
         }
 
-        [HttpGet("nation/{nationId}/population-culture-groups")]
-        public async Task<ActionResult<IEnumerable<PopulationCultureGroupDTO>>> GetPopulationCultureGroupsByNation(int nationId)
+        [HttpGet("nation/{nationId?}/population-culture-groups")]
+        public async Task<ActionResult<IEnumerable<PopulationCultureGroupDTO>>> GetPopulationCultureGroupsByNation(int? nationId)
         {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
             var populationGroups = await _context.Populations
                 .Where(p => _context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
                 .GroupBy(p => new { p.CultureId })
@@ -194,9 +205,13 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(populationGroups);
         }
 
-        [HttpGet("nation/{nationId}/population-social-groups")]
-        public async Task<ActionResult<IEnumerable<PopulationSocialGroupDTO>>> GetPopulationSocialGroupsByNation(int nationId)
+        [HttpGet("nation/{nationId?}/population-social-groups")]
+        public async Task<ActionResult<IEnumerable<PopulationSocialGroupDTO>>> GetPopulationSocialGroupsByNation(int? nationId)
         {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
             var populationGroups = await _context.Populations
                 .Where(p => _context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
                 .GroupBy(p => new { p.SocialGroupId })
@@ -209,9 +224,13 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .ToListAsync();
             return Ok(populationGroups);
         }
-        [HttpGet("nation/{nationId}/population-religion-groups")]
-        public async Task<ActionResult<IEnumerable<PopulationReligiousGroupDTO>>> GetPopulationReligiousGroupsByNation(int nationId)
+        [HttpGet("nation/{nationId?}/population-religion-groups")]
+        public async Task<ActionResult<IEnumerable<PopulationReligiousGroupDTO>>> GetPopulationReligiousGroupsByNation(int? nationId)
         {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
             var populationGroups = await _context.Populations
                 .Where(p => _context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
                 .GroupBy(p => new { p.ReligionId })
@@ -230,6 +249,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("location/{locationId}/population-groups")]
         public async Task<ActionResult<IEnumerable<PopulationGroupDTO>>> GetPopulationGroupsByLocation(int locationId)
         {
+
             var populationGroups = await _context.Populations
                 .Where(p => p.LocationId == locationId)
                 .GroupBy(p => new { p.ReligionId, p.CultureId, p.SocialGroupId })

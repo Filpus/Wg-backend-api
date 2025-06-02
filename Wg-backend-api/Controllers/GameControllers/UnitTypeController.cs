@@ -14,6 +14,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+        private int? _nationId;
 
         public UnitTypeController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -26,6 +27,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+            string nationIdStr = _sessionDataService.GetNation();
+            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
         // GET: api/UnitTypes
         // GET: api/UnitTypes/5
@@ -114,9 +117,13 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
-        [HttpGet("GetLandUnitTypeInfo/{nationId}")]
-        public async Task<ActionResult<IEnumerable<UnitTypeInfoDTO>>> GetLandUnitTypeInfo(int nationId)
+        [HttpGet("GetLandUnitTypeInfo/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<UnitTypeInfoDTO>>> GetLandUnitTypeInfo(int? nationId)
         {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
             var accessibleUnitTypeIds = await _context.AccessToUnits
                 .Where(atu => atu.NationId == nationId)
                 .Select(atu => atu.UnitTypeId)
@@ -146,9 +153,16 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok(unitTypeInfoList);
         }
-        [HttpGet("GetNavalUnitTypeInfo/{nationId}")]
-        public async Task<ActionResult<IEnumerable<UnitTypeInfoDTO>>> GetNavalUnitTypeInfo(int nationId)
+        [HttpGet("GetNavalUnitTypeInfo/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<UnitTypeInfoDTO>>> GetNavalUnitTypeInfo(int? nationId)
         {
+
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
+
+
             var accessibleUnitTypeIds = await _context.AccessToUnits
                 .Where(atu => atu.NationId == nationId)
                 .Select(atu => atu.UnitTypeId)
