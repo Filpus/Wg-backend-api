@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
@@ -13,6 +14,8 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+        private int? _nationId;
+
 
         public TradeController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -25,6 +28,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+            _nationId = _sessionDataService.GetNation() != null ? int.Parse(_sessionDataService.GetNation()) : null;
         }
 
         [HttpPost("TradeAgreement")]
@@ -43,7 +47,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .OrderByDescending(t => t.Id)
                 .FirstOrDefaultAsync();
 
-            
+
 
             return Ok(latestTradeAgreement?.Id);
         }
@@ -85,5 +89,133 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return CreatedAtAction("GetWantedResources", new { id = wantedResources[0].Id }, wantedResources);
         }
+
+        [HttpGet("OfferedTradeAgreements/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<TradeAgreementDTO>>> GetOfferedTradeAgreements(int? nationId)
+        {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
+            var tradeAgreements = await _context.TradeAgreements
+                .Where(t => t.OferingNationId == nationId)
+                .Select(t => new TradeAgreementDTO
+                {
+                    Id = t.Id,
+                    offeringNationId = t.OferingNationId,
+                    receivingNationId = t.ReceivingNationId,
+                    offeredResources = t.OfferedResources.Select(r => new ResourceAmountDto
+                    {
+                        ResourceId = r.ResourceId,
+                        ResourceName = _context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
+                        Amount = r.Quantity
+                    }).ToList(),
+                    requestedResources = t.WantedResources.Select(r => new ResourceAmountDto
+                    {
+                        ResourceId = r.ResourceId,
+                        ResourceName = _context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
+                        Amount = r.Amount
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return Ok(tradeAgreements);
+        }
+
+        [HttpGet("ReceivedTradeAgreements/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<TradeAgreementDTO>>> GetReceivedTradeAgreements(int? nationId)
+        {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
+            var tradeAgreements = await _context.TradeAgreements
+                .Where(t => t.ReceivingNationId == nationId)
+                .Select(t => new TradeAgreementDTO
+                {
+                    Id = t.Id,
+                    offeringNationId = t.OferingNationId,
+                    receivingNationId = t.ReceivingNationId,
+                    offeredResources = t.OfferedResources.Select(r => new ResourceAmountDto
+                    {
+                        ResourceId = r.ResourceId,
+                        ResourceName = _context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
+                        Amount = r.Quantity
+                    }).ToList(),
+                    requestedResources = t.WantedResources.Select(r => new ResourceAmountDto
+                    {
+                        ResourceId = r.ResourceId,
+                        ResourceName = _context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
+                        Amount = r.Amount
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return Ok(tradeAgreements);
+        }
+
+        [HttpPost("CreateTradeAgreementWithResources")]
+        public async Task<ActionResult<int>> CreateTradeAgreementWithResources(int offeringNationId, [FromBody] OfferTradeAgreementDTO offerTradeAgreementDTO)
+        {
+            if (offerTradeAgreementDTO == null || offerTradeAgreementDTO.offeredResources.Count == 0 || offerTradeAgreementDTO.requestedResources.Count == 0)
+            {
+                return BadRequest("Brak danych do zapisania.");
+            }
+
+            // Tworzenie nowej umowy handlowej
+            var tradeAgreement = new TradeAgreement
+            {
+                OferingNationId = offeringNationId,
+                ReceivingNationId = offerTradeAgreementDTO.receivingNationId,
+                OfferedResources = new List<OfferedResource>(),
+                WantedResources = new List<WantedResource>()
+            };
+
+          
+
+            // Dodanie oferowanych zasobów z przypisaniem ID umowy
+            // Po zapisaniu obiektu w bazie danych, właściwość Id jest automatycznie przypisana.  
+            _context.TradeAgreements.Add(tradeAgreement);
+            await _context.SaveChangesAsync();
+
+            // W tym momencie tradeAgreement.Id zawiera wartość wygenerowaną przez bazę danych.  
+            if (tradeAgreement.Id.HasValue)
+            {
+                Console.WriteLine($"Wygenerowane ID: {tradeAgreement.Id.Value}");
+            }
+            else
+            {
+                Console.WriteLine("ID nie zostało przypisane.");
+            }
+            foreach (var resource in offerTradeAgreementDTO.offeredResources)
+            {
+                tradeAgreement.OfferedResources.Add(new OfferedResource
+                {
+                    ResourceId = resource.ResourceId,
+                    TradeAgreementId = tradeAgreement.Id.Value,
+                    Quantity = resource.Amount,
+                });
+            }
+
+            // Dodanie chcianych zasobów z przypisaniem ID umowy
+            foreach (var resource in offerTradeAgreementDTO.requestedResources)
+            {
+                tradeAgreement.WantedResources.Add(new WantedResource
+                {
+                    ResourceId = resource.ResourceId,
+                    TradeAgreementId = tradeAgreement.Id.Value,
+                    Amount = resource.Amount,
+                });
+            }
+
+            // Zapisanie zasobów w bazie danych
+            _context.OfferedResources.AddRange(tradeAgreement.OfferedResources);
+            _context.WantedResources.AddRange(tradeAgreement.WantedResources);
+            await _context.SaveChangesAsync();
+
+            return Ok(tradeAgreement.Id);
+        }
+
     }
 }
+

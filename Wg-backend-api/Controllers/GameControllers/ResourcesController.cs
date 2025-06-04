@@ -306,9 +306,9 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Sum();
         }
 
-        private int GetTradeIncome(List<TradeAgreement> tradeAgreements, int nationId, int resourceId)
+        private float GetTradeIncome(List<TradeAgreement> tradeAgreements, int nationId, int resourceId)
         {
-            int tradeIncome = 0;
+            float tradeIncome = 0;
             foreach (var ta in tradeAgreements)
             {
                 bool isOffering = ta.OferingNationId == nationId;
@@ -330,9 +330,9 @@ namespace Wg_backend_api.Controllers.GameControllers
             return tradeIncome;
         }
 
-        private int GetTradeExpenses(List<TradeAgreement> tradeAgreements, int nationId, int resourceId)
+        private float GetTradeExpenses(List<TradeAgreement> tradeAgreements, int nationId, int resourceId)
         {
-            int tradeExpenses = 0;
+            float tradeExpenses = 0;
             foreach (var ta in tradeAgreements)
             {
                 bool isOffering = ta.OferingNationId == nationId;
@@ -354,6 +354,41 @@ namespace Wg_backend_api.Controllers.GameControllers
             return tradeExpenses;
         }
 
+        [HttpGet("nation/{nationId?}/owned-resources")]
+        public async Task<ActionResult<List<ResourceAmountDto>>> GetOwnedResources(int? nationId)
+        {
+
+            if(nationId == null)
+            {
+                nationId = _nationId;
+            }
+
+            var nation = await _context.Nations
+                .AsNoTracking()
+                .Where(n => n.Id == nationId)
+                .Include(n => n.Localisations)
+                    .ThenInclude(l => l.LocalisationResources)
+                .FirstOrDefaultAsync();
+
+            if (nation == null)
+            {
+                return NotFound($"Nie znaleziono państwa o ID: {nationId}");
+            }
+
+            var ownedResources = nation.Localisations
+                .SelectMany(l => l.LocalisationResources)
+                .GroupBy(lr => new { lr.ResourceId, lr.Resource.Name })
+                .Select(g => new ResourceAmountDto
+                {
+                    ResourceId = g.Key.ResourceId,
+                    ResourceName = g.Key.Name,
+                    Amount = g.Sum(lr => lr.Amount)
+                })
+                .ToList();
+
+            return Ok(ownedResources);
+        }
+
         //private int GetEventBalance(Nation nation, int resourceId)
         //{
         //    return nation.RelatedEvents
@@ -363,6 +398,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         //        .Sum();
         //}
 
+        
 
     }
 }
