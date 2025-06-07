@@ -368,6 +368,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Where(n => n.Id == nationId)
                 .Include(n => n.Localisations)
                     .ThenInclude(l => l.LocalisationResources)
+                        .ThenInclude(lr => lr.Resource)
                 .FirstOrDefaultAsync();
 
             if (nation == null)

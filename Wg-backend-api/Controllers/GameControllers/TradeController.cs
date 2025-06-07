@@ -91,7 +91,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpGet("OfferedTradeAgreements/{nationId?}")]
-        public async Task<ActionResult<IEnumerable<TradeAgreementDTO>>> GetOfferedTradeAgreements(int? nationId)
+        public async Task<ActionResult<IEnumerable<TradeAgreementInfoDTO>>> GetOfferedTradeAgreements(int? nationId)
         {
             if (nationId == null)
             {
@@ -99,18 +99,20 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             var tradeAgreements = await _context.TradeAgreements
                 .Where(t => t.OferingNationId == nationId)
-                .Select(t => new TradeAgreementDTO
+                .Select(t => new TradeAgreementInfoDTO
                 {
                     Id = t.Id,
-                    offeringNationId = t.OferingNationId,
-                    receivingNationId = t.ReceivingNationId,
-                    offeredResources = t.OfferedResources.Select(r => new ResourceAmountDto
+                    OfferingNationName = _context.Nations.FirstOrDefault(n => n.Id == t.OferingNationId).Name,
+                    ReceivingNationName = _context.Nations.FirstOrDefault(n => n.Id == t.ReceivingNationId).Name,
+                    IsActive = t.isAccepted,
+                    Duration = t.Duration, // Assuming duration is not stored in the database  
+                    OfferedResources = t.OfferedResources.Select(r => new ResourceAmountDto
                     {
                         ResourceId = r.ResourceId,
                         ResourceName = _context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
                         Amount = r.Quantity
                     }).ToList(),
-                    requestedResources = t.WantedResources.Select(r => new ResourceAmountDto
+                    RequestedResources = t.WantedResources.Select(r => new ResourceAmountDto
                     {
                         ResourceId = r.ResourceId,
                         ResourceName = _context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
@@ -123,7 +125,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpGet("ReceivedTradeAgreements/{nationId?}")]
-        public async Task<ActionResult<IEnumerable<TradeAgreementDTO>>> GetReceivedTradeAgreements(int? nationId)
+        public async Task<ActionResult<IEnumerable<TradeAgreementInfoDTO>>> GetReceivedTradeAgreements(int? nationId)
         {
             if (nationId == null)
             {
@@ -131,18 +133,20 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             var tradeAgreements = await _context.TradeAgreements
                 .Where(t => t.ReceivingNationId == nationId)
-                .Select(t => new TradeAgreementDTO
+                .Select(t => new TradeAgreementInfoDTO
                 {
                     Id = t.Id,
-                    offeringNationId = t.OferingNationId,
-                    receivingNationId = t.ReceivingNationId,
-                    offeredResources = t.OfferedResources.Select(r => new ResourceAmountDto
+                    OfferingNationName = _context.Nations.FirstOrDefault(n => n.Id == t.OferingNationId).Name,
+                    ReceivingNationName = _context.Nations.FirstOrDefault(n => n.Id == t.ReceivingNationId).Name,
+                    IsActive = t.isAccepted,
+                    Duration = t.Duration, // Assuming duration is not stored in the database  
+                    OfferedResources = t.OfferedResources.Select(r => new ResourceAmountDto
                     {
                         ResourceId = r.ResourceId,
                         ResourceName = _context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
                         Amount = r.Quantity
                     }).ToList(),
-                    requestedResources = t.WantedResources.Select(r => new ResourceAmountDto
+                    RequestedResources = t.WantedResources.Select(r => new ResourceAmountDto
                     {
                         ResourceId = r.ResourceId,
                         ResourceName = _context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
@@ -154,9 +158,14 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(tradeAgreements);
         }
 
-        [HttpPost("CreateTradeAgreementWithResources")]
-        public async Task<ActionResult<int>> CreateTradeAgreementWithResources(int offeringNationId, [FromBody] OfferTradeAgreementDTO offerTradeAgreementDTO)
+        [HttpPost("CreateTradeAgreementWithResources/{offeringNationId?}")]
+        public async Task<ActionResult<int>> CreateTradeAgreementWithResources( int? offeringNationId, [FromBody] OfferTradeAgreementDTO offerTradeAgreementDTO)
         {
+            if (offeringNationId == null)
+            {
+                offeringNationId = _nationId;
+            }
+
             if (offerTradeAgreementDTO == null || offerTradeAgreementDTO.offeredResources.Count == 0 || offerTradeAgreementDTO.requestedResources.Count == 0)
             {
                 return BadRequest("Brak danych do zapisania.");
@@ -165,7 +174,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             // Tworzenie nowej umowy handlowej
             var tradeAgreement = new TradeAgreement
             {
-                OferingNationId = offeringNationId,
+                OferingNationId = (int)offeringNationId,
                 ReceivingNationId = offerTradeAgreementDTO.receivingNationId,
                 OfferedResources = new List<OfferedResource>(),
                 WantedResources = new List<WantedResource>()

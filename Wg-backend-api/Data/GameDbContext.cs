@@ -82,19 +82,18 @@ namespace Wg_backend_api.Data
 
             modelBuilder.Entity<MapAccess>()
                 .HasKey(ma => new { ma.UserId, ma.MapId });
-            modelBuilder.Entity<Nation>()
-              .HasMany<TradeAgreement>()
-              .WithOne(ta => ta.OfferingNation)
-              .HasForeignKey(ta => ta.OferingNationId)
-              .OnDelete(DeleteBehavior.Restrict);
 
-            // Relacja: Nation -> TradeAgreements jako otrzymujący
-            modelBuilder.Entity<Nation>()
-                .HasMany<TradeAgreement>()
-                .WithOne(ta => ta.ReceivingNation)
+            modelBuilder.Entity<TradeAgreement>()
+                   .HasOne(ta => ta.OfferingNation)
+                   .WithMany(n => n.OfferedTradeAgreements)
+                   .HasForeignKey(ta => ta.OferingNationId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TradeAgreement>()
+                .HasOne(ta => ta.ReceivingNation)
+                .WithMany(n => n.ReceivedTradeAgreements)
                 .HasForeignKey(ta => ta.ReceivingNationId)
                 .OnDelete(DeleteBehavior.Restrict);
-         
             //modelBuilder.HasDefaultSchema(_schema);
         }
     }

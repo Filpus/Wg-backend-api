@@ -106,7 +106,7 @@ namespace Wg_backend_api.Models
         public Resource Resource { get; set; }
         [Required]
         [Column("amount")]
-        public int Amount { get; set; }
+        public float Amount { get; set; }
     }
 
     [Table("maintenanceCosts")]
@@ -128,7 +128,7 @@ namespace Wg_backend_api.Models
         public Resource Resource { get; set; }
         [Required]
         [Column("amount")]
-        public int Amount { get; set; }
+        public float Amount { get; set; }
     }
 
     [Table("troops")]

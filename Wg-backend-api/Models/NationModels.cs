@@ -37,7 +37,12 @@ namespace Wg_backend_api.Models
         public ICollection<RelatedEvents> RelatedEvents { get; set; }
         public ICollection<Faction> Factions { get; set; }
         public ICollection<Localisation> Localisations { get; set; }
-        public ICollection<TradeAgreement> TradeAgreements { get; set; }
+
+        [InverseProperty("OfFeringNation")]
+        public ICollection<TradeAgreement> OfferedTradeAgreements { get; set; }
+
+        [InverseProperty("ReceivingNation")]
+        public ICollection<TradeAgreement> ReceivedTradeAgreements { get; set; }
     }
 
 }

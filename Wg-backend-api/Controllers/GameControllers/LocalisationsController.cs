@@ -180,7 +180,9 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(localisations);
         }
 
-        [HttpGet("{id}/Details")]
+
+
+           [HttpGet("{id}/Details")]
         public async Task<ActionResult<LocalisationDetailsDTO>> GetLocalisationDetails(int id)
         {
             var localisation = await _context.Localisations
@@ -202,46 +204,27 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(localisation);
         }
 
-        private List<LocalisationResourceInfoDTO> GetLocalisationResources(int localisationId)
-        {
-            var localisationList = _context.LocalisationResources
-               .Where(lr => lr.LocationId == localisationId)
-               .Select(lr => new LocalisationResourceInfoDTO
-               {
-                   Name = _context.Localisations
-                       .Where(l => l.Id == lr.LocationId)
-                       .Select(l => l.Name)
-                       .FirstOrDefault(),
-                   ResourceName = _context.Resources
-                       .Where(r => r.Id == lr.ResourceId)
-                       .Select(r => r.Name)
-                       .FirstOrDefault(),
-                   Amount = lr.Amount
-               })
-               .ToList();
-
-            if (localisationList == null)
-            {
-                return new List<LocalisationResourceInfoDTO>();
-            }
-            else
-            {
-                return localisationList;
-            }
-        }
         private List<LocalisationResourceProductionDTO> GetLocalisationResourceProductions(int localisationId)
         {
             return _context.LocalisationResources
-               .Where(lr => lr.LocationId == localisationId)
-               .Select(lr => new LocalisationResourceProductionDTO
-               {
-                   ResourceName = _context.Resources
-                       .Where(r => r.Id == lr.ResourceId)
-                       .Select(r => r.Name)
-                       .FirstOrDefault(),
-                   Amount = CalculateProductionAmount(lr.ResourceId, localisationId)
-               })
-               .ToList();
+                .Where(lr => lr.LocationId == localisationId)
+                .Select(lr => new LocalisationResourceProductionDTO
+                {
+                    ResourceName = lr.Resource.Name,
+                    Amount = _context.Populations
+                        .Where(p => p.LocationId == localisationId)
+                        .GroupBy(p => p.SocialGroupId)
+                        .SelectMany(g => _context.ProductionShares
+                            .Where(ps => ps.SocialGroupId == g.Key && ps.ResourceId == lr.ResourceId)
+                            .Select(ps => new 
+                            {
+                                PopulationCount = g.Count(),
+                                ps.Coefficient,
+                                lr.Amount
+                            }))
+                        .Sum(x => x.PopulationCount * x.Coefficient * x.Amount)
+                })
+                .ToList();
         }
 
         private List<PopulationGroupDTO> GetPopulationGroups(int localisationId)
@@ -299,6 +282,18 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             return totalProduction;
+        }
+
+        private List<LocalisationResourceInfoDTO> GetLocalisationResources(int localisationId)
+        {
+            return _context.LocalisationResources
+                .Where(lr => lr.LocationId == localisationId)
+                .Select(lr => new LocalisationResourceInfoDTO
+                {
+                    ResourceName = lr.Resource.Name,
+                    Amount = lr.Amount
+                })
+                .ToList();
         }
     }
 }

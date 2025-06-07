@@ -132,7 +132,10 @@ namespace Wg_backend_api.Controllers.GameControllers
             var unitTypes = await _context.UnitTypes
                 .Where(ut => !ut.IsNaval && accessibleUnitTypeIds.Contains(ut.Id.Value))
                 .Include(ut => ut.ProductionCosts)
+                    .ThenInclude(pc => pc.Resource)
+
                 .Include(ut => ut.MaintenaceCosts)
+                    .ThenInclude(mc => mc.Resource)
                 .ToListAsync();
 
             var unitTypeInfoList = unitTypes.Select(ut => new UnitTypeInfoDTO
@@ -171,7 +174,10 @@ namespace Wg_backend_api.Controllers.GameControllers
             var unitTypes = await _context.UnitTypes
                 .Where(ut => ut.IsNaval && accessibleUnitTypeIds.Contains(ut.Id.Value))
                 .Include(ut => ut.ProductionCosts)
+                    .ThenInclude(pc => pc.Resource)
+
                 .Include(ut => ut.MaintenaceCosts)
+                    .ThenInclude(mc => mc.Resource)
                 .ToListAsync();
 
             var unitTypeInfoList = unitTypes.Select(ut => new UnitTypeInfoDTO

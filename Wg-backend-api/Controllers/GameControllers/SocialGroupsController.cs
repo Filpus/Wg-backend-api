@@ -158,14 +158,14 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Include(sg => sg.ProductionShares)
                 .ToListAsync();
 
-            var socialGroupInfoList = socialGroups.Select(sg => new SocialGroupInfoDTO
+            var socialGroupInfoList = socialGroups?.Select(sg => new SocialGroupInfoDTO
             {
                 Name = sg.Name,
                 BaseHappiness = CalculateBaseHappiness(sg),
                 Volunteers = CalculateVolunteers(sg),
                 ConsumedResources = GetConsumedResources(sg),
                 ProducedResources = GetProducedResources(sg)
-            }).ToList();
+            }).ToList() ?? new List<SocialGroupInfoDTO>();
 
             return Ok(socialGroupInfoList);
         }

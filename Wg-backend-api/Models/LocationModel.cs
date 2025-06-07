@@ -47,12 +47,12 @@ public class Localisation
         [Key] // Oznaczenie klucza głównego
         public int? Id { get; set; }
         [Required]
-        [Column("fk_locations")]
+        [Column("fk_Locations")]
         public int LocationId { get; set; }
         [ForeignKey("LocationId")]
         public Localisation Location { get; set; }
         [Required]
-        [Column("fk_resources")]
+        [Column("fk_Resources")]
         public int ResourceId { get; set; }
         [ForeignKey("ResourceId")]
         public Resource Resource { get; set; }
