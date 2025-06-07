@@ -8,9 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Wg_backend_api.Models;
 using System.IO;
 using System.Threading.Tasks;
-
-
-
+using BCrypt.Net;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
@@ -29,11 +27,9 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] CustomLoginRequest request)
         {   
-            //TODO login via username and email
-            var user = _context.Users.FirstOrDefault(p => p.Name == request.Name);
+            var user = _context.Users.FirstOrDefault(p => p.Name == request.Name || p.Email == request.Name);
 
-            //if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password)) // TODO Password encryption
-            if (user == null || request.Password!= user.Password)
+            if (user == null)
             {
                 return Unauthorized(new
                 {
@@ -41,18 +37,13 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                     message = "Wrong username or password"
                 });
             }
-            if (user.IsSSO) {
+
+            if (!IsUserEligibleForLogin(user, request.Password, out var errorMessage))
+            {
                 return Unauthorized(new
                 {
                     error = "Unauthorized",
-                    message = "User is SSO, please use SSO login"
-                });
-            }
-            if (user.IsArchived) {
-                return Unauthorized(new
-                {
-                    error = "Unauthorized",
-                    message = "User has been archived"
+                    message = errorMessage
                 });
             }
 
@@ -139,7 +130,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 {
                     Name = $"user{base64Guid}",
                     Email = email,
-                    Password = "",
+                    Password = BCrypt.Net.BCrypt.HashPassword(""),
                     IsSSO = true,
                     IsArchived = false,
                 };
@@ -169,6 +160,30 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             await HttpContext.SignInAsync("MyCookieAuth", new ClaimsPrincipal(identity));
 
             return Redirect(returnUrl);
+        }
+
+        private bool IsUserEligibleForLogin(User user, string password, out string errorMessage)
+        {
+            if (user.IsSSO)
+            {
+                errorMessage = "User is SSO, please use SSO login";
+                return false;
+            }
+
+            if (user.IsArchived)
+            {
+                errorMessage = "User has been archived";
+                return false;
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(password, user.Password))
+            {
+                errorMessage = "Wrong username or password";
+                return false;
+            }
+
+            errorMessage = null;
+            return true;
         }
 
     }
