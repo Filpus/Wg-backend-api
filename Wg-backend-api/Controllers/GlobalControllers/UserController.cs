@@ -7,6 +7,9 @@ using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
+using BCrypt.Net;
+
+
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
@@ -58,7 +61,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 return BadRequest(new { message = "Bad request: ID mismatch or invalid user data." });
             }
-
+            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
             _context.Entry(user).State = EntityState.Modified;
 
             try
@@ -117,7 +120,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
             if (!string.IsNullOrEmpty(userPathDTO.Password))
             {
-                user.Password = userPathDTO.Password; // TODO password encyrption
+                user.Password = BCrypt.Net.BCrypt.HashPassword(userPathDTO.Password);
             }
             _context.Entry(user).State = EntityState.Modified;
             await _context.SaveChangesAsync();
@@ -142,6 +145,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         public async Task<ActionResult<User>> PostUser(User user)
         {
             user.Id = null;
+            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 

@@ -96,34 +96,31 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
-            // TODO remove if statement in production
-            if (true) { 
-                var gameDbContext = _gameDbContextFactory.Create($"{game.Name}");
+            var gameDbContext = _gameDbContextFactory.Create($"{game.Name}");
 
-                var userInGame = await gameDbContext.Players.Where(u => u.UserId == userId).FirstOrDefaultAsync();
-                if (userInGame == null)
+            var userInGame = await gameDbContext.Players.Where(u => u.UserId == userId).FirstOrDefaultAsync();
+            if (userInGame == null)
+            {
+                return Unauthorized(new
                 {
-                    return Unauthorized(new
-                    {
-                        error = "Unauthorized",
-                        message = "User is not game member"
-                    });
-                }
-                var accesToNation = await gameDbContext.Assignments
-                    .Include(a => a.Nation)
-                    .Where(a => a.UserId == userId && a.IsActive)
-                    .FirstOrDefaultAsync();
-                if (accesToNation == null)
-                {
-                    return Unauthorized(new
-                    {
-                        error = "Unauthorized",
-                        message = "User is not game member"
-                    });
-                }
-                _sessionDataService.SetNation($"{accesToNation.Nation.Id}");
-            
+                    error = "Unauthorized",
+                    message = "User is not game member"
+                });
             }
+            var accesToNation = await gameDbContext.Assignments
+                .Include(a => a.Nation)
+                .Where(a => a.UserId == userId && a.IsActive)
+                .FirstOrDefaultAsync();
+            if (accesToNation == null)
+            {
+                return Unauthorized(new
+                {
+                    error = "Unauthorized",
+                    message = "User is not game member"
+                });
+            }
+
+            _sessionDataService.SetNation($"{accesToNation.Nation.Id}");
             _sessionDataService.SetSchema($"{game.Name}");
             
             return Ok(new { selectedGameId = game.Id });
@@ -208,7 +205,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 try
                 {
                     if (creteGame.ImageFile.Length == 0) { 
-                        //return 
+                        return BadRequest("Plik obrazu jest pusty lub nie został przesłany.");
                     }
 
                     var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };

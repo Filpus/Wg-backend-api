@@ -1,5 +1,6 @@
 ﻿using Bogus;
 using Wg_backend_api.Models;
+using BCrypt.Net;
 
 namespace Wg_backend_api.Data.Seeders
 {
@@ -20,7 +21,7 @@ namespace Wg_backend_api.Data.Seeders
             }
 
 
-            _globalContext.Users.Add(new User {Name="admin", Email="admin@admin.pl", Password="admin", IsArchived=false });
+            _globalContext.Users.Add(new User {Name="admin", Email="admin@admin.pl", Password=BCrypt.Net.BCrypt.HashPassword("admin"), IsArchived=false });
             _globalContext.Users.AddRange(GetUserGenerator().Generate(50));
             _globalContext.SaveChanges();
             var usersId = _globalContext.Users.Select(u => u.Id).ToList();
@@ -50,7 +51,7 @@ namespace Wg_backend_api.Data.Seeders
         {
             return new Faker<User>().RuleFor(u => u.Name, f => f.Person.UserName)
                 .RuleFor(u => u.Email, f => f.Internet.Email())
-                .RuleFor(u => u.Password, f => f.Internet.Password())
+                .RuleFor(u => u.Password, f => BCrypt.Net.BCrypt.HashPassword(f.Internet.Password()))
                 .RuleFor(u => u.IsArchived, f => f.Random.Bool());
         }
 
@@ -59,7 +60,7 @@ namespace Wg_backend_api.Data.Seeders
 
             return new Faker<Game>().RuleFor(g => g.Name, f => f.Commerce.ProductName())
                 .RuleFor(g => g.Description, f => f.Lorem.Paragraph())
-                .RuleFor(g => g.Image, f => f.Internet.Avatar())
+                .RuleFor(g => g.Image, f => null)
                 .RuleFor(g => g.OwnerId, f => f.PickRandom(usersId));
         }
 
