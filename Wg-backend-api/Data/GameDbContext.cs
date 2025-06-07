@@ -75,208 +75,13 @@ namespace Wg_backend_api.Data
 
             }
             modelBuilder.HasDefaultSchema(_schema);
-            modelBuilder.Entity<AccessToUnit>()
-                .HasKey(atu => atu.Id);
-            modelBuilder.Entity<AccessToUnit>()
-                .HasOne<UnitType>()
-                .WithMany()
-                .HasForeignKey(atu => atu.UnitTypeId);
-            modelBuilder.Entity<AccessToUnit>()
-                .HasOne<Player>()
-                .WithMany()
-                .HasForeignKey(atu => atu.NationId);
-
-            modelBuilder.Entity<UnitOrder>()
-                .HasKey(uo => uo.Id);
-            modelBuilder.Entity<UnitOrder>()
-                .HasOne<UnitType>()
-                .WithMany()
-                .HasForeignKey(uo => uo.UnitTypeId);
-            modelBuilder.Entity<UnitOrder>()
-                .HasOne<Nation>()
-                .WithMany()
-                .HasForeignKey(uo => uo.NationId);
-
-            modelBuilder.Entity<ProductionCost>()
-                .HasKey(pc => pc.Id);
-            modelBuilder.Entity<ProductionCost>()
-                .HasOne<UnitType>()
-                .WithMany()
-                .HasForeignKey(pc => pc.UnitTypeId);
-            modelBuilder.Entity<ProductionCost>()
-                .HasOne<Resource>()
-                .WithMany()
-                .HasForeignKey(pc => pc.ResourceId);
-
-            modelBuilder.Entity<MaintenaceCosts>()
-                .HasKey(mc => mc.Id);
-            modelBuilder.Entity<MaintenaceCosts>()
-                .HasOne<UnitType>()
-                .WithMany()
-                .HasForeignKey(mc => mc.UnitTypeId);
-            modelBuilder.Entity<MaintenaceCosts>()
-                .HasOne<Resource>()
-                .WithMany()
-                .HasForeignKey(mc => mc.ResourceId);
-
-            modelBuilder.Entity<Troop>()
-                .HasKey(t => t.Id);
-            modelBuilder.Entity<Troop>()
-                .HasOne(t => t.UnitType)
-                .WithMany()
-                .HasForeignKey(t => t.UnitTypeId);
-            modelBuilder.Entity<Troop>()
-                .HasOne(t => t.Army)
-                .WithMany(a => a.Troops)
-                .HasForeignKey(t => t.ArmyId);
 
 
 
-            modelBuilder.Entity<Army>()
-                .HasKey(a => a.Id);
-            modelBuilder.Entity<Army>()
-                .HasOne<Nation>()
-                .WithMany()
-                .HasForeignKey(a => a.NationId);
-            modelBuilder.Entity<Army>()
-                .HasOne<Localisation>()
-                .WithMany()
-                .HasForeignKey(a => a.LocationId);
 
-            modelBuilder.Entity<Action>()
-                .HasKey(a => a.Id);
-            modelBuilder.Entity<Action>()
-                .HasOne<Nation>()
-                .WithMany()
-                .HasForeignKey(a => a.NationId);
-
-            modelBuilder.Entity<Player>()
-            .HasOne(p => p.Assignment)
-            .WithOne(a => a.User)
-            .HasForeignKey<Assignment>(a => a.UserId);
-
-            modelBuilder.Entity<Nation>()
-                .HasOne(n => n.Assignment)
-                .WithOne(a => a.Nation)
-                .HasForeignKey<Assignment>(a => a.NationId);
-
-            modelBuilder.Entity<RelatedEvents>()
-                .HasKey(re => re.Id);
-            modelBuilder.Entity<RelatedEvents>()
-                .HasOne<Event>()
-                .WithMany()
-                .HasForeignKey(re => re.EventId);
-            modelBuilder.Entity<RelatedEvents>()
-                .HasOne<Nation>()
-                .WithMany()
-                .HasForeignKey(re => re.NationId);
-
-            modelBuilder.Entity<Modifiers>()
-                .HasKey(m => m.Id);
-            modelBuilder.Entity<Modifiers>()
-                .HasOne<Event>()
-                .WithMany()
-                .HasForeignKey(m => m.EventId);
-            modelBuilder.Entity<Modifiers>()
-                .HasOne<Resource>()
-                .WithMany()
-                .HasForeignKey(m => m.ResourceId);
-            modelBuilder.Entity<Modifiers>()
-                .HasOne<SocialGroup>()
-                .WithMany()
-                .HasForeignKey(m => m.SocialGroupId);
-            modelBuilder.Entity<Modifiers>()
-                .HasOne<Culture>()
-                .WithMany()
-                .HasForeignKey(m => m.CultureId);
-            modelBuilder.Entity<Modifiers>()
-                .HasOne<Religion>()
-                .WithMany()
-                .HasForeignKey(m => m.ReligionId);
-
-            modelBuilder.Entity<Faction>()
-                .HasKey(f => f.Id);
-            modelBuilder.Entity<Faction>()
-                .HasOne<Nation>()
-                .WithMany()
-                .HasForeignKey(f => f.NationId);
-
-            modelBuilder.Entity<Localisation>()
-                .HasKey(l => l.Id);
-            modelBuilder.Entity<Localisation>()
-                .HasOne<Nation>()
-                .WithMany()
-                .HasForeignKey(l => l.NationId);
-
-            modelBuilder.Entity<LocalisationResource>()
-                .HasKey(lr => lr.Id);
-            modelBuilder.Entity<LocalisationResource>()
-                .HasOne<Localisation>()
-                .WithMany()
-                .HasForeignKey(lr => lr.LocationId);    
 
             modelBuilder.Entity<MapAccess>()
                 .HasKey(ma => new { ma.UserId, ma.MapId });
-            modelBuilder.Entity<MapAccess>()
-                .HasOne<Player>()
-                .WithMany()
-                .HasForeignKey(ma => ma.UserId);
-            modelBuilder.Entity<MapAccess>()
-                .HasOne<Map>()
-                .WithMany()
-                .HasForeignKey(ma => ma.MapId);
-
-            modelBuilder.Entity<Population>()
-                .HasKey(p => p.Id);
-            modelBuilder.Entity<Population>()
-                .HasOne<Religion>()
-                .WithMany()
-                .HasForeignKey(p => p.ReligionId);
-            modelBuilder.Entity<Population>()
-                .HasOne<Culture>()
-                .WithMany()
-                .HasForeignKey(p => p.CultureId);
-            modelBuilder.Entity<Population>()
-                .HasOne<SocialGroup>()
-                .WithMany()
-                .HasForeignKey(p => p.SocialGroupId);
-            modelBuilder.Entity<Population>()
-                .HasOne<Localisation>()
-                .WithMany()
-                .HasForeignKey(p => p.LocationId);
-
-            modelBuilder.Entity<TradeAgreement>()
-                .HasKey(ta => ta.Id);
-            modelBuilder.Entity<TradeAgreement>()
-                .HasOne<Nation>()
-                .WithMany()
-                .HasForeignKey(ta => ta.OferingNationId);
-            modelBuilder.Entity<TradeAgreement>()
-                .HasOne<Nation>()
-                .WithMany()
-                .HasForeignKey(ta => ta.ReceivingNationId);
-
-            modelBuilder.Entity<OfferedResource>()
-                .HasKey(or => or.Id);
-            modelBuilder.Entity<OfferedResource>()
-                .HasOne<Resource>()
-                .WithMany()
-                .HasForeignKey(or => or.ResourceId);
-            modelBuilder.Entity<OfferedResource>()
-                .HasOne<TradeAgreement>()
-                .WithMany()
-                .HasForeignKey(or => or.TradeAgreementId);
-
-            modelBuilder.Entity<WantedResource>()
-                .HasKey(wr => wr.Id);
-            modelBuilder.Entity<WantedResource>()
-                .HasOne<Resource>()
-                .WithMany()
-                .HasForeignKey(wr => wr.ResourceId);
-            modelBuilder.Entity<WantedResource>()
-                .HasOne<TradeAgreement>()
-                .WithMany()
-                .HasForeignKey(wr => wr.TradeAgreementId);
             modelBuilder.Entity<Nation>()
               .HasMany<TradeAgreement>()
               .WithOne(ta => ta.OfferingNation)
@@ -289,7 +94,7 @@ namespace Wg_backend_api.Data
                 .WithOne(ta => ta.ReceivingNation)
                 .HasForeignKey(ta => ta.ReceivingNationId)
                 .OnDelete(DeleteBehavior.Restrict);
-
+         
             //modelBuilder.HasDefaultSchema(_schema);
         }
     }

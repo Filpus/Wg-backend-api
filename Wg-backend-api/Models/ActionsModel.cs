@@ -16,7 +16,8 @@ namespace Wg_backend_api.Models
         [Column("fk_Nations")]
         public int NationId { get; set; }
 
-
+        [ForeignKey("NationId")]
+        public Nation Nation { get; set; }
         [Column("name")]
         public string? Name { get; set; }
 

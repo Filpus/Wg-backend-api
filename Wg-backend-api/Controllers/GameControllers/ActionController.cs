@@ -119,7 +119,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok();
         }
 
-        [HttpGet("settled")]
+        [HttpGet("settledAndUnsetled")]
         public async Task<ActionResult> GetSettledAndUnsettledActions()
         {
             var settledActions = await _context.Actions

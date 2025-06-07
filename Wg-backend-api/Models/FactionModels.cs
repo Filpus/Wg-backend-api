@@ -36,5 +36,7 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("color")]
         public string Color { get; set; }
+
+        
     }
 }

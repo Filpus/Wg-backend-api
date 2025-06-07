@@ -98,7 +98,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             // TODO remove if statement in production
             if (true) { 
-                var gameDbContext = _gameDbContextFactory.Create($"game_{game.Id.ToString()}");
+                var gameDbContext = _gameDbContextFactory.Create($"{game.Name}");
 
                 var userInGame = await gameDbContext.Players.Where(u => u.UserId == userId).FirstOrDefaultAsync();
                 if (userInGame == null)
@@ -124,7 +124,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 _sessionDataService.SetNation($"{accesToNation.Nation.Id}");
             
             }
-            _sessionDataService.SetSchema($"game_{game.Id.ToString()}");
+            _sessionDataService.SetSchema($"{game.Name}");
             
             return Ok(new { selectedGameId = game.Id });
         }

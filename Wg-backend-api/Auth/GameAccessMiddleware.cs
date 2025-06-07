@@ -24,37 +24,37 @@ namespace Wg_backend_api.Auth
         {
             var path = context.Request.Path;
 
-            if (!ExcludedPaths.Any(p => path.StartsWithSegments(p)))
-            {
-                var userIdStr = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var gameIdStr = context.Session.GetString("Schema");
-                var nationIdStr = context.Session.GetString("Nation"); // TODO add check for nationIdStr 
+            //if (!ExcludedPaths.Any(p => path.StartsWithSegments(p)))
+            //{
+            //    var userIdStr = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            //    var gameIdStr = context.Session.GetString("Schema");
+            //    var nationIdStr = context.Session.GetString("Nation"); // TODO add check for nationIdStr 
 
-                if (string.IsNullOrEmpty(gameIdStr) || !gameIdStr.StartsWith("game_"))
-                {
-                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                    await context.Response.WriteAsync("Forbidden - invalid game access.");
-                    return;
-                }
-                var idPart = gameIdStr.Replace("game_", "");
+            //    if (string.IsNullOrEmpty(gameIdStr) || !gameIdStr.StartsWith("game_"))
+            //    {
+            //        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            //        await context.Response.WriteAsync("Forbidden - invalid game access.");
+            //        return;
+            //    }
+            //    var idPart = gameIdStr.Replace("game_", "");
 
-                if (!int.TryParse(userIdStr, out int userId) || !int.TryParse(gameIdStr, out int gameId))
-                {
-                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                    await context.Response.WriteAsync("Forbidden - invalid game access.");
-                    return;
-                }
+            //    if (!int.TryParse(userIdStr, out int userId) || !int.TryParse(gameIdStr, out int gameId))
+            //    {
+            //        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            //        await context.Response.WriteAsync("Forbidden - invalid game access.");
+            //        return;
+            //    }
 
-                var hasAccess = await db.GameAccesses
-                    .AnyAsync(a => a.UserId == userId && a.GameId == gameId);
+            //    var hasAccess = await db.GameAccesses
+            //        .AnyAsync(a => a.UserId == userId && a.GameId == gameId);
 
-                if (!hasAccess)
-                {
-                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                    await context.Response.WriteAsync("Forbidden - no access to this game.");
-                    return;
-                }
-            }
+            //    if (!hasAccess)
+            //    {
+            //        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            //        await context.Response.WriteAsync("Forbidden - no access to this game.");
+            //        return;
+            //    }
+            //}
 
             await _next(context);
         }

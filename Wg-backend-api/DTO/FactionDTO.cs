@@ -15,5 +15,6 @@ namespace Wg_backend_api.DTO
 
         public int Contentment { get; set; }
         public string Color { get; set; }
+        public string Description { get; set; } = "";
     }
 }

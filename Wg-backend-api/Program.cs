@@ -42,7 +42,9 @@ namespace Wg_backend_api.Data
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(options =>
             {
-                options.IdleTimeout = TimeSpan.FromMinutes(10); // TODO how many minutes we need?
+                options.IdleTimeout = TimeSpan.FromMinutes(10);
+                options.Cookie.SameSite = SameSiteMode.Lax; // Nie None dla HTTP
+                options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Nie Always dla HTTP// TODO how many minutes we need?
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
@@ -88,7 +90,7 @@ namespace Wg_backend_api.Data
             {
                 options.AddPolicy("AllowAngular", builder =>
                 {
-                    builder.WithOrigins("http://localhost:4200")
+                    builder.WithOrigins("https://localhost:4200", "http://localhost:4200")
                            .AllowCredentials()
                            .AllowAnyHeader()
                            .AllowAnyMethod();
@@ -137,7 +139,6 @@ namespace Wg_backend_api.Data
             });
 
 
-            app.UseSession();
 
             app.UseHttpsRedirection();
 
