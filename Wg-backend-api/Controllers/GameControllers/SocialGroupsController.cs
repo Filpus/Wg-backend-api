@@ -155,7 +155,9 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             var socialGroups = await _context.SocialGroups
                 .Include(sg => sg.UsedResources)
+                    .ThenInclude(ur => ur.Resource)
                 .Include(sg => sg.ProductionShares)
+                    .ThenInclude(ps => ps.Resource)
                 .ToListAsync();
 
             var socialGroupInfoList = socialGroups?.Select(sg => new SocialGroupInfoDTO
