@@ -96,8 +96,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
-            var gameDbContext = _gameDbContextFactory.Create($"{game.Name}");
-
+            var gameDbContext = _gameDbContextFactory.Create($"game_{game.Id}");
+            
             var userInGame = await gameDbContext.Players.Where(u => u.UserId == userId).FirstOrDefaultAsync();
             if (userInGame == null)
             {

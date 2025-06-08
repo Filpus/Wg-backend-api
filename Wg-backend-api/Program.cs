@@ -42,7 +42,7 @@ namespace Wg_backend_api.Data
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(options =>
             {
-                options.IdleTimeout = TimeSpan.FromMinutes(10);
+                options.IdleTimeout = TimeSpan.FromDays(365);
                 options.Cookie.SameSite = SameSiteMode.Lax; // Nie None dla HTTP
                 options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Nie Always dla HTTP// TODO how many minutes we need?
                 options.Cookie.HttpOnly = true;
@@ -151,8 +151,11 @@ namespace Wg_backend_api.Data
 
             app.UseAuthentication();
 
-            app.UseMiddleware<ValidateUserIdMiddleware>();
-            app.UseMiddleware<GameAccessMiddleware>();  
+            if (!args.Contains("--no-login"))
+            {
+                app.UseMiddleware<ValidateUserIdMiddleware>();
+                app.UseMiddleware<GameAccessMiddleware>();  
+            }
 
             app.UseAuthorization();
             app.MapControllers(); // Map controller routes  
