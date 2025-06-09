@@ -158,7 +158,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return _context.Localisations.Any(e => e.Id == id);
         }
 
-        [HttpGet("Nation/{nationId?}/GeneralInfo")]
+        [HttpGet("Nation/GeneralInfo/{nationId?}")]
         public async Task<ActionResult<IEnumerable<LocalisationGeneralInfoDTO>>> GetLocalisationsGeneralInfoByNation(int? nationId)
         {
             if (nationId == null)
@@ -182,7 +182,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
 
 
-           [HttpGet("{id}/Details")]
+           [HttpGet("Details/{id}")]
         public async Task<ActionResult<LocalisationDetailsDTO>> GetLocalisationDetails(int id)
         {
             var localisation = await _context.Localisations
