@@ -45,12 +45,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<MapDTO> { new MapDTO { Id = map.Id, Name = map.MapLocation, MapLocation = map.MapLocation } });
+                return Ok(new List<MapDTO> { new MapDTO { Id = map.Id, Name = map.MapLocation, MapLocation = map.MapLocation, MapIconLocation = map.MapIconLocation } });
             }
             else
             {
                 var maps = await _context.Maps
-                    .Select(map => new MapDTO { Id = map.Id, Name = map.MapLocation, MapLocation = map.MapLocation })
+                    .Select(map => new MapDTO { Id = map.Id, Name = map.MapLocation, MapLocation = map.MapLocation, MapIconLocation = map.MapIconLocation })
                     .ToListAsync();
                 return Ok(maps);
             }
@@ -218,7 +218,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                     {
                         Id = map.Id,
                         Name = map.Name, // Example name, adjust as needed  
-                        MapLocation = map.MapLocation
+                        MapLocation = map.MapLocation,
+                        MapIconLocation = map.MapIconLocation
                     })
                 .ToListAsync();
 

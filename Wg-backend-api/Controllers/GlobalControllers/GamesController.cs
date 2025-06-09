@@ -122,7 +122,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             _sessionDataService.SetNation($"{accesToNation.Nation.Id}");
             _sessionDataService.SetSchema($"game_{game.Id}");
-            
+
             return Ok(new { selectedGameId = game.Id });
         }
 
