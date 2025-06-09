@@ -28,17 +28,14 @@ namespace Wg_backend_api.DTO
 
     public class LocalisationResourceInfoDTO
     {
-        public string Name { get; set; }
         public string ResourceName { get; set; }
         public float Amount { get; set; }
     }
 
     public class LocalisationResourceProductionDTO
     {
-        public string Name { get; set; }
         public string ResourceName { get; set; }
-        public float Amount { get; set; }
-        public float Production { get; set; }
+        public float ProductionAmount { get; set; }
     }
 
     public class LocalisationGeneralInfoDTO
