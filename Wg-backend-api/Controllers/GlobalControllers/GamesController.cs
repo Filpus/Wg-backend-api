@@ -96,7 +96,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
-            var gameDbContext = _gameDbContextFactory.Create($"{game.Name}");
+            var gameDbContext = _gameDbContextFactory.Create($"game_{game.Id}");
             
             var userInGame = await gameDbContext.Players.Where(u => u.UserId == userId).FirstOrDefaultAsync();
             if (userInGame == null)
@@ -121,7 +121,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
 
             _sessionDataService.SetNation($"{accesToNation.Nation.Id}");
-            _sessionDataService.SetSchema($"{game.Name}");
+            _sessionDataService.SetSchema($"game_{game.Id}");
             
             return Ok(new { selectedGameId = game.Id });
         }
