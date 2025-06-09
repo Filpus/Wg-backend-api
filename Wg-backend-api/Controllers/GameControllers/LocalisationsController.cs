@@ -169,6 +169,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Where(l => l.NationId == nationId)
                 .Select(l => new LocalisationGeneralInfoDTO
                 {
+                    Id = (int)l.Id,
                     Name = l.Name,
                     Size = l.Size,
                     Fortification = l.Fortification,
