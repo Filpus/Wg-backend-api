@@ -124,8 +124,11 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 nationId = _nationId;
             }
+
             var navalArmies = await _context.Armies
                 .Where(a => a.NationId == nationId && a.IsNaval)
+                .Include(a => a.Troops)
+                    .ThenInclude(t => t.UnitType)
                 .Select(a => new ArmiesInfoDTO
                 {
                     ArmyId = a.Id.Value,
@@ -133,7 +136,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Location = a.Location.Name,
                     Nation = a.Nation.Id.ToString(),
                     IsNaval = a.IsNaval,
-                    Units = AggregateUnits(a.Id.Value),
+                    Units = a.Troops
+                        .GroupBy(t => t.UnitTypeId)
+                        .Select(g => new TroopsAgregatedDTO
+                        {
+                            UnitTypeName = g.First().UnitType.Name,
+                            Quantity = g.Sum(t => t.Quantity),
+                            TroopCount = g.Count()
+                        })
+                        .ToList(),
                     TotalStrength = a.Troops.Sum(t => t.Quantity)
                 })
                 .ToListAsync();
@@ -151,6 +162,8 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             var armies = await _context.Armies
                 .Where(a => a.NationId == nationId && !a.IsNaval)
+                .Include(a => a.Troops)
+                    .ThenInclude(t => t.UnitType)
                 .Select(a => new ArmiesInfoDTO
                 {
                     ArmyId = a.Id.Value,
@@ -158,7 +171,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Location = a.Location.Name,
                     Nation = a.Nation.Id.ToString(),
                     IsNaval = a.IsNaval,
-                    Units = AggregateUnits(a.Id.Value),
+                    Units = a.Troops
+                        .GroupBy(t => t.UnitTypeId)
+                        .Select(g => new TroopsAgregatedDTO
+                        {
+                            UnitTypeName = g.First().UnitType.Name,
+                            Quantity = g.Sum(t => t.Quantity),
+                            TroopCount = g.Count()
+                        })
+                        .ToList(),
                     TotalStrength = a.Troops.Sum(t => t.Quantity)
                 })
                 .ToListAsync();
@@ -166,20 +187,6 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(armies);
         }
 
-        private List<TroopsAgregatedDTO> AggregateUnits(int armyId)
-        {
-            var troops = _context.Troops.Where(t => t.ArmyId == armyId).ToList();
-
-            return troops
-                .GroupBy(t => t.UnitTypeId)
-                .Select(g => new TroopsAgregatedDTO
-                {
-                    UnitTypeName = g.First().UnitType.Name,
-                    Quantity = g.Sum(t => t.Quantity),
-                    TroopCount = g.Count(),
-                }).ToList();
-        }
-        
 
        
 

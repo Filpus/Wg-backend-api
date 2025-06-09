@@ -206,50 +206,69 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         private List<LocalisationResourceProductionDTO> GetLocalisationResourceProductions(int localisationId)
         {
-            return _context.LocalisationResources
-                .Where(lr => lr.LocationId == localisationId)
-                .Select(lr => new LocalisationResourceProductionDTO
+            var localisationResources = _context.LocalisationResources
+                   .Include(lr => lr.Resource)
+                   .Where(lr => lr.LocationId == localisationId)
+                   .ToList();
+
+            // Pobierz populacje i podziel na grupy społeczne  
+            var populationGroups = _context.Populations
+                .Where(p => p.LocationId == localisationId)
+                .GroupBy(p => p.SocialGroupId)
+                .Select(g => new
                 {
-                    ResourceName = lr.Resource.Name,
-                    Amount = _context.Populations
-                        .Where(p => p.LocationId == localisationId)
-                        .GroupBy(p => p.SocialGroupId)
-                        .SelectMany(g => _context.ProductionShares
-                            .Where(ps => ps.SocialGroupId == g.Key && ps.ResourceId == lr.ResourceId)
-                            .Select(ps => new 
-                            {
-                                PopulationCount = g.Count(),
-                                ps.Coefficient,
-                                lr.Amount
-                            }))
-                        .Sum(x => x.PopulationCount * x.Coefficient * x.Amount)
+                    SocialGroupId = g.Key,
+                    PopulationCount = g.Count()
                 })
                 .ToList();
-        }
 
+            // Pobierz wszystkie udziały produkcyjne dla tej lokalizacji  
+            var productionShares = _context.ProductionShares.ToList();
+
+
+
+            var result = new List<LocalisationResourceProductionDTO>();
+
+            foreach (var lr in localisationResources)
+            {
+                float totalProduction = 0;
+
+                foreach (var group in populationGroups)
+                {
+                    var share = productionShares
+                        .FirstOrDefault(ps => ps.SocialGroupId == group.SocialGroupId && ps.ResourceId == lr.ResourceId);
+
+                    if (share != null)
+                    {
+                        totalProduction += group.PopulationCount * share.Coefficient * lr.Amount;
+                    }
+                }
+
+                result.Add(new LocalisationResourceProductionDTO
+                {
+                    ResourceName = lr.Resource.Name,
+                    ProductionAmount = totalProduction
+                });
+            }
+
+            return result;
+        }
         private List<PopulationGroupDTO> GetPopulationGroups(int localisationId)
         {
-            return _context.Populations
-                           .Where(p => p.LocationId == localisationId)
-                           .GroupBy(p => new { p.SocialGroupId, p.CultureId, p.ReligionId })
-                           .Select(g => new PopulationGroupDTO
-                           {
-                               SocialGroup = _context.SocialGroups
-                                   .Where(sg => sg.Id == g.Key.SocialGroupId)
-                                   .Select(sg => sg.BaseHappiness.ToString())
-                                   .FirstOrDefault(),
-                               Culture = _context.Cultures
-                                   .Where(c => c.Id == g.Key.CultureId)
-                                   .Select(c => c.Id.ToString())
-                                   .FirstOrDefault(),
-                               Religion = _context.Religions
-                                   .Where(r => r.Id == g.Key.ReligionId)
-                                   .Select(r => r.Id.ToString())
-                                   .FirstOrDefault(),
-                               Amount = g.Count(),
-                               Happiness = g.Average(p => p.Happiness)
-                           })
-                           .ToList();
+            var populationGroups =  _context.Populations
+                .Where(p => p.LocationId == localisationId)
+                .GroupBy(p => new { p.ReligionId, p.CultureId, p.SocialGroupId })
+                .Select(g => new PopulationGroupDTO
+                {
+                    Religion = _context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
+                    Culture = _context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
+                    SocialGroup = _context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
+                    Amount = g.Count(),
+                    Happiness = g.Average(p => p.Happiness)
+                })
+                .ToListAsync();
+
+            return populationGroups.Result;
         }
 
         private float CalculateProductionAmount(int resourceId, int localisationId)
