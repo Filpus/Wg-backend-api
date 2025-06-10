@@ -142,7 +142,7 @@ namespace Wg_backend_api.Data
 
             app.UseHttpsRedirection();
 
-            app.UseStaticFiles(); // Teraz z obs�ug� CORS
+            //app.UseStaticFiles(); // Teraz z obs�ug� CORS
 
             app.UseRouting(); // Jawnie dodane
             app.UseSession(); // Tutaj dodajemy middleware sesji

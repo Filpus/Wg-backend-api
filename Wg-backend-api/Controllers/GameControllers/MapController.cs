@@ -1,10 +1,12 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats;
 
 namespace Wg_backend_api.Controllers.GameControllers
 {
@@ -43,12 +45,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<MapDTO> { new MapDTO { Id = map.Id, Name = map.MapLocation, MapLocation = map.MapLocation } });
+                return Ok(new List<MapDTO> { new MapDTO { Id = map.Id, Name = map.MapLocation, MapLocation = map.MapLocation, MapIconLocation = map.MapIconLocation } });
             }
             else
             {
                 var maps = await _context.Maps
-                    .Select(map => new MapDTO { Id = map.Id, Name = map.MapLocation, MapLocation = map.MapLocation })
+                    .Select(map => new MapDTO { Id = map.Id, Name = map.MapLocation, MapLocation = map.MapLocation, MapIconLocation = map.MapIconLocation })
                     .ToListAsync();
                 return Ok(maps);
             }
@@ -128,13 +130,30 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     await mapCreateDTO.ImageFile.CopyToAsync(stream);
                 }
+                // tworznenie ikonki 
+                var thumbnailFileName = $"{Path.GetFileNameWithoutExtension(uniqueFileName)}_thumb{fileExtension}";
+                var thumbnailPath = Path.Combine(uploadsFolder, thumbnailFileName);
+
+                // zapis minitarku
+                using (var image = await Image.LoadAsync(filePath))
+                {
+                    image.Mutate(x => x.Resize(new ResizeOptions
+                    {
+                        Mode = ResizeMode.Max,
+                        Size = new Size(300, 300)
+                    }));
+
+                    await image.SaveAsync(thumbnailPath); 
+                }
 
                 // 8. Zapis do bazy danych
                 var imageUrl = $"/images/{uniqueFileName}";
+                var thumbnailUrl = $"/images/{thumbnailFileName}";
                 var newMap = new Map
                 {
                     Name = mapCreateDTO.Name,
                     MapLocation = imageUrl,
+                    MapIconLocation = thumbnailUrl
                 };
 
                 _context.Maps.Add(newMap);
@@ -145,7 +164,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     Id = newMap.Id,
                     Name = newMap.Name,
-                    MapLocation = $"{Request.Scheme}://{Request.Host}{imageUrl}"
+                    MapLocation = $"{Request.Scheme}://{Request.Host}{imageUrl}",
+                    MapIconLocation = $"{Request.Scheme}://{Request.Host}{thumbnailUrl}"
                 };
 
                 return CreatedAtAction(nameof(GetMaps), new { id = createdMap.Id }, createdMap);
@@ -198,7 +218,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                     {
                         Id = map.Id,
                         Name = map.Name, // Example name, adjust as needed  
-                        MapLocation = map.MapLocation
+                        MapLocation = map.MapLocation,
+                        MapIconLocation = map.MapIconLocation
                     })
                 .ToListAsync();
 

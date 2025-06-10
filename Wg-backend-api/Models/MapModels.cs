@@ -18,6 +18,9 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("mapLocation")]
         public string MapLocation { get; set; }
+        [Required]
+        [Column("mapIconLocation")]
+        public string MapIconLocation { get; set; }
 
         public ICollection<MapAccess> MapAccesses { get; set; }
     }
