@@ -200,7 +200,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
-        [HttpGet("nation/{nationId?}/maps")]
+        [HttpGet("nation/maps/{nationId?}")]
         public async Task<ActionResult<IEnumerable<MapDTO>>> GetNationMaps(int? nationId)
         {
 
@@ -208,16 +208,16 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 nationId = _nationId;
             }
+            
             var nationMaps = await _context.MapAccesses
-                .Where(ma => _context.Localisations
-                    .Any(loc => loc.NationId == nationId && loc.Id == ma.MapId))
+                .Where(ma => ma.NationId == nationId)
                 .Join(_context.Maps,
                     ma => ma.MapId,
                     map => map.Id,
                     (ma, map) => new MapDTO
                     {
                         Id = map.Id,
-                        Name = map.Name, // Example name, adjust as needed  
+                        Name = map.Name, 
                         MapLocation = map.MapLocation,
                         MapIconLocation = map.MapIconLocation
                     })

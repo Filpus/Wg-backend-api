@@ -31,10 +31,10 @@ namespace Wg_backend_api.Controllers.GameControllers
             _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
-        [HttpGet("{userId}/{mapId}")]
-        public async Task<ActionResult<MapAccess>> GetMapAccess(int userId, int mapId)
+        [HttpGet("{nationId}/{mapId}")]
+        public async Task<ActionResult<MapAccess>> GetMapAccess(int nationId, int mapId)
         {
-            var mapAccess = await _context.MapAccesses.FindAsync(userId, mapId);
+            var mapAccess = await _context.MapAccesses.FindAsync(nationId, mapId);
             if (mapAccess == null)
             {
                 return NotFound();
@@ -74,21 +74,27 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<MapAccess>> PostMapAccesses([FromBody] List<MapAccess> mapAccesses)
+        public async Task<ActionResult<MapAccess>> PostMapAccesses([FromBody] List<MapAccessCreateDTO> mapAccessesDto)
         {
-            if (mapAccesses == null || mapAccesses.Count == 0)
+            if (mapAccessesDto == null || mapAccessesDto.Count == 0)
             {
                 return BadRequest("Brak danych do zapisania.");
             }
 
+            var mapAccesses = mapAccessesDto.Select(dto => new MapAccess
+            {
+                NationId = dto.NationId,
+                MapId = dto.MapId
+            }).ToList();
+
             _context.MapAccesses.AddRange(mapAccesses);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetMapAccesses", new { userId = mapAccesses[0].UserId, mapId = mapAccesses[0].MapId }, mapAccesses);
+            return CreatedAtAction("GetMapAccesses", new { nationId = mapAccesses[0].NationId, mapId = mapAccesses[0].MapId }, mapAccesses);
         }
 
         [HttpDelete]
-        public async Task<ActionResult> DeleteMapAccesses([FromBody] List<(int userId, int mapId)> ids)
+        public async Task<ActionResult> DeleteMapAccesses([FromBody] List<(int nationId, int mapId)> ids)
         {
             if (ids == null || ids.Count == 0)
             {
@@ -96,7 +102,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             var mapAccesses = await _context.MapAccesses
-                .Where(ma => ids.Any(id => id.userId == ma.UserId && id.mapId == ma.MapId))
+                .Where(ma => ids.Any(id => id.nationId == ma.NationId && id.mapId == ma.MapId))
                 .ToListAsync();
 
 
