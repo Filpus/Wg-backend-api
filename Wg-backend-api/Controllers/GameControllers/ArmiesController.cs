@@ -187,6 +187,57 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(armies);
         }
 
+        [HttpGet("GetManpowerInfoByNationId/{nationId?}")]
+        public async Task<ActionResult<ManpowerInfoDTO>> GetManpowerInfoByNationId(int? nationId)
+        {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
+
+            if (nationId == null)
+            {
+                return BadRequest("Brak ID państwa.");
+            }
+
+            // Total manpower: Sum of volunteers from all populations by their social groups
+            var totalManpower = await _context.Populations
+                .Where(p => p.Location.NationId == nationId)
+                .SumAsync(p => p.SocialGroup.Volunteers);
+
+            // Manpower in land armies: Sum of all troop quantities in land armies
+            var manpowerInLandArmies = await _context.Armies
+                .Where(a => a.NationId == nationId && !a.IsNaval)
+                .SumAsync(a => a.Troops.Sum(t => t.Quantity));
+
+            // Manpower in naval armies: Sum of all troop quantities in naval armies
+            var manpowerInNavalArmies = await _context.Armies
+                .Where(a => a.NationId == nationId && a.IsNaval)
+                .SumAsync(a => a.Troops.Sum(t => t.Quantity));
+
+            // Recruiting land manpower: Sum of all units in recruitment for land armies
+            var recruitingLandManpower = await _context.UnitOrders
+               .Where(uo => uo.NationId == nationId && !uo.UnitType.IsNaval)
+               .SumAsync(uo => uo.Quantity * uo.UnitType.VolunteersNeeded);
+
+            // Recruiting naval manpower: Sum of all units in recruitment for naval armies  
+            var recruitingNavalManpower = await _context.UnitOrders
+               .Where(uo => uo.NationId == nationId && uo.UnitType.IsNaval)
+               .SumAsync(uo => uo.Quantity * uo.UnitType.VolunteersNeeded);
+
+            var manpowerInfo = new ManpowerInfoDTO
+            {
+                TotalMappower = totalManpower,
+                AvailableManpower = totalManpower - (manpowerInLandArmies + manpowerInNavalArmies + recruitingLandManpower+ recruitingNavalManpower),
+                RecruitingLandManpower = recruitingLandManpower,
+                RecruitingNavalManpower = recruitingNavalManpower,
+                ManpowerInLandArmies = manpowerInLandArmies,
+                ManpowerInNavalArmies = manpowerInNavalArmies
+            };
+
+            return Ok(manpowerInfo);
+        }
+
 
        
 
