@@ -170,11 +170,11 @@ CREATE TABLE default_schema.accessestonations (
 );
 
 CREATE TABLE default_schema."mapAccess" (
-    "fk_Users" integer NOT NULL,
+    "fk_Nations" integer NOT NULL,
     "fk_Maps" integer NOT NULL,
-    CONSTRAINT "PK_mapAccess" PRIMARY KEY ("fk_Users", "fk_Maps"),
+    CONSTRAINT "PK_mapAccess" PRIMARY KEY ("fk_Nations", "fk_Maps"),
     CONSTRAINT "FK_mapAccess_map_fk_Maps" FOREIGN KEY ("fk_Maps") REFERENCES default_schema.map (id) ON DELETE CASCADE,
-    CONSTRAINT "FK_mapAccess_players_fk_Users" FOREIGN KEY ("fk_Users") REFERENCES default_schema.players (id) ON DELETE CASCADE
+    CONSTRAINT "FK_mapAccess_players_fk_Users" FOREIGN KEY ("fk_Nations") REFERENCES default_schema.nations (id) ON DELETE CASCADE
 );
 
 CREATE TABLE default_schema.modifiers (

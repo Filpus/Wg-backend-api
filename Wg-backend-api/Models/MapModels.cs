@@ -29,11 +29,11 @@ namespace Wg_backend_api.Models
     [Table("mapAccess")]
     public class MapAccess
     {
-        [Column("fk_Users")]
+        [Column("fk_Nations")]
         [Key]
-        public int UserId { get; set; }
-        [ForeignKey("UserId")]
-        public Player User { get; set; }
+        public int NationId { get; set; }
+        [ForeignKey("NationId")]
+        public Nation Nation { get; set; }
 
         [Column("fk_Maps")]
         [Key]

@@ -81,7 +81,7 @@ namespace Wg_backend_api.Data
 
 
             modelBuilder.Entity<MapAccess>()
-                .HasKey(ma => new { ma.UserId, ma.MapId });
+                .HasKey(ma => new { ma.NationId, ma.MapId });
 
             modelBuilder.Entity<TradeAgreement>()
                    .HasOne(ta => ta.OfferingNation)
