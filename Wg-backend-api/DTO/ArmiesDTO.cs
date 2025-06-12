@@ -102,6 +102,19 @@ namespace Wg_backend_api.DTO
         public int? Id { get; set; }
         public string UnitTypeName { get; set; }
         public int Quantity { get; set; }
+        public int UsedManpower { get; set; }
+
     }
 
+    public class ManpowerInfoDTO
+    {
+        public int TotalMappower { get; set; }
+        public int AvailableManpower { get; set; }
+        public int RecruitingLandManpower { get; set; }
+        public int RecruitingNavalManpower { get; set; }
+        public int ManpowerInLandArmies { get; set; }
+        public int ManpowerInNavalArmies { get; set; }
+
+
+    }
 }

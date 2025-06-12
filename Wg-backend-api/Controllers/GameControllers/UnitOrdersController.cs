@@ -117,8 +117,9 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
+
         [HttpGet("GetUnitOrdersByNationId/{nationId?}")]
-        public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetUnitOrdersByNationId(int? nationId)
+        public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetNavUnitOrdersByNationId(int? nationId)
         {
             if (nationId == null)
             {
@@ -130,11 +131,58 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     Id = uo.Id,
                     UnitTypeName = uo.UnitType.Name,
-                    Quantity = uo.Quantity
+                    Quantity = uo.Quantity,
+                    UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded // Calculate used manpower  
+
                 })
                 .ToListAsync();
 
             return Ok(unitOrders);
+        }
+
+
+        [HttpGet("GetNavalUnitOrdersByNationId/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetNavalUnitOrdersByNationId(int? nationId)
+        {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
+            var navalUnitOrders = await _context.UnitOrders
+                .Where(uo => uo.NationId == nationId && uo.UnitType.IsNaval) // Assuming UnitType has an IsNaval property
+                .Select(uo => new UnitOrderInfoDTO
+                {
+                    Id = uo.Id,
+                    UnitTypeName = uo.UnitType.Name,
+                    Quantity = uo.Quantity,
+                    UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded // Calculate used manpower  
+
+                })
+                .ToListAsync();
+
+            return Ok(navalUnitOrders);
+        }
+
+        [HttpGet("GetLandUnitOrdersByNationId/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetLandUnitOrdersByNationId(int? nationId)
+        {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
+            var landUnitOrders = await _context.UnitOrders
+                .Where(uo => uo.NationId == nationId && !uo.UnitType.IsNaval) // Assuming UnitType has an IsNaval property
+                .Select(uo => new UnitOrderInfoDTO
+                {
+                    Id = uo.Id,
+                    UnitTypeName = uo.UnitType.Name,
+                    Quantity = uo.Quantity,
+                    UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded // Calculate used manpower  
+
+                })
+                .ToListAsync();
+
+            return Ok(landUnitOrders);
         }
 
         [HttpPost("AddRecruitOrder/{nationId?}")]
@@ -175,6 +223,8 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return CreatedAtAction("GetUnitOrders", new { id = newUnitOrder.Id }, newUnitOrder);
         }
+
+
 
     }
 }
