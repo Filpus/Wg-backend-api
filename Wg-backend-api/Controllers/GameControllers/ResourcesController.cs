@@ -169,7 +169,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok();
         }
 
-        [HttpGet("nation/{nationId?}/resource-balance")]
+        [HttpGet("nation/resource-balance/{nationId?}")]
         public async Task<ActionResult<NationResourceBalanceDto>> GetNationResourceBalance(int? nationId)
         {
 
