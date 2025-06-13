@@ -162,7 +162,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return _context.Populations.Any(e => e.Id == id);
         }
 
-        [HttpGet("nation/{nationId?}/population-groups")]
+        [HttpGet("nation/population-groups/{nationId?}")]
         public async Task<ActionResult<IEnumerable<PopulationGroupDTO>>> GetPopulationGroupsByNation(int? nationId)
         {
             if (nationId == null)
@@ -185,7 +185,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(populationGroups);
         }
 
-        [HttpGet("nation/{nationId?}/population-culture-groups")]
+        [HttpGet("nation/population-culture-groups/{nationId?}")]
         public async Task<ActionResult<IEnumerable<PopulationCultureGroupDTO>>> GetPopulationCultureGroupsByNation(int? nationId)
         {
             if (nationId == null)
@@ -205,7 +205,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(populationGroups);
         }
 
-        [HttpGet("nation/{nationId?}/population-social-groups")]
+        [HttpGet("nation/population-social-groups/{nationId?}")]
         public async Task<ActionResult<IEnumerable<PopulationSocialGroupDTO>>> GetPopulationSocialGroupsByNation(int? nationId)
         {
             if (nationId == null)
@@ -224,7 +224,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .ToListAsync();
             return Ok(populationGroups);
         }
-        [HttpGet("nation/{nationId?}/population-religion-groups")]
+        [HttpGet("nation/population-religion-groups/{nationId?}")]
         public async Task<ActionResult<IEnumerable<PopulationReligiousGroupDTO>>> GetPopulationReligiousGroupsByNation(int? nationId)
         {
             if (nationId == null)
@@ -246,7 +246,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
 
 
-        [HttpGet("location/{locationId}/population-groups")]
+        [HttpGet("location/population-groups/{locationId}")]
         public async Task<ActionResult<IEnumerable<PopulationGroupDTO>>> GetPopulationGroupsByLocation(int locationId)
         {
 
@@ -266,7 +266,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(populationGroups);
         }
 
-        [HttpGet("location/{locationId}/population-culture-groups")]
+        [HttpGet("location/population-culture-groups/{locationId}")]
         public async Task<ActionResult<IEnumerable<PopulationCultureGroupDTO>>> GetPopulationCultureGroupsByLocation(int locationId)
         {
             var populationGroups = await _context.Populations
@@ -281,7 +281,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .ToListAsync();
             return Ok(populationGroups);
         }
-        [HttpGet("location/{locationId}/population-social-groups")]
+        [HttpGet("location/population-social-groups/{locationId}")]
         public async Task<ActionResult<IEnumerable<PopulationSocialGroupDTO>>> GetPopulationSocialGroupsByLocation(int locationId)
         {
             var populationGroups = await _context.Populations
@@ -296,7 +296,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .ToListAsync();
             return Ok(populationGroups);
         }
-        [HttpGet("location/{locationId}/population-religion-groups")]
+        [HttpGet("location/population-religion-groups/{locationId}")]
         public async Task<ActionResult<IEnumerable<PopulationReligiousGroupDTO>>> GetPopulationReligiousGroupsByLocation(int locationId)
         {
             var populationGroups = await _context.Populations
