@@ -185,6 +185,8 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(landUnitOrders);
         }
 
+
+
         [HttpPost("AddRecruitOrder/{nationId?}")]
         public async Task<IActionResult> AddRecruitOrder(int? nationId, [FromBody] RecruitOrderDTO recruitOrder)
         {
@@ -222,6 +224,36 @@ namespace Wg_backend_api.Controllers.GameControllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetUnitOrders", new { id = newUnitOrder.Id }, newUnitOrder);
+        }
+
+        [HttpPatch("UpdateRecruitmentCount")]
+        public async Task<IActionResult> UpdateRecruitmentCount([FromBody] EditOrderDTO editOrder)
+        {
+            if (editOrder == null || editOrder.OrderId <= 0 || editOrder.NewCount < 0)
+            {
+                return BadRequest("Nieprawidłowe dane zlecenia edycji.");
+            }
+
+            var unitOrder = await _context.UnitOrders.FindAsync(editOrder.OrderId);
+            if (unitOrder == null)
+            {  
+                return NotFound("Nie znaleziono zamówienia jednostek o podanym ID.");
+            }
+
+            unitOrder.Quantity = editOrder.NewCount;
+
+            _context.Entry(unitOrder).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return StatusCode(500, "Błąd podczas aktualizacji.");
+            }
+
+            return Ok(unitOrder);
         }
 
 

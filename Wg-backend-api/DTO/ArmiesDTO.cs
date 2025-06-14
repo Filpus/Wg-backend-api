@@ -86,8 +86,13 @@ namespace Wg_backend_api.DTO
         public int Count { get; set; }
     }
 
+    public class EditOrderDTO
+    {
+        public int OrderId { get; set; }
+        public int NewCount { get; set; }
+    }
 
-    public class UnitOrderDTO
+        public class UnitOrderDTO
     {
         public int? Id { get; set; }
         public int UnitTypeId { get; set; }
