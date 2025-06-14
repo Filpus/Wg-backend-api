@@ -56,19 +56,19 @@ namespace Wg_backend_api.Controllers.GameControllers
             return await _context.Nations.ToListAsync();
         }
 
-        [HttpGet("enemy-names")]
-        public async Task<List<NationDTO>> GetenemyNationsNames() {
+        [HttpGet("other-nations")]
+        public async Task<List<NationBaseInfoDTO>> GetOtherNations() {
             var nationId = _sessionDataService.GetNation();
             
             if (string.IsNullOrEmpty(nationId))
             {
-                return new List<NationDTO>();
+                return new List<NationBaseInfoDTO>();
             }
             int id = int.Parse(nationId);
 
             return await _context.Nations
                 .Where(n => n.Id != id)
-                .Select(n => new NationDTO
+                .Select(n => new NationBaseInfoDTO
                 {
                     Id = n.Id,
                     Name = n.Name
