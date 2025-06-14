@@ -1,9 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
@@ -169,7 +165,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok();
         }
 
-        [HttpGet("nation/{nationId?}/resource-balance")]
+        [HttpGet("nation/resource-balance/{nationId?}")]
         public async Task<ActionResult<NationResourceBalanceDto>> GetNationResourceBalance(int? nationId)
         {
 
