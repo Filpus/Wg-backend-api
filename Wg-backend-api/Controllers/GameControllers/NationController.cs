@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
@@ -53,7 +54,26 @@ namespace Wg_backend_api.Controllers.GameControllers
         public async Task<ActionResult<IEnumerable<Nation>>> GetNations()
         {
             return await _context.Nations.ToListAsync();
+        }
 
+        [HttpGet("other-nations")]
+        public async Task<List<NationBaseInfoDTO>> GetOtherNations() {
+            var nationId = _sessionDataService.GetNation();
+            
+            if (string.IsNullOrEmpty(nationId))
+            {
+                return new List<NationBaseInfoDTO>();
+            }
+            int id = int.Parse(nationId);
+
+            return await _context.Nations
+                .Where(n => n.Id != id)
+                .Select(n => new NationBaseInfoDTO
+                {
+                    Id = n.Id,
+                    Name = n.Name
+                })
+                .ToListAsync();
         }
 
         // PUT: api/Religions
