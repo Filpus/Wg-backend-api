@@ -101,6 +101,7 @@ namespace Wg_backend_api.DTO
     {
         public int? Id { get; set; }
         public string UnitTypeName { get; set; }
+        public int UnitTypeId { get; set; }
         public int Quantity { get; set; }
         public int UsedManpower { get; set; }
 

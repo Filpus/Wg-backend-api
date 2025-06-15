@@ -131,6 +131,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     Id = uo.Id,
                     UnitTypeName = uo.UnitType.Name,
+                    UnitTypeId = uo.UnitTypeId,
+
                     Quantity = uo.Quantity,
                     UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded // Calculate used manpower  
 
@@ -155,6 +157,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Id = uo.Id,
                     UnitTypeName = uo.UnitType.Name,
                     Quantity = uo.Quantity,
+                    UnitTypeId = uo.UnitTypeId,
+
                     UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded // Calculate used manpower  
 
                 })
@@ -176,6 +180,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     Id = uo.Id,
                     UnitTypeName = uo.UnitType.Name,
+                    UnitTypeId = uo.UnitTypeId, 
                     Quantity = uo.Quantity,
                     UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded // Calculate used manpower  
 
