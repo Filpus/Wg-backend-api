@@ -90,7 +90,7 @@ namespace Wg_backend_api.Data
             {
                 options.AddPolicy("AllowAngular", builder =>
                 {
-                    builder.WithOrigins("https://localhost:4200", "http://localhost:4200")
+                    builder.WithOrigins("https://localhost:4200", "http://localhost:4200", "https://localhost")
                            .AllowCredentials()
                            .AllowAnyHeader()
                            .AllowAnyMethod();
