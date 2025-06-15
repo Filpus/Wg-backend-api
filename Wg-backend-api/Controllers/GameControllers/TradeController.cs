@@ -47,8 +47,6 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .OrderByDescending(t => t.Id)
                 .FirstOrDefaultAsync();
 
-
-
             return Ok(latestTradeAgreement?.Id);
         }
 
@@ -159,14 +157,14 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpPost("CreateTradeAgreementWithResources/{offeringNationId?}")]
-        public async Task<ActionResult<int>> CreateTradeAgreementWithResources( int? offeringNationId, [FromBody] OfferTradeAgreementDTO offerTradeAgreementDTO)
+        public async Task<ActionResult<int>> CreateTradeAgreementWithResources(int? offeringNationId, [FromBody] OfferTradeAgreementDTO offerTradeAgreementDTO)
         {
             if (offeringNationId == null)
             {
                 offeringNationId = _nationId;
             }
 
-            if (offerTradeAgreementDTO == null || offerTradeAgreementDTO.offeredResources.Count == 0 || offerTradeAgreementDTO.requestedResources.Count == 0)
+            if (offerTradeAgreementDTO == null || (offerTradeAgreementDTO.offeredResources.Count == 0 && offerTradeAgreementDTO.requestedResources.Count == 0))
             {
                 return BadRequest("Brak danych do zapisania.");
             }
@@ -180,7 +178,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 WantedResources = new List<WantedResource>()
             };
 
-          
+
 
             // Dodanie oferowanych zasobów z przypisaniem ID umowy
             // Po zapisaniu obiektu w bazie danych, właściwość Id jest automatycznie przypisana.  
@@ -225,6 +223,35 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(tradeAgreement.Id);
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteTradeAgreement(int id)
+        {
+            var tradeAgreement = await _context.TradeAgreements.FindAsync(id);
+            if (tradeAgreement == null)
+            {
+                return NotFound(new { error = "Umowa handlowa nie została znaleziona." });
+            }
+            _context.TradeAgreements.Remove(tradeAgreement);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpPost("AcceptTrade/{id}")]
+        public async Task<IActionResult> AcceptTrade(int id) {
+            var tradeAgreement = await _context.TradeAgreements.FindAsync(id);
+            if (tradeAgreement == null)
+            {
+                return NotFound(new {error =  "Umowa handlowa nie została znaleziona."});
+            }
+            if (tradeAgreement.isAccepted)
+            {
+                return BadRequest(new { error = "Umowa handlowa została już zaakceptowana." });
+            }
+            tradeAgreement.isAccepted = true;
+            _context.TradeAgreements.Update(tradeAgreement);
+            await _context.SaveChangesAsync();
+            return Ok(new { message =  "Umowa handlowa została zaakceptowana."});
+        }
     }
 }
 
