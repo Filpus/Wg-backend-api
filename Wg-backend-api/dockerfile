@@ -1,0 +1,32 @@
+# Argumenty dla wersji .NET i konfiguracji
+ARG DOTNET_VERSION=8.0
+ARG BUILD_CONFIGURATION=Release
+
+# Etap 1: Kompilacja (Build Stage)
+FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
+WORKDIR /src
+
+# Kopiowanie pliku projektu (.csproj) i przywracanie zale¿noœci
+COPY *.csproj ./
+RUN dotnet restore
+
+# Kopiowanie ca³ego kodu Ÿród³owego
+COPY . ./
+
+# Publikacja aplikacji
+RUN dotnet publish "Wg-backend-api.csproj" -c Release -o /app/publish 
+
+# Etap 2: Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION} AS runtime
+WORKDIR /app
+
+# Kopiowanie opublikowanej aplikacji z etapu kompilacji
+COPY --from=build /app/publish .
+COPY Resources/Images /app/Resources/Images
+
+# Eksponowanie portów (dla .NET 8+ domyœlnie 8080 i 8081)
+
+EXPOSE 7105
+
+# Punkt wejœcia aplikacji
+ENTRYPOINT ["dotnet", "Wg-backend-api.dll"]

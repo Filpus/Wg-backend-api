@@ -311,5 +311,25 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .ToListAsync();
             return Ok(populationGroups);
         }
+
+        [HttpGet("nation/total-population-info/{nationId?}")]
+        public async Task<ActionResult<TotalPopulationInfoDTO>> GetTotalPopulationInfo(int? nationId)
+        {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
+            var totalPopulation = await _context.Populations
+                .Where(p => _context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
+                .CountAsync();
+            var averageHappiness = await _context.Populations
+                .Where(p => _context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
+                .AverageAsync(p => p.Happiness);
+            return Ok(new TotalPopulationInfoDTO
+            {
+                TotalPopulation = totalPopulation,
+                AverageHappiness = averageHappiness
+            });
+        }
     }
 }

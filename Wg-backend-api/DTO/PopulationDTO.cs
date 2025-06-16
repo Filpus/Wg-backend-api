@@ -46,4 +46,10 @@ namespace Wg_backend_api.DTO
         public int Amount { get; set; }
         public float Happiness { get; set; }
     }
+    public class TotalPopulationInfoDTO
+    {
+        public int TotalPopulation { get; set; }
+        public float AverageHappiness { get; set; }
+
+    }
 }
