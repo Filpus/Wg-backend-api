@@ -20,7 +20,17 @@ namespace Wg_backend_api.Data
         static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            var connectionString = "";
+            if (builder.Environment.IsDevelopment())
+            {
+                connectionString = builder.Configuration.GetConnectionString("DevConection");
+
+            }
+            else
+            {
+                connectionString = builder.Configuration.GetConnectionString("DeploymentConection");
+
+            }
 
             // Add DbContexts  
             builder.Services.AddDbContext<GlobalDbContext>(options =>
@@ -90,7 +100,7 @@ namespace Wg_backend_api.Data
             {
                 options.AddPolicy("AllowAngular", builder =>
                 {
-                    builder.WithOrigins("https://localhost:4200", "http://localhost:4200", "https://localhost")
+                    builder.WithOrigins("https://localhost:4200", "http://localhost:4200", "https://localhost", "https://wargameshub.pl")
                            .AllowCredentials()
                            .AllowAnyHeader()
                            .AllowAnyMethod();
@@ -140,7 +150,7 @@ namespace Wg_backend_api.Data
 
 
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             //app.UseStaticFiles(); // Teraz z obs�ug� CORS
 
