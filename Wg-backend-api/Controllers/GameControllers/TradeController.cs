@@ -50,43 +50,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(latestTradeAgreement?.Id);
         }
 
-        [HttpPost("OfferedResources")]
-        public async Task<ActionResult<IEnumerable<OfferedResource>>> PostOfferedResources([FromBody] List<OfferedResource> offeredResources)
-        {
-            if (offeredResources == null || offeredResources.Count == 0)
-            {
-                return BadRequest("Brak danych do zapisania.");
-            }
 
-            foreach (var resource in offeredResources)
-            {
-                resource.Id = null;
-            }
-
-            _context.OfferedResources.AddRange(offeredResources);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetOfferedResources", new { id = offeredResources[0].Id }, offeredResources);
-        }
-
-        [HttpPost("WantedResources")]
-        public async Task<ActionResult<IEnumerable<WantedResource>>> PostWantedResources([FromBody] List<WantedResource> wantedResources)
-        {
-            if (wantedResources == null || wantedResources.Count == 0)
-            {
-                return BadRequest("Brak danych do zapisania.");
-            }
-
-            foreach (var resource in wantedResources)
-            {
-                resource.Id = null;
-            }
-
-            _context.WantedResources.AddRange(wantedResources);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetWantedResources", new { id = wantedResources[0].Id }, wantedResources);
-        }
 
         [HttpGet("OfferedTradeAgreements/{nationId?}")]
         public async Task<ActionResult<IEnumerable<TradeAgreementInfoDTO>>> GetOfferedTradeAgreements(int? nationId)

@@ -25,78 +25,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
         }
-        // GET: api/RelatedEvents
-        // GET: api/RelatedEvents/5
-        [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<RelatedEvents>>> GetRelatedEvents(int? id)
-        {
-            if (id.HasValue)
-            {
-                var relatedEvent = await _context.RelatedEvents.FindAsync(id);
-                if (relatedEvent == null)
-                {
-                    return NotFound();
-                }
-                return Ok(new List<RelatedEvents> { relatedEvent });
-            }
-            else
-            {
-                return await _context.RelatedEvents.ToListAsync();
-            }
-        }
-
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<RelatedEvents>>> GetRelatedEvents()
-        {
-            return await _context.RelatedEvents.ToListAsync();
-        }
-
-        // PUT: api/RelatedEvents
-        [HttpPut]
-        public async Task<IActionResult> PutRelatedEvents([FromBody] List<RelatedEvents> relatedEvents)
-        {
-            if (relatedEvents == null || relatedEvents.Count == 0)
-            {
-                return BadRequest("Brak danych do edycji.");
-            }
-
-            foreach (var relatedEvent in relatedEvents)
-            {
-                _context.Entry(relatedEvent).State = EntityState.Modified;
-            }
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "Błąd podczas aktualizacji.");
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/RelatedEvents
-        [HttpPost]
-        public async Task<ActionResult<RelatedEvents>> PostRelatedEvents([FromBody] List<RelatedEvents> relatedEvents)
-        {
-            if (relatedEvents == null || relatedEvents.Count == 0)
-            {
-                return BadRequest("Brak danych do zapisania.");
-            }
-
-            foreach (RelatedEvents relatedEvent in relatedEvents)
-            {
-                // Assuming RelatedEvents has an Id property
-                relatedEvent.Id = null;
-            }
-
-            _context.RelatedEvents.AddRange(relatedEvents);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetRelatedEvents", new { id = relatedEvents[0].Id }, relatedEvents);
-        }
+  
 
         // DELETE: api/RelatedEvents
         [HttpDelete]

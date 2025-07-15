@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
@@ -27,10 +28,9 @@ namespace Wg_backend_api.Controllers.GameControllers
             _context = _gameDbContextFactory.Create(schema);
         }
 
-        // GET: api/Troops
-        // GET: api/Troops/5
+        // GET: api/Troops/5  
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<Troop>>> GetTroops(int? id)
+        public async Task<ActionResult<IEnumerable<TroopDTO>>> GetTroops(int? id)
         {
             if (id.HasValue)
             {
@@ -39,25 +39,47 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<Troop> { troop });
+                var troopDTO = new TroopDTO
+                {
+                    Id = troop.Id,
+                    UnitTypeId = troop.UnitTypeId,
+                    ArmyId = troop.ArmyId,
+                    Quantity = troop.Quantity
+                };
+                return Ok(new List<TroopDTO> { troopDTO });
             }
             else
             {
-                return await _context.Troops.ToListAsync();
+                var troops = await _context.Troops.ToListAsync();
+                var troopDTOs = troops.Select(t => new TroopDTO
+                {
+                    Id = t.Id,
+                    UnitTypeId = t.UnitTypeId,
+                    ArmyId = t.ArmyId,
+                    Quantity = t.Quantity
+                }).ToList();
+                return Ok(troopDTOs);
             }
         }
 
-        // PUT: api/Troops
+        // PUT: api/Troops  
         [HttpPut]
-        public async Task<IActionResult> PutTroops([FromBody] List<Troop> troops)
+        public async Task<IActionResult> PutTroops([FromBody] List<TroopDTO> troopDTOs)
         {
-            if (troops == null || troops.Count == 0)
+            if (troopDTOs == null || troopDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do edycji.");
             }
 
-            foreach (var troop in troops)
+            foreach (var troopDTO in troopDTOs)
             {
+                var troop = new Troop
+                {
+                    Id = troopDTO.Id,
+                    UnitTypeId = troopDTO.UnitTypeId,
+                    ArmyId = troopDTO.ArmyId,
+                    Quantity = troopDTO.Quantity
+                };
                 _context.Entry(troop).State = EntityState.Modified;
             }
 
@@ -73,24 +95,35 @@ namespace Wg_backend_api.Controllers.GameControllers
             return NoContent();
         }
 
-        // POST: api/Troops
+        // POST: api/Troops  
         [HttpPost]
-        public async Task<ActionResult<Troop>> PostTroops([FromBody] List<Troop> troops)
+        public async Task<ActionResult<List<TroopDTO>>> PostTroops([FromBody] List<TroopDTO> troopDTOs)
         {
-            if (troops == null || troops.Count == 0)
+            if (troopDTOs == null || troopDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            foreach (Troop troop in troops)
+            var troops = troopDTOs.Select(t => new Troop
             {
-                troop.Id = null;
-            }
+                Id = null,
+                UnitTypeId = t.UnitTypeId,
+                ArmyId = t.ArmyId,
+                Quantity = t.Quantity
+            }).ToList();
 
             _context.Troops.AddRange(troops);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetTroops", new { id = troops[0].Id }, troops);
+            var createdTroopDTOs = troops.Select(t => new TroopDTO
+            {
+                Id = t.Id,
+                UnitTypeId = t.UnitTypeId,
+                ArmyId = t.ArmyId,
+                Quantity = t.Quantity
+            }).ToList();
+
+            return CreatedAtAction("GetTroops", new { id = createdTroopDTOs[0].Id }, createdTroopDTOs);
         }
 
         // DELETE: api/Troops

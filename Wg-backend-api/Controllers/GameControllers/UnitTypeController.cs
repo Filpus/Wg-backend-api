@@ -30,10 +30,10 @@ namespace Wg_backend_api.Controllers.GameControllers
             string nationIdStr = _sessionDataService.GetNation();
             _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
-        // GET: api/UnitTypes
-        // GET: api/UnitTypes/5
+        // GET: api/UnitTypes  
+        // GET: api/UnitTypes/5  
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<UnitType>>> GetUnitTypes(int? id)
+        public async Task<ActionResult<IEnumerable<UnitTypeDTO>>> GetUnitTypes(int? id)
         {
             if (id.HasValue)
             {
@@ -42,25 +42,71 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<UnitType> { unitType });
+                var unitTypeDTO = new UnitTypeDTO
+                {
+                    UnitId = unitType.Id.Value,
+                    UnitName = unitType.Name,
+                    Description = unitType.Description,
+                    UnitType = unitType.Type,
+                    Quantity = unitType.VolunteersNeeded,
+                    Melee = unitType.Melee,
+                    Range = unitType.Range,
+                    Defense = unitType.Defense,
+                    Speed = unitType.Speed,
+                    Morale = unitType.Morale,
+                    IsNaval = unitType.IsNaval
+                };
+                return Ok(new List<UnitTypeDTO> { unitTypeDTO });
             }
             else
             {
-                return await _context.UnitTypes.ToListAsync();
+                var unitTypes = await _context.UnitTypes.ToListAsync();
+                var unitTypeDTOs = unitTypes.Select(ut => new UnitTypeDTO
+                {
+                    UnitId = ut.Id.Value,
+                    UnitName = ut.Name,
+                    Description = ut.Description,
+                    UnitType = ut.Type,
+                    Quantity = ut.VolunteersNeeded,
+                    Melee = ut.Melee,
+                    Range = ut.Range,
+                    Defense = ut.Defense,
+                    Speed = ut.Speed,
+                    Morale = ut.Morale,
+                    IsNaval = ut.IsNaval
+                }).ToList();
+                return Ok(unitTypeDTOs);
             }
         }
 
-        // PUT: api/UnitTypes
+        // PUT: api/UnitTypes  
         [HttpPut]
-        public async Task<IActionResult> PutUnitTypes([FromBody] List<UnitType> unitTypes)
+        public async Task<IActionResult> PutUnitTypes([FromBody] List<UnitTypeDTO> unitTypeDTOs)
         {
-            if (unitTypes == null || unitTypes.Count == 0)
+            if (unitTypeDTOs == null || unitTypeDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do edycji.");
             }
 
-            foreach (var unitType in unitTypes)
+            foreach (var unitTypeDTO in unitTypeDTOs)
             {
+                var unitType = await _context.UnitTypes.FindAsync(unitTypeDTO.UnitId);
+                if (unitType == null)
+                {
+                    return NotFound($"Nie znaleziono jednostki o ID {unitTypeDTO.UnitId}.");
+                }
+
+                unitType.Name = unitTypeDTO.UnitName;
+                unitType.Description = unitTypeDTO.Description;
+                unitType.Type = unitTypeDTO.UnitType;
+                unitType.VolunteersNeeded = unitTypeDTO.Quantity;
+                unitType.Melee = unitTypeDTO.Melee;
+                unitType.Range = unitTypeDTO.Range;
+                unitType.Defense = unitTypeDTO.Defense;
+                unitType.Speed = unitTypeDTO.Speed;
+                unitType.Morale = unitTypeDTO.Morale;
+                unitType.IsNaval = unitTypeDTO.IsNaval;
+
                 _context.Entry(unitType).State = EntityState.Modified;
             }
 
@@ -76,24 +122,48 @@ namespace Wg_backend_api.Controllers.GameControllers
             return NoContent();
         }
 
-        // POST: api/UnitTypes
+        // POST: api/UnitTypes  
         [HttpPost]
-        public async Task<ActionResult<UnitType>> PostUnitTypes([FromBody] List<UnitType> unitTypes)
+        public async Task<ActionResult<UnitTypeDTO>> PostUnitTypes([FromBody] List<UnitTypeDTO> unitTypeDTOs)
         {
-            if (unitTypes == null || unitTypes.Count == 0)
+            if (unitTypeDTOs == null || unitTypeDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            foreach (UnitType unitType in unitTypes)
+            var unitTypes = unitTypeDTOs.Select(dto => new UnitType
             {
-                unitType.Id = null;
-            }
+                Name = dto.UnitName,
+                Description = dto.Description,
+                Type = dto.UnitType,
+                VolunteersNeeded = dto.Quantity,
+                Melee = dto.Melee,
+                Range = dto.Range,
+                Defense = dto.Defense,
+                Speed = dto.Speed,
+                Morale = dto.Morale,
+                IsNaval = dto.IsNaval
+            }).ToList();
 
             _context.UnitTypes.AddRange(unitTypes);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUnitTypes", new { id = unitTypes[0].Id }, unitTypes);
+            var createdDTOs = unitTypes.Select(ut => new UnitTypeDTO
+            {
+                UnitId = ut.Id.Value,
+                UnitName = ut.Name,
+                Description = ut.Description,
+                UnitType = ut.Type,
+                Quantity = ut.VolunteersNeeded,
+                Melee = ut.Melee,
+                Range = ut.Range,
+                Defense = ut.Defense,
+                Speed = ut.Speed,
+                Morale = ut.Morale,
+                IsNaval = ut.IsNaval
+            }).ToList();
+
+            return CreatedAtAction("GetUnitTypes", new { id = createdDTOs[0].UnitId }, createdDTOs);
         }
 
         // DELETE: api/UnitTypes

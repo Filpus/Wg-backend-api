@@ -32,68 +32,6 @@ namespace Wg_backend_api.Controllers.GameControllers
             _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
-        [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<Event>>> GetEvents(int? id)
-        {
-            if (id.HasValue)
-            {
-                var eventItem = await _context.Events.FindAsync(id);
-                if (eventItem == null)
-                {
-                    return NotFound();
-                }
-                return Ok(new List<Event> { eventItem });
-            }
-            else
-            {
-                return await _context.Events.ToListAsync();
-            }
-        }
-
-        [HttpPut]
-        public async Task<IActionResult> PutEvents([FromBody] List<Event> events)
-        {
-            if (events == null || events.Count == 0)
-            {
-                return BadRequest("Brak danych do edycji.");
-            }
-
-            foreach (var eventItem in events)
-            {
-                _context.Entry(eventItem).State = EntityState.Modified;
-            }
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "Błąd podczas aktualizacji.");
-            }
-
-            return NoContent();
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<Event>> PostEvents([FromBody] List<Event> events)
-        {
-            if (events == null || events.Count == 0)
-            {
-                return BadRequest("Brak danych do zapisania.");
-            }
-
-            foreach (Event eventItem in events)
-            {
-                eventItem.Id = null;
-            }
-
-            _context.Events.AddRange(events);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetEvents", new { id = events[0].Id }, events);
-        }
-
         [HttpDelete]
         public async Task<ActionResult> DeleteEvents([FromBody] List<int?> ids)
         {
