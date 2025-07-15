@@ -32,69 +32,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
         // GET: api/UnitOrders
         // GET: api/UnitOrders/5
-        [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<UnitOrder>>> GetUnitOrders(int? id)
-        {
-            if (id.HasValue)
-            {
-                var unitOrder = await _context.UnitOrders.FindAsync(id);
-                if (unitOrder == null)
-                {
-                    return NotFound();
-                }
-                return Ok(new List<UnitOrder> { unitOrder });
-            }
-            else
-            {
-                return await _context.UnitOrders.ToListAsync();
-            }
-        }
 
-        // PUT: api/UnitOrders
-        [HttpPut]
-        public async Task<IActionResult> PutUnitOrders([FromBody] List<UnitOrder> unitOrders)
-        {
-            if (unitOrders == null || unitOrders.Count == 0)
-            {
-                return BadRequest("Brak danych do edycji.");
-            }
-
-            foreach (var unitOrder in unitOrders)
-            {
-                _context.Entry(unitOrder).State = EntityState.Modified;
-            }
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "Błąd podczas aktualizacji.");
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/UnitOrders
-        [HttpPost]
-        public async Task<ActionResult<UnitOrder>> PostUnitOrders([FromBody] List<UnitOrder> unitOrders)
-        {
-            if (unitOrders == null || unitOrders.Count == 0)
-            {
-                return BadRequest("Brak danych do zapisania.");
-            }
-
-            foreach (UnitOrder unitOrder in unitOrders)
-            {
-                unitOrder.Id = null;
-            }
-
-            _context.UnitOrders.AddRange(unitOrders);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetUnitOrders", new { id = unitOrders[0].Id }, unitOrders);
-        }
 
         // DELETE: api/UnitOrders
         [HttpDelete]

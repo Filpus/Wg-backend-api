@@ -29,10 +29,9 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             _context = _gameDbContextFactory.Create(schema);
         }
-        // GET: api/Religions
-        // GET: api/Religions/5
+
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<Nation>>> GetNations(int? id)
+        public async Task<ActionResult<IEnumerable<NationDTO>>> GetNations(int? id)
         {
             if (id.HasValue)
             {
@@ -41,25 +40,51 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<Nation> { nation });
+                return Ok(new List<NationDTO>
+                {
+                    new NationDTO
+                    {
+                        Id = nation.Id,
+                        Name = nation.Name,
+                        ReligionId = nation.ReligionId,
+                        CultureId = nation.CultureId,
+                        AssignmentIsActive = false // Placeholder, adjust logic as needed  
+                    }
+                });
             }
             else
             {
-                return await _context.Nations.ToListAsync();
+                var nations = await _context.Nations.ToListAsync();
+                return Ok(nations.Select(n => new NationDTO
+                {
+                    Id = n.Id,
+                    Name = n.Name,
+                    ReligionId = n.ReligionId,
+                    CultureId = n.CultureId,
+                    AssignmentIsActive = false // Placeholder, adjust logic as needed  
+                }));
             }
         }
 
-
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Nation>>> GetNations()
+        public async Task<ActionResult<IEnumerable<NationDTO>>> GetNations()
         {
-            return await _context.Nations.ToListAsync();
+            var nations = await _context.Nations.ToListAsync();
+            return Ok(nations.Select(n => new NationDTO
+            {
+                Id = n.Id,
+                Name = n.Name,
+                ReligionId = n.ReligionId,
+                CultureId = n.CultureId,
+                AssignmentIsActive = false // Placeholder, adjust logic as needed  
+            }));
         }
 
         [HttpGet("other-nations")]
-        public async Task<List<NationBaseInfoDTO>> GetOtherNations() {
+        public async Task<List<NationBaseInfoDTO>> GetOtherNations()
+        {
             var nationId = _sessionDataService.GetNation();
-            
+
             if (string.IsNullOrEmpty(nationId))
             {
                 return new List<NationBaseInfoDTO>();
@@ -76,17 +101,26 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .ToListAsync();
         }
 
-        // PUT: api/Religions
         [HttpPut]
-        public async Task<IActionResult> PutNations([FromBody] List<Nation> nations)
+        public async Task<IActionResult> PutNations([FromBody] List<NationDTO> nations)
         {
             if (nations == null || nations.Count == 0)
             {
                 return BadRequest("Brak danych do edycji.");
             }
 
-            foreach (var nation in nations)
+            foreach (var nationDto in nations)
             {
+                var nation = await _context.Nations.FindAsync(nationDto.Id);
+                if (nation == null)
+                {
+                    return NotFound($"Nie znaleziono państwa o ID {nationDto.Id}.");
+                }
+
+                nation.Name = nationDto.Name;
+                nation.ReligionId = nationDto.ReligionId;
+                nation.CultureId = nationDto.CultureId;
+
                 _context.Entry(nation).State = EntityState.Modified;
             }
 
@@ -102,27 +136,34 @@ namespace Wg_backend_api.Controllers.GameControllers
             return NoContent();
         }
 
-        // POST: api/Religions
         [HttpPost]
-        public async Task<ActionResult<Nation>> PostNations([FromBody] List<Nation> nations)
+        public async Task<ActionResult<NationDTO>> PostNations([FromBody] List<NationDTO> nations)
         {
             if (nations == null || nations.Count == 0)
             {
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            foreach (Nation nation in nations)
+            var newNations = nations.Select(nationDto => new Nation
             {
-                nation.Id = null;
-            }
+                Name = nationDto.Name,
+                ReligionId = nationDto.ReligionId,
+                CultureId = nationDto.CultureId
+            }).ToList();
 
-            _context.Nations.AddRange(nations);
+            _context.Nations.AddRange(newNations);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetNations", new { id = nations[0].Id }, nations);
+            return CreatedAtAction("GetNations", new { id = newNations[0].Id }, newNations.Select(n => new NationDTO
+            {
+                Id = n.Id,
+                Name = n.Name,
+                ReligionId = n.ReligionId,
+                CultureId = n.CultureId,
+                AssignmentIsActive = false // Placeholder, adjust logic as needed  
+            }));
         }
 
-        // DELETE: api/Religions
         [HttpDelete]
         public async Task<ActionResult> DeleteNations([FromBody] List<int?> ids)
         {
@@ -135,7 +176,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             if (nations.Count == 0)
             {
-                return NotFound("Nie znaleziono panstwa do usunięcia.");
+                return NotFound("Nie znaleziono państwa do usunięcia.");
             }
 
             _context.Nations.RemoveRange(nations);
