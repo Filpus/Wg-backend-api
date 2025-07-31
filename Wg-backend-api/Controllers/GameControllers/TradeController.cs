@@ -40,6 +40,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             tradeAgreement.Id = null;
+            tradeAgreement.Status = TradeStatus.Pending;
             _context.TradeAgreements.Add(tradeAgreement);
             await _context.SaveChangesAsync();
 
@@ -96,14 +97,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 nationId = _nationId;
             }
             var tradeAgreements = await _context.TradeAgreements
-                .Where(t => t.OferingNationId == nationId)
+                .Where(t => t.OfferingNationId == nationId)
                 .Select(t => new TradeAgreementInfoDTO
                 {
                     Id = t.Id,
-                    OfferingNationName = _context.Nations.FirstOrDefault(n => n.Id == t.OferingNationId).Name,
+                    OfferingNationName = _context.Nations.FirstOrDefault(n => n.Id == t.OfferingNationId).Name,
                     ReceivingNationName = _context.Nations.FirstOrDefault(n => n.Id == t.ReceivingNationId).Name,
-                    IsActive = t.isAccepted,
+                    Status = t.Status.ToString(),
                     Duration = t.Duration, // Assuming duration is not stored in the database  
+                    Description = t.Description,
                     OfferedResources = t.OfferedResources.Select(r => new ResourceAmountDto
                     {
                         ResourceId = r.ResourceId,
@@ -134,9 +136,10 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Select(t => new TradeAgreementInfoDTO
                 {
                     Id = t.Id,
-                    OfferingNationName = _context.Nations.FirstOrDefault(n => n.Id == t.OferingNationId).Name,
+                    OfferingNationName = _context.Nations.FirstOrDefault(n => n.Id == t.OfferingNationId).Name,
                     ReceivingNationName = _context.Nations.FirstOrDefault(n => n.Id == t.ReceivingNationId).Name,
-                    IsActive = t.isAccepted,
+                    Status = t.Status.ToString(),
+                    Description = t.Description,
                     Duration = t.Duration, // Assuming duration is not stored in the database  
                     OfferedResources = t.OfferedResources.Select(r => new ResourceAmountDto
                     {
@@ -172,10 +175,13 @@ namespace Wg_backend_api.Controllers.GameControllers
             // Tworzenie nowej umowy handlowej
             var tradeAgreement = new TradeAgreement
             {
-                OferingNationId = (int)offeringNationId,
+                OfferingNationId = (int)offeringNationId,
                 ReceivingNationId = offerTradeAgreementDTO.receivingNationId,
                 OfferedResources = new List<OfferedResource>(),
-                WantedResources = new List<WantedResource>()
+                WantedResources = new List<WantedResource>(),
+                Status = TradeStatus.Pending,
+                Duration = offerTradeAgreementDTO.Duration,
+                Description = offerTradeAgreementDTO.Description ?? ""
             };
 
 
@@ -243,14 +249,50 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 return NotFound(new {error =  "Umowa handlowa nie została znaleziona."});
             }
-            if (tradeAgreement.isAccepted)
+            if (tradeAgreement.Status != TradeStatus.Pending)
             {
-                return BadRequest(new { error = "Umowa handlowa została już zaakceptowana." });
+                return BadRequest(new { error = "Umowa handlowa została już zaakceptowana lub odrzucona." });
             }
-            tradeAgreement.isAccepted = true;
+            tradeAgreement.Status = TradeStatus.Accepted;
             _context.TradeAgreements.Update(tradeAgreement);
             await _context.SaveChangesAsync();
             return Ok(new { message =  "Umowa handlowa została zaakceptowana."});
+        }
+
+        [HttpPost("CancelTrade/{id}")]
+        public async Task<IActionResult> CancelTrade(int id)
+        {
+            var tradeAgreement = await _context.TradeAgreements.FindAsync(id);
+            if (tradeAgreement == null)
+            {
+                return NotFound(new { error = "Umowa handlowa nie została znaleziona." });
+            }
+            if (tradeAgreement.Status != TradeStatus.Cancelled && tradeAgreement.Status != TradeStatus.Rejected)
+            {
+                return BadRequest(new { error = "Umowa handlowa została już anulowana lub odrzucona" });
+            }
+            tradeAgreement.Status = TradeStatus.Accepted;
+            _context.TradeAgreements.Update(tradeAgreement);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Umowa handlowa została anulowana." });
+        }
+
+        [HttpPost("RejectTrade/{id}")]
+        public async Task<IActionResult> RejectTrade(int id)
+        {
+            var tradeAgreement = await _context.TradeAgreements.FindAsync(id);
+            if (tradeAgreement == null)
+            {
+                return NotFound(new { error = "Umowa handlowa nie została znaleziona." });
+            }
+            if (tradeAgreement.Status != TradeStatus.Pending)
+            {
+                return BadRequest(new { error = "Umowa handlowa nie oczekuje na rozpatrzenie." });
+            }
+            tradeAgreement.Status = TradeStatus.Accepted;
+            _context.TradeAgreements.Update(tradeAgreement);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Umowa handlowa została odrzucona." });
         }
     }
 }

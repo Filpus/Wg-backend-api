@@ -826,8 +826,9 @@ CREATE TABLE game_1.tradeagreements (
     id integer NOT NULL,
     fk_nationoffering integer NOT NULL,
     fk_nationreceiving integer NOT NULL,
-    isaccepted boolean NOT NULL,
-    duration integer NOT NULL
+    status integer NOT NULL,
+    duration integer NOT NULL,
+    description text NOT NULL
 );
 
 
@@ -1449,12 +1450,12 @@ COPY game_1.socialgroups (id, name, basehappiness, volunteers) FROM stdin;
 -- Data for Name: tradeagreements; Type: TABLE DATA; Schema: game_1; Owner: postgres
 --
 
-COPY game_1.tradeagreements (id, fk_nationoffering, fk_nationreceiving, isaccepted, duration) FROM stdin;
-1	1	2	t	10
-2	1	3	f	5
-3	2	4	t	8
-4	3	5	t	12
-5	4	5	f	6
+COPY game_1.tradeagreements (id, fk_nationoffering, fk_nationreceiving, status, duration, description) FROM stdin;
+1	1	2	0	10	I am description
+2	1	3	0	5	I am also description
+3	2	4	3	8	But I m not description
+4	3	5	1	12	What about me?
+5	4	5	2	6	
 \.
 
 
