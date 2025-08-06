@@ -176,12 +176,11 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return false;
             }
 
-
-            //if (!BCrypt.Net.BCrypt.Verify(password, user.Password))
-            //{
-            //    errorMessage = "Wrong username or password";
-            //    return false;
-            //}
+            if (!BCrypt.Net.BCrypt.Verify(password, user.Password))
+            {
+                errorMessage = "Wrong username or password";
+                return false;
+            }
 
             errorMessage = null;
             return true;

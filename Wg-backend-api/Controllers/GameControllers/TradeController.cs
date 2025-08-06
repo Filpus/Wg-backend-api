@@ -271,7 +271,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 return BadRequest(new { error = "Umowa handlowa została już anulowana lub odrzucona" });
             }
-            tradeAgreement.Status = TradeStatus.Accepted;
+            tradeAgreement.Status = TradeStatus.Cancelled;
             _context.TradeAgreements.Update(tradeAgreement);
             await _context.SaveChangesAsync();
             return Ok(new { message = "Umowa handlowa została anulowana." });
@@ -289,7 +289,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 return BadRequest(new { error = "Umowa handlowa nie oczekuje na rozpatrzenie." });
             }
-            tradeAgreement.Status = TradeStatus.Accepted;
+            tradeAgreement.Status = TradeStatus.Rejected;
             _context.TradeAgreements.Update(tradeAgreement);
             await _context.SaveChangesAsync();
             return Ok(new { message = "Umowa handlowa została odrzucona." });
