@@ -258,7 +258,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private async Task<List<TradeAgreement>> GetAcceptedTradeAgreementsAsync(int nationId)
         {
             return await _context.TradeAgreements
-                .Where(ta => ta.isAccepted && (ta.OferingNationId == nationId || ta.ReceivingNationId == nationId))
+                .Where(ta => ta.Status == TradeStatus.Accepted && (ta.OfferingNationId == nationId || ta.ReceivingNationId == nationId))
                 .Include(ta => ta.OfferedResources)
                 .Include(ta => ta.WantedResources)
                 .ToListAsync();
@@ -307,7 +307,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             float tradeIncome = 0;
             foreach (var ta in tradeAgreements)
             {
-                bool isOffering = ta.OferingNationId == nationId;
+                bool isOffering = ta.OfferingNationId == nationId;
                 if (isOffering)
                 {
                     // Chciane zasoby to przychód
@@ -331,7 +331,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             float tradeExpenses = 0;
             foreach (var ta in tradeAgreements)
             {
-                bool isOffering = ta.OferingNationId == nationId;
+                bool isOffering = ta.OfferingNationId == nationId;
                 if (isOffering)
                 {
                     // Oferowane zasoby to wydatek

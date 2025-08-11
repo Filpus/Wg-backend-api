@@ -86,7 +86,7 @@ namespace Wg_backend_api.Data
             modelBuilder.Entity<TradeAgreement>()
                    .HasOne(ta => ta.OfferingNation)
                    .WithMany(n => n.OfferedTradeAgreements)
-                   .HasForeignKey(ta => ta.OferingNationId)
+                   .HasForeignKey(ta => ta.OfferingNationId)
                    .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<TradeAgreement>()

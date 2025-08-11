@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using Wg_backend_api.DTO;
+using System.Runtime.InteropServices;
 
 namespace Wg_backend_api.Models
 {
@@ -65,9 +67,9 @@ namespace Wg_backend_api.Models
 
         [Required]
         [Column("fk_nationoffering")]
-        public int OferingNationId { get; set; }
+        public int OfferingNationId { get; set; }
 
-        [ForeignKey("OferingNationId")]
+        [ForeignKey("OfferingNationId")]
         public  Nation OfferingNation { get; set; }
 
         [Required]
@@ -78,12 +80,16 @@ namespace Wg_backend_api.Models
         public  Nation ReceivingNation { get; set; }
 
         [Required]
-        [Column("isaccepted")]
-        public bool isAccepted { get; set; }
+        [Column("status")]
+        public TradeStatus Status { get; set; }
 
         [Required]
         [Column("duration")]
         public int Duration { get; set; }
+
+        [Required]
+        [Column("description")]
+        public string Description { get; set; } = "";
 
         public  ICollection<OfferedResource> OfferedResources { get; set; }
         public  ICollection<WantedResource> WantedResources { get; set; }
