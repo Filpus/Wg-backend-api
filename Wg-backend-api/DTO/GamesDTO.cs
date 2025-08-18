@@ -1,6 +1,7 @@
 ﻿namespace Wg_backend_api.DTO
 {
-    public class PlayerGamesDTO { 
+    public class PlayerGamesDTO
+    {
         public List<GameDTO> PlayerGames { get; set; } = new();
     }
 
