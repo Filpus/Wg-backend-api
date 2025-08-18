@@ -88,8 +88,8 @@ namespace Wg_backend_api.Controllers.GameControllers
 
 
             foreach (Religion religion in religions)
-            {   
-                if(religion.Name == null)
+            {
+                if (religion.Name == null)
                 {
                     return BadRequest("Brak nazwy religii.");
                 }

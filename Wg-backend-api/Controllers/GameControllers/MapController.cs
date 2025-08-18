@@ -14,7 +14,7 @@ namespace Wg_backend_api.Controllers.GameControllers
     [ApiController]
     public class MapController : Controller
     {
-        
+
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
@@ -143,7 +143,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                         Size = new Size(300, 300)
                     }));
 
-                    await image.SaveAsync(thumbnailPath); 
+                    await image.SaveAsync(thumbnailPath);
                 }
 
                 // 8. Zapis do bazy danych
@@ -208,7 +208,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 nationId = _nationId;
             }
-            
+
             var nationMaps = await _context.MapAccesses
                 .Where(ma => ma.NationId == nationId)
                 .Join(_context.Maps,
@@ -217,7 +217,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     (ma, map) => new MapDTO
                     {
                         Id = map.Id,
-                        Name = map.Name, 
+                        Name = map.Name,
                         MapLocation = map.MapLocation,
                         MapIconLocation = map.MapIconLocation
                     })
