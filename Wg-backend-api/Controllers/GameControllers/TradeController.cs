@@ -267,7 +267,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 return NotFound(new { error = "Umowa handlowa nie została znaleziona." });
             }
-            if (tradeAgreement.Status != TradeStatus.Cancelled && tradeAgreement.Status != TradeStatus.Rejected)
+            if (tradeAgreement.Status != TradeStatus.Pending)
             {
                 return BadRequest(new { error = "Umowa handlowa została już anulowana lub odrzucona" });
             }
