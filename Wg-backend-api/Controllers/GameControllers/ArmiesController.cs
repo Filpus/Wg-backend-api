@@ -228,7 +228,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             var manpowerInfo = new ManpowerInfoDTO
             {
                 TotalMappower = totalManpower,
-                AvailableManpower = totalManpower - (manpowerInLandArmies + manpowerInNavalArmies + recruitingLandManpower + recruitingNavalManpower),
+                AvailableManpower = totalManpower - (manpowerInLandArmies + manpowerInNavalArmies + recruitingLandManpower+ recruitingNavalManpower),
                 RecruitingLandManpower = recruitingLandManpower,
                 RecruitingNavalManpower = recruitingNavalManpower,
                 ManpowerInLandArmies = manpowerInLandArmies,
@@ -237,6 +237,9 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok(manpowerInfo);
         }
+
+
+       
 
     }
 }

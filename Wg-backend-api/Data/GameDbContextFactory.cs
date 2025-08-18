@@ -9,7 +9,7 @@ namespace Wg_backend_api.Data
     public class GameDbContextFactory : IGameDbContextFactory
     {
         private readonly DbContextOptions<GameDbContext> _options;
-
+       
 
         public GameDbContextFactory(DbContextOptions<GameDbContext> options)
         {

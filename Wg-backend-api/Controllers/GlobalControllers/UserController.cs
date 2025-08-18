@@ -43,7 +43,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return NotFound(new { message = "User not found." });
             }
 
-            return Ok(user);
+            return Ok(user); 
         }
 
         // Edit user data 
@@ -84,8 +84,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [HttpPatch]
-        public async Task<IActionResult> PatchUser([FromBody] UserPathDTO userPathDTO)
-        {
+        public async Task<IActionResult> PatchUser([FromBody] UserPathDTO userPathDTO) {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userId, out int parsedUserId))
             {
@@ -142,7 +141,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         // Register a new user
-        [HttpPost]
+        [HttpPost]  
         public async Task<ActionResult<User>> PostUser(User user)
         {
             user.Id = null;
@@ -225,7 +224,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                     await file.CopyToAsync(stream);
                 }
 
-
+                
                 var imageUrl = $"/images/{uniqueFileName}";
                 var user = await _context.Users.FindAsync(id);
                 if (user == null)

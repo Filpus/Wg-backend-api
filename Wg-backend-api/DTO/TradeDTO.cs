@@ -2,7 +2,7 @@
 {
     public class TradeAgreementDTO
     {
-        public int? Id { get; set; }
+        public int? Id { get; set; }    
         public int offeringNationId { get; set; }
         public int receivingNationId { get; set; }
         public TradeStatus Status { get; set; }
@@ -13,7 +13,7 @@
         public List<ResourceAmountDto> requestedResources { get; set; } = new List<ResourceAmountDto>();
     }
 
-
+  
     public class TradeAgreementInfoDTO
     {
         public int? Id { get; set; }
@@ -35,12 +35,11 @@
         public List<ResourceAmountDto> requestedResources { get; set; } = new List<ResourceAmountDto>();
     }
 
-    public enum TradeStatus
-    {
+    public enum TradeStatus {
         Pending,
-        Accepted,
-        Rejected,
-        Cancelled
+        Accepted, 
+        Rejected, 
+        Cancelled 
     }
 
 }

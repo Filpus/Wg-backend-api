@@ -39,7 +39,7 @@ namespace Wg_backend_api.Data
             return true;
         }
 
-        //      Podaj adres pliku globalInitalize
+//      Podaj adres pliku globalInitalize
         public static void GenerateGlobalSchema(string connectionString, string sqlScriptPath)
         {
             GenerateNewGame(connectionString, sqlScriptPath, "Global");

@@ -17,7 +17,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private GameDbContext _context;
 
         private int? _nationId;
-
+       
 
         public FactionsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {

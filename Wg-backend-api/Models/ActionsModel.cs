@@ -6,7 +6,7 @@ namespace Wg_backend_api.Models
     [Table("actions")]
     public class Action
     {
-
+       
         [Key]
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

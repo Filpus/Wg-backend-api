@@ -56,7 +56,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         // PUT: api/Assignments/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut]
-        public async Task<IActionResult> PutAssignment([FromBody] Assignment[] assignments)
+        public async Task<IActionResult> PutAssignment( [FromBody] Assignment[] assignments)
         {
             foreach (var assignment in assignments)
             {
@@ -96,8 +96,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     _context.Assignments.Add(assignment);
                     await _context.SaveChangesAsync();
                 }
-                else
-                {
+                else {
                     return BadRequest();
                 }
             }
@@ -106,7 +105,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         // DELETE: api/Assignments/5
         [HttpDelete]
-        public async Task<IActionResult> DeleteAssignment([FromBody] int[] ids)
+        public async Task<IActionResult> DeleteAssignment([FromBody]int[] ids)
         {
 
             foreach (var id in ids)

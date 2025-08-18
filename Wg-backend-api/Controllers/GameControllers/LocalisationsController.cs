@@ -183,7 +183,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
 
 
-        [HttpGet("Details/{id}")]
+           [HttpGet("Details/{id}")]
         public async Task<ActionResult<LocalisationDetailsDTO>> GetLocalisationDetails(int id)
         {
             var localisation = await _context.Localisations
@@ -256,7 +256,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
         private List<PopulationGroupDTO> GetPopulationGroups(int localisationId)
         {
-            var populationGroups = _context.Populations
+            var populationGroups =  _context.Populations
                 .Where(p => p.LocationId == localisationId)
                 .GroupBy(p => new { p.ReligionId, p.CultureId, p.SocialGroupId })
                 .Select(g => new PopulationGroupDTO

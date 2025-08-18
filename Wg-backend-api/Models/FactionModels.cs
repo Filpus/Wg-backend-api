@@ -37,6 +37,6 @@ namespace Wg_backend_api.Models
         [Column("color")]
         public string Color { get; set; }
 
-
+        
     }
 }

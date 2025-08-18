@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Wg_backend_api.Models
 {
-    [Table("locations")]
-    public class Localisation
+    [Table("locations")] 
+public class Localisation
     {
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -36,7 +36,7 @@ namespace Wg_backend_api.Models
 
         // Powiązanie z armiami  
         public ICollection<Army> Armies { get; set; }
-        public ICollection<LocalisationResource> LocalisationResources { get; set; }
+        public ICollection<LocalisationResource> LocalisationResources { get; set; } 
     }
 
     [Table("locationsResources")]

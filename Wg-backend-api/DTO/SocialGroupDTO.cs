@@ -7,7 +7,7 @@ namespace Wg_backend_api.DTO
     {
         public int? Id { get; set; }
 
-
+ 
         public string Name { get; set; }
 
         public float BaseHappiness { get; set; } // Typ float do przechowywania wartości zmiennoprzecinkowych

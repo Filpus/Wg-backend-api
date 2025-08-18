@@ -12,11 +12,11 @@ namespace Wg_backend_api.Data
 
         private readonly string _schema;
 
-        public GameDbContext(DbContextOptions<GameDbContext> options, string schema = "") // Fuszera drut this default schema name
+        public GameDbContext(DbContextOptions<GameDbContext> options, string schema = "" ) // Fuszera drut this default schema name
             : base(options)
         {
-
-            _schema = schema ?? throw new ArgumentNullException(nameof(schema));
+            
+            _schema = schema  ?? throw new ArgumentNullException(nameof(schema));
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

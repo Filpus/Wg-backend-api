@@ -57,10 +57,9 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpGet("other-nations")]
-        public async Task<List<NationBaseInfoDTO>> GetOtherNations()
-        {
+        public async Task<List<NationBaseInfoDTO>> GetOtherNations() {
             var nationId = _sessionDataService.GetNation();
-
+            
             if (string.IsNullOrEmpty(nationId))
             {
                 return new List<NationBaseInfoDTO>();

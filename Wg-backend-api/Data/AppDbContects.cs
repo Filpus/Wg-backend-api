@@ -59,7 +59,7 @@ namespace Wg_backend_api.Data
 
             modelBuilder.Entity<OfferedResource>()
                 .Property(o => o.Id)
-                .ValueGeneratedOnAdd();
+                .ValueGeneratedOnAdd(); 
 
             modelBuilder.Entity<WantedResource>()
                 .Property(w => w.Id)

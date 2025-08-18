@@ -26,7 +26,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] CustomLoginRequest request)
-        {
+        {   
             var user = _context.Users.FirstOrDefault(p => p.Name == request.Name || p.Email == request.Name);
 
             if (user == null)
@@ -116,8 +116,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             var externalUser = result.Principal;
             var email = externalUser.FindFirst(ClaimTypes.Email)?.Value;
-            if (email == null)
-            {
+            if (email == null) { 
                 return BadRequest(new { error = "Email not found in external user data" });
             }
 
