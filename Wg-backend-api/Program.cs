@@ -164,14 +164,15 @@ namespace Wg_backend_api.Data
             if (!args.Contains("--no-login"))
             {
                 app.UseMiddleware<ValidateUserIdMiddleware>();
-                app.UseMiddleware<GameAccessMiddleware>();  
+                app.UseMiddleware<GameAccessMiddleware>();
             }
 
             app.UseAuthorization();
             app.MapControllers(); // Map controller routes  
 
 
-            if (args.Contains("--global")) {
+            if (args.Contains("--global"))
+            {
                 if (string.IsNullOrEmpty(connectionString))
                 {
                     throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");

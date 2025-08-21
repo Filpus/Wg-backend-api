@@ -180,7 +180,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     Id = uo.Id,
                     UnitTypeName = uo.UnitType.Name,
-                    UnitTypeId = uo.UnitTypeId, 
+                    UnitTypeId = uo.UnitTypeId,
                     Quantity = uo.Quantity,
                     UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded // Calculate used manpower  
 
@@ -196,7 +196,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         public async Task<IActionResult> AddRecruitOrder(int? nationId, [FromBody] RecruitOrderDTO recruitOrder)
         {
 
-            if ( nationId == null)
+            if (nationId == null)
             {
                 nationId = _nationId;
             }
@@ -241,7 +241,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             var unitOrder = await _context.UnitOrders.FindAsync(editOrder.OrderId);
             if (unitOrder == null)
-            {  
+            {
                 return NotFound("Nie znaleziono zamówienia jednostek o podanym ID.");
             }
 

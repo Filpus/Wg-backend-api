@@ -21,7 +21,7 @@ namespace Wg_backend_api.Data.Seeders
             }
 
 
-            _globalContext.Users.Add(new User {Name="admin", Email="admin@admin.pl", Password=BCrypt.Net.BCrypt.HashPassword("admin"), IsArchived=false });
+            _globalContext.Users.Add(new User { Name = "admin", Email = "admin@admin.pl", Password = BCrypt.Net.BCrypt.HashPassword("admin"), IsArchived = false });
             _globalContext.Users.AddRange(GetUserGenerator().Generate(50));
             _globalContext.SaveChanges();
             var usersId = _globalContext.Users.Select(u => u.Id).ToList();
@@ -43,7 +43,7 @@ namespace Wg_backend_api.Data.Seeders
             }
             _globalContext.GameAccesses.AddRange(GetGameAccessGenerator(nonNullUserIds, gamesId, 50));
             _globalContext.SaveChanges();
-            
+
 
         }
 

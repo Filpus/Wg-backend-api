@@ -243,11 +243,12 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpPost("AcceptTrade/{id}")]
-        public async Task<IActionResult> AcceptTrade(int id) {
+        public async Task<IActionResult> AcceptTrade(int id)
+        {
             var tradeAgreement = await _context.TradeAgreements.FindAsync(id);
             if (tradeAgreement == null)
             {
-                return NotFound(new {error =  "Umowa handlowa nie została znaleziona."});
+                return NotFound(new { error = "Umowa handlowa nie została znaleziona." });
             }
             if (tradeAgreement.Status != TradeStatus.Pending)
             {
@@ -256,7 +257,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             tradeAgreement.Status = TradeStatus.Accepted;
             _context.TradeAgreements.Update(tradeAgreement);
             await _context.SaveChangesAsync();
-            return Ok(new { message =  "Umowa handlowa została zaakceptowana."});
+            return Ok(new { message = "Umowa handlowa została zaakceptowana." });
         }
 
         [HttpPost("CancelTrade/{id}")]

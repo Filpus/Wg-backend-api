@@ -53,8 +53,9 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             var access = await _globalDbContext.GameAccesses
                 .FirstOrDefaultAsync(a => a.GameId == gameId && a.UserId == userId);
-            
-            if (access == null) {
+
+            if (access == null)
+            {
                 return Forbid();
             }
 
@@ -64,7 +65,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 return NotFound("Game not found");
             }
-            
+
             var schema = $"game_{game.Name}";
             //HttpContext.Session.SetString("Schema", schema); //TO DO Tymczasowe ograniczenie!!!!!!!!!!!
             using var gameDb = _gameDbContextFactory.Create(schema);

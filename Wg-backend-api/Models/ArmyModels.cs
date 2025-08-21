@@ -42,7 +42,7 @@ namespace Wg_backend_api.Models
 
         public ICollection<ProductionCost> ProductionCosts { get; set; }
         public ICollection<MaintenaceCosts> MaintenaceCosts { get; set; }
-    
+
     }
 
 
@@ -173,10 +173,10 @@ namespace Wg_backend_api.Models
         public int LocationId { get; set; }
         [ForeignKey("LocationId")]
         public Localisation Location { get; set; }
-       
+
         [Required]
         [Column("is_naval")]
-        public bool IsNaval {  get; set; }
+        public bool IsNaval { get; set; }
 
         public ICollection<Troop> Troops { get; set; }
     }
