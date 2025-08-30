@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
@@ -30,12 +31,10 @@ namespace Wg_backend_api.Controllers.GameControllers
             _context = _gameDbContextFactory.Create(schema);
         }
 
-
-
-        // GET: api/Cultures
-        // GET: api/Cultures/5
+        // GET: api/Cultures  
+        // GET: api/Cultures/5  
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<Culture>>> GetCultures(int? id)
+        public async Task<ActionResult<IEnumerable<CultureDTO>>> GetCultures(int? id)
         {
             if (id.HasValue)
             {
@@ -44,25 +43,32 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<Culture> { culture });
+                return Ok(new List<CultureDTO> { new CultureDTO { Id = culture.Id, Name = culture.ToString() } });
             }
             else
             {
-                return await _context.Cultures.ToListAsync();
+                var cultures = await _context.Cultures.ToListAsync();
+                return Ok(cultures.Select(c => new CultureDTO { Id = c.Id, Name = c.ToString() }));
             }
         }
 
-        // PUT: api/Cultures
+        // PUT: api/Cultures  
         [HttpPut]
-        public async Task<IActionResult> PutCultures([FromBody] List<Culture> cultures)
+        public async Task<IActionResult> PutCultures([FromBody] List<CultureDTO> cultureDTOs)
         {
-            if (cultures == null || cultures.Count == 0)
+            if (cultureDTOs == null || cultureDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do edycji.");
             }
 
-            foreach (var culture in cultures)
+            foreach (var cultureDTO in cultureDTOs)
             {
+                var culture = await _context.Cultures.FindAsync(cultureDTO.Id);
+                if (culture == null)
+                {
+                    return NotFound($"Nie znaleziono kultury o ID {cultureDTO.Id}.");
+                }
+                culture.Name = cultureDTO.Name;
                 _context.Entry(culture).State = EntityState.Modified;
             }
 
@@ -78,28 +84,23 @@ namespace Wg_backend_api.Controllers.GameControllers
             return NoContent();
         }
 
-        // POST: api/Cultures
+        // POST: api/Cultures  
         [HttpPost]
-        public async Task<ActionResult<Culture>> PostCultures([FromBody] List<Culture> cultures)
+        public async Task<ActionResult<CultureDTO>> PostCultures([FromBody] List<CultureDTO> cultureDTOs)
         {
-            if (cultures == null || cultures.Count == 0)
+            if (cultureDTOs == null || cultureDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do zapisania.");
             }
 
-
-            foreach (Culture culture in cultures)
-            {
-                culture.Id = null;
-            }
-
-            _context.Cultures.Add(cultures[0]);
+            var cultures = cultureDTOs.Select(dto => new Culture { Id = null, ToString() = dto.Name }).ToList();
+            _context.Cultures.AddRange(cultures);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCultures", new { id = cultures[0].Id }, cultures);
+            return CreatedAtAction("GetCultures", new { id = cultures[0].Id }, cultureDTOs);
         }
 
-        // DELETE: api/Cultures
+        // DELETE: api/Cultures  
         [HttpDelete]
         public async Task<ActionResult> DeleteCultures([FromBody] List<int?> ids)
         {
