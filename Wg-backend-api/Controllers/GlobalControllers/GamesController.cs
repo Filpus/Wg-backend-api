@@ -45,7 +45,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             var gamesAccess = await _globalDbContext.GameAccesses
                 .Where(g => g.UserId == userId)
-                .Select(g => g.GameId) 
+                .Select(g => g.GameId)
                 .ToListAsync();
 
             if (gamesAccess.Count == 0)
@@ -88,7 +88,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             var access = await _globalDbContext.GameAccesses
                 .Where(a => a.GameId == gameId && a.UserId == userId).FirstOrDefaultAsync();
 
-            if (access == null) {
+            if (access == null)
+            {
                 return Unauthorized(new
                 {
                     error = "Unauthorized",
@@ -97,7 +98,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
 
             var gameDbContext = _gameDbContextFactory.Create($"game_{game.Id}");
-            
+
             var userInGame = await gameDbContext.Players.Where(u => u.UserId == userId).FirstOrDefaultAsync();
             if (userInGame == null)
             {
@@ -191,7 +192,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 .Where(g => g.Name == creteGame.Name)
                 .FirstOrDefaultAsync();
 
-            if (gameWithSameName != null) { 
+            if (gameWithSameName != null)
+            {
                 return Conflict(new
                 {
                     error = "Conflict",
@@ -201,10 +203,12 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             var gameImagePath = "";
 
-            if (creteGame.ImageFile != null) { 
+            if (creteGame.ImageFile != null)
+            {
                 try
                 {
-                    if (creteGame.ImageFile.Length == 0) { 
+                    if (creteGame.ImageFile.Length == 0)
+                    {
                         return BadRequest("Plik obrazu jest pusty lub nie został przesłany.");
                     }
 

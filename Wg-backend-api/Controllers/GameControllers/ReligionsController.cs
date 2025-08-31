@@ -92,10 +92,11 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            var religions = new List<Religion>();
-            foreach (var religionDTO in religionDTOs)
+
+            foreach (Religion religion in religions)
             {
-                if (string.IsNullOrEmpty(religionDTO.Name))
+                if (religion.Name == null)
+
                 {
                     return BadRequest("Brak nazwy religii.");
                 }

@@ -13,7 +13,7 @@ namespace Wg_backend_api.Auth
             "/api/games",
             "/api/user",
             "/api/players"
-        }; 
+        };
 
         public GameAccessMiddleware(RequestDelegate next)
         {

@@ -222,7 +222,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     PopulationExpenses = GetPopulationExpenses(nation, resource.Id),
                     PopulationProduction = GetPopulationProduction(nation, resource.Id),
                     TradeIncome = GetTradeIncome(acceptedTradeAgreements, (int)nationId, resource.Id),
-                    TradeExpenses = GetTradeExpenses(acceptedTradeAgreements,(int) nationId, resource.Id),
+                    TradeExpenses = GetTradeExpenses(acceptedTradeAgreements, (int)nationId, resource.Id),
                     EventBalance = 0
                 };
 
@@ -379,7 +379,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         public async Task<ActionResult<List<ResourceAmountDto>>> GetOwnedResources(int? nationId)
         {
 
-            if(nationId == null)
+            if (nationId == null)
             {
                 nationId = _nationId;
             }
@@ -420,7 +420,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         //        .Sum();
         //}
 
-        
+
 
     }
 }
