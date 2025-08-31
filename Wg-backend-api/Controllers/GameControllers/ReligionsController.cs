@@ -5,6 +5,7 @@ using System.Linq;
 using System.Resources;
 using System.Threading.Tasks;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
@@ -31,10 +32,10 @@ namespace Wg_backend_api.Controllers.GameControllers
             _context = _gameDbContextFactory.Create(schema);
         }
 
-        // GET: api/Religions
-        // GET: api/Religions/5
+        // GET: api/Religions  
+        // GET: api/Religions/5  
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<Religion>>> GetReligions(int? id)
+        public async Task<ActionResult<IEnumerable<ReligionDTO>>> GetReligions(int? id)
         {
             if (id.HasValue)
             {
@@ -43,25 +44,30 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<Religion> { religion });
+                return Ok(new List<ReligionDTO>
+                {
+                    new ReligionDTO { Id = religion.Id, Name = religion.Name }
+                });
             }
             else
             {
-                return Ok(await _context.Religions.ToListAsync());
+                var religions = await _context.Religions.ToListAsync();
+                return Ok(religions.Select(r => new ReligionDTO { Id = r.Id, Name = r.Name }));
             }
         }
 
-        // PUT: api/Religions
+        // PUT: api/Religions  
         [HttpPut]
-        public async Task<IActionResult> PutReligions([FromBody] List<Religion> religions)
+        public async Task<IActionResult> PutReligions([FromBody] List<ReligionDTO> religionDTOs)
         {
-            if (religions == null || religions.Count == 0)
+            if (religionDTOs == null || religionDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do edycji.");
             }
 
-            foreach (var religion in religions)
+            foreach (var religionDTO in religionDTOs)
             {
+                var religion = new Religion { Id = religionDTO.Id, Name = religionDTO.Name };
                 _context.Entry(religion).State = EntityState.Modified;
             }
 
@@ -77,11 +83,11 @@ namespace Wg_backend_api.Controllers.GameControllers
             return NoContent();
         }
 
-        // POST: api/Religions
+        // POST: api/Religions  
         [HttpPost]
-        public async Task<ActionResult<Religion>> PostReligions([FromBody] List<Religion> religions)
+        public async Task<ActionResult<IEnumerable<ReligionDTO>>> PostReligions([FromBody] List<ReligionDTO> religionDTOs)
         {
-            if (religions == null || religions.Count == 0)
+            if (religionDTOs == null || religionDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do zapisania.");
             }
@@ -90,19 +96,21 @@ namespace Wg_backend_api.Controllers.GameControllers
             foreach (Religion religion in religions)
             {
                 if (religion.Name == null)
+
                 {
                     return BadRequest("Brak nazwy religii.");
                 }
-                religion.Id = null;
+                religions.Add(new Religion { Name = religionDTO.Name });
             }
 
             _context.Religions.AddRange(religions);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetReligions", new { id = religions[0].Id }, religions);
+            var createdDTOs = religions.Select(r => new ReligionDTO { Id = r.Id, Name = r.Name }).ToList();
+            return CreatedAtAction("GetReligions", new { id = createdDTOs[0].Id }, createdDTOs);
         }
 
-        // DELETE: api/Religions
+        // DELETE: api/Religions  
         [HttpDelete]
         public async Task<ActionResult> DeleteReligions([FromBody] List<int?> ids)
         {

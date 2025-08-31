@@ -33,67 +33,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         }
 
-        [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<Army>>> GetArmies(int? id)
-        {
-            if (id.HasValue)
-            {
-                var army = await _context.Armies.FindAsync(id);
-                if (army == null)
-                {
-                    return NotFound();
-                }
-                return Ok(new List<Army> { army });
-            }
-            else
-            {
-                return await _context.Armies.ToListAsync();
-            }
-        }
 
-        [HttpPut]
-        public async Task<IActionResult> PutArmies([FromBody] List<Army> armies)
-        {
-            if (armies == null || armies.Count == 0)
-            {
-                return BadRequest("Brak danych do edycji.");
-            }
-
-            foreach (var army in armies)
-            {
-                _context.Entry(army).State = EntityState.Modified;
-            }
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "Błąd podczas aktualizacji.");
-            }
-
-            return NoContent();
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<Army>> PostArmies([FromBody] List<Army> armies)
-        {
-            if (armies == null || armies.Count == 0)
-            {
-                return BadRequest("Brak danych do zapisania.");
-            }
-
-            foreach (Army army in armies)
-            {
-                army.Id = null;
-            }
-
-            _context.Armies.AddRange(armies);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetArmies", new { id = armies[0].Id }, armies);
-        }
 
         [HttpDelete]
         public async Task<ActionResult> DeleteArmies([FromBody] List<int?> ids)

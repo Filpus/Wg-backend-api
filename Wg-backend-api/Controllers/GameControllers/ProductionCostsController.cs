@@ -28,71 +28,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             _context = _gameDbContextFactory.Create(schema);
         }
 
-        // GET: api/ProductionCosts
-        // GET: api/ProductionCosts/5
-        [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<ProductionCost>>> GetProductionCosts(int? id)
-        {
-            if (id.HasValue)
-            {
-                var productionCost = await _context.ProductionCosts.FindAsync(id);
-                if (productionCost == null)
-                {
-                    return NotFound();
-                }
-                return Ok(new List<ProductionCost> { productionCost });
-            }
-            else
-            {
-                return await _context.ProductionCosts.ToListAsync();
-            }
-        }
-
-        // PUT: api/ProductionCosts
-        [HttpPut]
-        public async Task<IActionResult> PutProductionCosts([FromBody] List<ProductionCost> productionCosts)
-        {
-            if (productionCosts == null || productionCosts.Count == 0)
-            {
-                return BadRequest("Brak danych do edycji.");
-            }
-
-            foreach (var productionCost in productionCosts)
-            {
-                _context.Entry(productionCost).State = EntityState.Modified;
-            }
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "Błąd podczas aktualizacji.");
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/ProductionCosts
-        [HttpPost]
-        public async Task<ActionResult<ProductionCost>> PostProductionCosts([FromBody] List<ProductionCost> productionCosts)
-        {
-            if (productionCosts == null || productionCosts.Count == 0)
-            {
-                return BadRequest("Brak danych do zapisania.");
-            }
-
-            foreach (ProductionCost productionCost in productionCosts)
-            {
-                productionCost.Id = null;
-            }
-
-            _context.ProductionCosts.AddRange(productionCosts);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetProductionCosts", new { id = productionCosts[0].Id }, productionCosts);
-        }
+   
 
         // DELETE: api/ProductionCosts
         [HttpDelete]

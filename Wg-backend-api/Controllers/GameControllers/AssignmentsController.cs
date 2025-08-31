@@ -104,6 +104,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok();
         }
 
+
         // DELETE: api/Assignments/5
         [HttpDelete]
         public async Task<IActionResult> DeleteAssignment([FromBody] int[] ids)

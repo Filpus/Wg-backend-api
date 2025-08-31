@@ -28,78 +28,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             _context = _gameDbContextFactory.Create(schema);
         }
 
-        // GET: api/ProductionShares
-        // GET: api/ProductionShares/5
-        [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<ProductionShare>>> GetProductionShares(int? id)
-        {
-            if (id.HasValue)
-            {
-                var productionShare = await _context.ProductionShares.FindAsync(id);
-                if (productionShare == null)
-                {
-                    return NotFound();
-                }
-                return Ok(new List<ProductionShare> { productionShare });
-            }
-            else
-            {
-                return await _context.ProductionShares.ToListAsync();
-            }
-        }
-
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProductionShare>>> GetProductionShares()
-        {
-            return await _context.ProductionShares.ToListAsync();
-        }
-
-        // PUT: api/ProductionShares
-        [HttpPut]
-        public async Task<IActionResult> PutProductionShares([FromBody] List<ProductionShare> productionShares)
-        {
-            if (productionShares == null || productionShares.Count == 0)
-            {
-                return BadRequest("Brak danych do edycji.");
-            }
-
-            foreach (var productionShare in productionShares)
-            {
-                _context.Entry(productionShare).State = EntityState.Modified;
-            }
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "Błąd podczas aktualizacji.");
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/ProductionShares
-        [HttpPost]
-        public async Task<ActionResult<ProductionShare>> PostProductionShares([FromBody] List<ProductionShare> productionShares)
-        {
-            if (productionShares == null || productionShares.Count == 0)
-            {
-                return BadRequest("Brak danych do zapisania.");
-            }
-
-            foreach (ProductionShare productionShare in productionShares)
-            {
-                productionShare.Id = null;
-            }
-
-            _context.ProductionShares.AddRange(productionShares);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetProductionShares", new { id = productionShares[0].Id }, productionShares);
-        }
-
+       
         // DELETE: api/ProductionShares
         [HttpDelete]
         public async Task<ActionResult> DeleteProductionShares([FromBody] List<int?> ids)

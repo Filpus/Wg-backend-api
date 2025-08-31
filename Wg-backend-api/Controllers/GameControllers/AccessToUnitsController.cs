@@ -29,69 +29,6 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         }
 
-        [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<AccessToUnit>>> GetAccessToUnits(int? id)
-        {
-
-            if (id.HasValue)
-            {
-                var accessToUnit = await _context.AccessToUnits.FindAsync(id);
-                if (accessToUnit == null)
-                {
-                    return NotFound();
-                }
-                return Ok(new List<AccessToUnit> { accessToUnit });
-            }
-            else
-            {
-                return await _context.AccessToUnits.ToListAsync();
-            }
-        }
-
-        [HttpPut]
-        public async Task<IActionResult> PutAccessToUnits([FromBody] List<AccessToUnit> accessToUnits)
-        {
-            if (accessToUnits == null || accessToUnits.Count == 0)
-            {
-                return BadRequest("Brak danych do edycji.");
-            }
-
-            foreach (var accessToUnit in accessToUnits)
-            {
-                _context.Entry(accessToUnit).State = EntityState.Modified;
-            }
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "Błąd podczas aktualizacji.");
-            }
-
-            return NoContent();
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<AccessToUnit>> PostAccessToUnits([FromBody] List<AccessToUnit> accessToUnits)
-        {
-            if (accessToUnits == null || accessToUnits.Count == 0)
-            {
-                return BadRequest("Brak danych do zapisania.");
-            }
-
-            foreach (AccessToUnit accessToUnit in accessToUnits)
-            {
-                accessToUnit.Id = null;
-            }
-
-            _context.AccessToUnits.AddRange(accessToUnits);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetAccessToUnits", new { id = accessToUnits[0].Id }, accessToUnits);
-        }
-
         [HttpDelete]
         public async Task<ActionResult> DeleteAccessToUnits([FromBody] List<int?> ids)
         {
