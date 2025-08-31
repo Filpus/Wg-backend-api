@@ -31,67 +31,6 @@ namespace Wg_backend_api.Controllers.GameControllers
             _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
-        [HttpGet("{nationId}/{mapId}")]
-        public async Task<ActionResult<MapAccess>> GetMapAccess(int nationId, int mapId)
-        {
-            var mapAccess = await _context.MapAccesses.FindAsync(nationId, mapId);
-            if (mapAccess == null)
-            {
-                return NotFound();
-            }
-            return Ok(mapAccess);
-        }
-
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<MapAccess>>> GetMapAccesses()
-        {
-            return await _context.MapAccesses.ToListAsync();
-        }
-
-        [HttpPut]
-        public async Task<IActionResult> PutMapAccesses([FromBody] List<MapAccess> mapAccesses)
-        {
-            if (mapAccesses == null || mapAccesses.Count == 0)
-            {
-                return BadRequest("Brak danych do edycji.");
-            }
-
-            foreach (var mapAccess in mapAccesses)
-            {
-                _context.Entry(mapAccess).State = EntityState.Modified;
-            }
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "B³¹d podczas aktualizacji.");
-            }
-
-            return NoContent();
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<MapAccess>> PostMapAccesses([FromBody] List<MapAccessCreateDTO> mapAccessesDto)
-        {
-            if (mapAccessesDto == null || mapAccessesDto.Count == 0)
-            {
-                return BadRequest("Brak danych do zapisania.");
-            }
-
-            var mapAccesses = mapAccessesDto.Select(dto => new MapAccess
-            {
-                NationId = dto.NationId,
-                MapId = dto.MapId
-            }).ToList();
-
-            _context.MapAccesses.AddRange(mapAccesses);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetMapAccesses", new { nationId = mapAccesses[0].NationId, mapId = mapAccesses[0].MapId }, mapAccesses);
-        }
 
         [HttpDelete]
         public async Task<ActionResult> DeleteMapAccesses([FromBody] List<(int nationId, int mapId)> ids)

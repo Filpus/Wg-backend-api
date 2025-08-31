@@ -34,7 +34,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         // GET: api/Resources
         // GET: api/Resources/5
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<Resource>>> GetResources(int? id)
+        public async Task<ActionResult<IEnumerable<ResourceDto>>> GetResources(int? id)
         {
             if (id.HasValue)
             {
@@ -43,25 +43,50 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<Resource> { resource });  // Zwraca pojedynczy zasób w liście
+                var resourceDto = new ResourceDto
+                {
+                    Id = resource.Id.Value,
+                    Name = resource.Name,
+                    IsMain = resource.IsMain,
+                    Icon = resource.Icon
+                };
+                return Ok(new List<ResourceDto> { resourceDto }); // Zwraca pojedynczy zasób w liście
             }
             else
             {
-                return await _context.Resources.ToListAsync();  // Zwraca wszystkie zasoby
+                var resources = await _context.Resources.ToListAsync();
+                var resourceDtos = resources.Select(r => new ResourceDto
+                {
+                    Id = r.Id.Value,
+                    Name = r.Name,
+                    IsMain = r.IsMain,
+                    Icon = r.Icon
+                }).ToList();
+                return Ok(resourceDtos); // Zwraca wszystkie zasoby
             }
         }
 
         // PUT: api/Resources
         [HttpPut]
-        public async Task<IActionResult> PutResources([FromBody] List<Resource> resources)
+        public async Task<IActionResult> PutResources([FromBody] List<ResourceDto> resourceDtos)
         {
-            if (resources == null || resources.Count == 0)
+            if (resourceDtos == null || resourceDtos.Count == 0)
             {
                 return BadRequest("Brak danych do edycji.");
             }
 
-            foreach (var resource in resources)
+            foreach (var resourceDto in resourceDtos)
             {
+                var resource = await _context.Resources.FindAsync(resourceDto.Id);
+                if (resource == null)
+                {
+                    return NotFound($"Nie znaleziono zasobu o ID: {resourceDto.Id}");
+                }
+
+                resource.Name = resourceDto.Name;
+                resource.IsMain = resourceDto.IsMain;
+                resource.Icon = resourceDto.Icon;
+
                 _context.Entry(resource).State = EntityState.Modified;
             }
 
