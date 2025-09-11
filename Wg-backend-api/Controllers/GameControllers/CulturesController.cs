@@ -93,7 +93,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            var cultures = cultureDTOs.Select(dto => new Culture { Id = null, ToString() = dto.Name }).ToList();
+            var cultures = cultureDTOs.Select(dto => new Culture { Name = dto.Name }).ToList();
             _context.Cultures.AddRange(cultures);
             await _context.SaveChangesAsync();
 

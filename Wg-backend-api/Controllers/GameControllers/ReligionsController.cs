@@ -89,22 +89,22 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (religionDTOs == null || religionDTOs.Count == 0)
             {
-                return BadRequest("Brak danych do zapisania.");
+                return this.BadRequest("Brak danych do zapisania.");
             }
 
+            var religions = new List<Religion>();
 
-            foreach (Religion religion in religions)
+            foreach (var religionDTO in religionDTOs)
             {
-                if (religion.Name == null)
-
+                if (string.IsNullOrWhiteSpace(religionDTO.Name))
                 {
-                    return BadRequest("Brak nazwy religii.");
+                    return this.BadRequest("Brak nazwy religii.");
                 }
                 religions.Add(new Religion { Name = religionDTO.Name });
             }
 
-            _context.Religions.AddRange(religions);
-            await _context.SaveChangesAsync();
+            this._context.Religions.AddRange(religions);
+            await this._context.SaveChangesAsync();
 
             var createdDTOs = religions.Select(r => new ReligionDTO { Id = r.Id, Name = r.Name }).ToList();
             return CreatedAtAction("GetReligions", new { id = createdDTOs[0].Id }, createdDTOs);

@@ -47,7 +47,6 @@ namespace Wg_backend_api.Controllers.GameControllers
                     UnitId = unitType.Id.Value,
                     UnitName = unitType.Name,
                     Description = unitType.Description,
-                    UnitType = unitType.Type,
                     Quantity = unitType.VolunteersNeeded,
                     Melee = unitType.Melee,
                     Range = unitType.Range,
@@ -66,7 +65,6 @@ namespace Wg_backend_api.Controllers.GameControllers
                     UnitId = ut.Id.Value,
                     UnitName = ut.Name,
                     Description = ut.Description,
-                    UnitType = ut.Type,
                     Quantity = ut.VolunteersNeeded,
                     Melee = ut.Melee,
                     Range = ut.Range,
@@ -98,7 +96,6 @@ namespace Wg_backend_api.Controllers.GameControllers
 
                 unitType.Name = unitTypeDTO.UnitName;
                 unitType.Description = unitTypeDTO.Description;
-                unitType.Type = unitTypeDTO.UnitType;
                 unitType.VolunteersNeeded = unitTypeDTO.Quantity;
                 unitType.Melee = unitTypeDTO.Melee;
                 unitType.Range = unitTypeDTO.Range;
@@ -135,7 +132,6 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 Name = dto.UnitName,
                 Description = dto.Description,
-                Type = dto.UnitType,
                 VolunteersNeeded = dto.Quantity,
                 Melee = dto.Melee,
                 Range = dto.Range,
@@ -153,7 +149,6 @@ namespace Wg_backend_api.Controllers.GameControllers
                 UnitId = ut.Id.Value,
                 UnitName = ut.Name,
                 Description = ut.Description,
-                UnitType = ut.Type,
                 Quantity = ut.VolunteersNeeded,
                 Melee = ut.Melee,
                 Range = ut.Range,
