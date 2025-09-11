@@ -39,6 +39,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Logic\Modifires\Base\" />
+    <Folder Include="Logic\Modifires\ConditionBuilders\" />
+    <Folder Include="Logic\Modifires\Interfaces\" />
+    <Folder Include="Logic\Modifires\Processors\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
