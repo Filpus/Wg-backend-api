@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using Wg_backend_api.Data;
+using Wg_backend_api.Enums;
+using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Logic.Modifires
 {
@@ -15,7 +17,7 @@ namespace Wg_backend_api.Logic.Modifires
         /// <summary>
         /// Query które jest modyfikowane przez zastosowanie warunków
         /// </summary>
-        protected IQueryable<TEntity> Query { get; private set; }
+        protected IQueryable<TEntity> Query { get; set; }
 
         /// <summary>
         /// Oryginalne query do resetowania
@@ -244,10 +246,12 @@ namespace Wg_backend_api.Logic.Modifires
 
                 await context.SaveChangesAsync();
 
-                result.AffectedEntities = changeRecords.ToDictionary(
-                    cr => $"{typeof(TEntity).Name}_{cr.EntityId}",
-                    cr => (object)cr
-                );
+                result.AffectedEntities = changeRecords
+                    .GroupBy(cr => cr.EntityId)
+                    .ToDictionary(
+                        g => $"{typeof(TEntity).Name}_{g.Key}",
+                        g => (object)g.Last() // wybiera najnowszą zmianę dla encji
+                    );
 
                 result.Message = $"Pomyślnie zmodyfikowano {changeRecords.Count} encji typu {typeof(TEntity).Name}";
 

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Wg_backend_api.Enums;
 
 namespace Wg_backend_api.Models
 {
@@ -54,33 +55,21 @@ namespace Wg_backend_api.Models
         public int? Id { get; set; }
 
         [Required]
-        [Column("fk_Events")]
+        [Column("event_id")]
         public int EventId { get; set; }
         [ForeignKey("EventId")]
         public Event Event { get; set; }
 
+
+
         [Required]
-        [Column("modifireType")]
-        public ModifireType modifireType { get; set; }
+        [MaxLength(50)]
+        [Column("modifier_type")]
+        public ModifierType ModifierType { get; set; }
 
-        [Column("fk_Resources")]
-        public int? ResourceId { get; set; }
-        [ForeignKey("ResourceId")]
-        public Resource? Resource { get; set; }
+        [Required]
+        [Column("conditions")]
+        public string Conditions { get; set; } = default!;
 
-        [Column("fk_SocialGroups")]
-        public int? SocialGroupId { get; set; }
-        [ForeignKey("SocialGroupId")]
-        public SocialGroup? SocialGroup { get; set; }
-
-        [Column("fk_Cultures")]
-        public int? CultureId { get; set; }
-        [ForeignKey("CultureId")]
-        public Culture? Culture { get; set; }
-
-        [Column("fk_Religion")]
-        public int? ReligionId { get; set; }
-        [ForeignKey("ReligionId")]
-        public Religion? Religion { get; set; }
     }
 }
