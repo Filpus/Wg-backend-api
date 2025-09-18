@@ -1,13 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Wg_backend_api.Data;
-using Wg_backend_api.DTO;
-using Wg_backend_api.Models;
-using Wg_backend_api.Services;
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
-namespace Wg_backend_api.Controllers.GameControllers
+﻿namespace Wg_backend_api.Controllers.GameControllers
 {
+    // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.EntityFrameworkCore;
+    using Wg_backend_api.Data;
+    using Wg_backend_api.DTO;
+    using Wg_backend_api.Models;
+    using Wg_backend_api.Services;
+
     [Route("api/[controller]")]
     [ApiController]
     public class ResourcesController : ControllerBase
@@ -19,18 +19,20 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public ResourcesController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
-            string nationIdStr = _sessionDataService.GetNation();
-            _nationId = int.Parse(nationIdStr);
+
+            this._context = this._gameDbContextFactory.Create(schema);
+            string nationIdStr = this._sessionDataService.GetNation();
+            this._nationId = int.Parse(nationIdStr);
         }
+
         // GET: api/Resources
         // GET: api/Resources/5
         [HttpGet("{id?}")]
@@ -38,31 +40,32 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var resource = await _context.Resources.FindAsync(id);
+                var resource = await this._context.Resources.FindAsync(id);
                 if (resource == null)
                 {
-                    return NotFound();
+                    return this.NotFound();
                 }
+
                 var resourceDto = new ResourceDto
                 {
                     Id = resource.Id.Value,
                     Name = resource.Name,
                     IsMain = resource.IsMain,
-                    Icon = resource.Icon
+                    Icon = resource.Icon,
                 };
-                return Ok(new List<ResourceDto> { resourceDto }); // Zwraca pojedynczy zasób w liście
+                return this.Ok(new List<ResourceDto> { resourceDto }); // Zwraca pojedynczy zasób w liście
             }
             else
             {
-                var resources = await _context.Resources.ToListAsync();
+                var resources = await this._context.Resources.ToListAsync();
                 var resourceDtos = resources.Select(r => new ResourceDto
                 {
                     Id = r.Id.Value,
                     Name = r.Name,
                     IsMain = r.IsMain,
-                    Icon = r.Icon
+                    Icon = r.Icon,
                 }).ToList();
-                return Ok(resourceDtos); // Zwraca wszystkie zasoby
+                return this.Ok(resourceDtos); // Zwraca wszystkie zasoby
             }
         }
 
@@ -72,31 +75,40 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (resourceDtos == null || resourceDtos.Count == 0)
             {
-                return BadRequest("Brak danych do edycji.");
+                return this.BadRequest("Brak danych do edycji.");
+            }
+
+            // check the name is between 1 and 64 characters
+            foreach (var resourceDto in resourceDtos)
+            {
+                if (string.IsNullOrWhiteSpace(resourceDto.Name) || resourceDto.Name.Length > 64)
+                {
+                    return this.BadRequest("Nazwa zasobu jest niepoprawnej długości.");
+                }
             }
 
             foreach (var resourceDto in resourceDtos)
             {
-                var resource = await _context.Resources.FindAsync(resourceDto.Id);
+                var resource = await this._context.Resources.FindAsync(resourceDto.Id);
                 if (resource == null)
                 {
-                    return NotFound($"Nie znaleziono zasobu o ID: {resourceDto.Id}");
+                    return this.NotFound($"Nie znaleziono zasobu o ID: {resourceDto.Id}");
                 }
 
                 resource.Name = resourceDto.Name;
                 resource.IsMain = resourceDto.IsMain;
                 resource.Icon = resourceDto.Icon;
 
-                _context.Entry(resource).State = EntityState.Modified;
+                this._context.Entry(resource).State = EntityState.Modified;
             }
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                return StatusCode(500, "Błąd podczas aktualizacji.");
+                return this.StatusCode(500, "Błąd podczas aktualizacji.");
             }
 
             return NoContent();
@@ -108,7 +120,16 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (resources == null || !resources.Any())
             {
-                return BadRequest("Brak danych do zapisania.");
+                return this.BadRequest("Brak danych do zapisania.");
+            }
+
+            // check the name is between 1 and 64 characters
+            foreach (var dto in resources)
+            {
+                if (string.IsNullOrWhiteSpace(dto.Name) || dto.Name.Length > 64)
+                {
+                    return this.BadRequest("Nazwa zasobu jest niepoprawnej długości.");
+                }
             }
 
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
@@ -116,7 +137,9 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "resources", "icons");
             if (!Directory.Exists(uploadsFolder))
+            {
                 Directory.CreateDirectory(uploadsFolder);
+            }
 
             var savedResources = new List<Resource>();
 
@@ -129,10 +152,14 @@ namespace Wg_backend_api.Controllers.GameControllers
                     var extension = Path.GetExtension(dto.IconFile.FileName).ToLower();
 
                     if (!allowedExtensions.Contains(extension))
-                        return BadRequest($"Nieprawidłowe rozszerzenie pliku: {dto.IconFile.FileName}");
+                    {
+                        return this.BadRequest($"Nieprawidłowe rozszerzenie pliku: {dto.IconFile.FileName}");
+                    }
 
                     if (dto.IconFile.Length > maxFileSize)
-                        return BadRequest($"Plik {dto.IconFile.FileName} przekracza maksymalny rozmiar {maxFileSize / 1024 / 1024} MB");
+                    {
+                        return this.BadRequest($"Plik {dto.IconFile.FileName} przekracza maksymalny rozmiar {maxFileSize / 1024 / 1024} MB");
+                    }
 
                     var uniqueFileName = $"{Guid.NewGuid()}{extension}";
                     var filePath = Path.Combine(uploadsFolder, uniqueFileName);
@@ -153,18 +180,18 @@ namespace Wg_backend_api.Controllers.GameControllers
                 });
             }
 
-            _context.Resources.AddRange(savedResources);
-            await _context.SaveChangesAsync();
+            this._context.Resources.AddRange(savedResources);
+            await this._context.SaveChangesAsync();
 
             var response = savedResources.Select(r => new ResourceDto
             {
                 Id = (int)r.Id,
                 Name = r.Name,
                 IsMain = r.IsMain,
-                Icon = r.Icon != null ? $"{Request.Scheme}://{Request.Host}/{r.Icon}" : null
+                Icon = r.Icon != null ? $"{this.Request.Scheme}://{this.Request.Host}/{r.Icon}" : null,
             }).ToList();
 
-            return CreatedAtAction(nameof(PostResources), null, response);
+            return this.CreatedAtAction(nameof(this.PostResources), null, response);
         }
 
 
@@ -174,20 +201,20 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (ids == null || ids.Count == 0)
             {
-                return BadRequest("Brak ID do usunięcia.");
+                return this.BadRequest("Brak ID do usunięcia.");
             }
 
             var resources = await _context.Resources.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (resources.Count == 0)
             {
-                return NotFound("Nie znaleziono zasobów do usunięcia.");
+                return this.NotFound("Nie znaleziono zasobów do usunięcia.");
             }
 
-            _context.Resources.RemoveRange(resources);
-            await _context.SaveChangesAsync();
+            this._context.Resources.RemoveRange(resources);
+            await this._context.SaveChangesAsync();
 
-            return Ok();
+            return this.Ok();
         }
 
         [HttpGet("nation/resource-balance/{nationId?}")]
@@ -196,20 +223,23 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             if (!nationId.HasValue)
             {
-                nationId = _nationId;
+                nationId = this._nationId;
             }
 
 
-            var resources = await GetAllResourcesAsync();
-            var nation = await GetNationWithIncludesAsync((int)nationId);
-            if (nation == null) return NotFound();
+            var resources = await this.GetAllResourcesAsync();
+            var nation = await this.GetNationWithIncludesAsync((int)nationId);
+            if (nation == null)
+            {
+                return this.NotFound();
+            }
 
-            var acceptedTradeAgreements = await GetAcceptedTradeAgreementsAsync((int)nationId);
+            var acceptedTradeAgreements = await this.GetAcceptedTradeAgreementsAsync((int)nationId);
 
             var result = new NationResourceBalanceDto
             {
                 Resources = resources,
-                ResourceBalances = new List<ResourceBalanceDto>()
+                ResourceBalances = new List<ResourceBalanceDto>(),
             };
 
             foreach (var resource in resources)
@@ -217,13 +247,13 @@ namespace Wg_backend_api.Controllers.GameControllers
                 var resourceBalance = new ResourceBalanceDto
                 {
                     ResourceId = resource.Id,
-                    CurrentAmount = GetCurrentResourceAmount(nation, resource.Id),
-                    ArmyMaintenanceExpenses = GetArmyMaintenanceExpenses(nation, resource.Id),
-                    PopulationExpenses = GetPopulationExpenses(nation, resource.Id),
-                    PopulationProduction = GetPopulationProduction(nation, resource.Id),
-                    TradeIncome = GetTradeIncome(acceptedTradeAgreements, (int)nationId, resource.Id),
-                    TradeExpenses = GetTradeExpenses(acceptedTradeAgreements, (int)nationId, resource.Id),
-                    EventBalance = 0
+                    CurrentAmount = this.GetCurrentResourceAmount(nation, resource.Id),
+                    ArmyMaintenanceExpenses = this.GetArmyMaintenanceExpenses(nation, resource.Id),
+                    PopulationExpenses = this.GetPopulationExpenses(nation, resource.Id),
+                    PopulationProduction = this.GetPopulationProduction(nation, resource.Id),
+                    TradeIncome = this.GetTradeIncome(acceptedTradeAgreements, (int)nationId, resource.Id),
+                    TradeExpenses = this.GetTradeExpenses(acceptedTradeAgreements, (int)nationId, resource.Id),
+                    EventBalance = 0,
                 };
 
                 resourceBalance.TotalBalance =
@@ -237,20 +267,20 @@ namespace Wg_backend_api.Controllers.GameControllers
                 result.ResourceBalances.Add(resourceBalance);
             }
 
-            return Ok(result);
+            return this.Ok(result);
         }
 
         // --- PODFUNKCJE ---
 
         private async Task<List<ResourceDto>> GetAllResourcesAsync()
         {
-            return await _context.Resources
+            return await this._context.Resources
                 .AsNoTracking()
                 .Select(r => new ResourceDto
                 {
                     Id = r.Id.Value,
                     Name = r.Name,
-                    IsMain = r.IsMain
+                    IsMain = r.IsMain,
                 })
                 .ToListAsync();
         }
@@ -282,7 +312,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         private async Task<List<TradeAgreement>> GetAcceptedTradeAgreementsAsync(int nationId)
         {
-            return await _context.TradeAgreements
+            return await this._context.TradeAgreements
                 .Where(ta => ta.Status == TradeStatus.Accepted && (ta.OfferingNationId == nationId || ta.ReceivingNationId == nationId))
                 .Include(ta => ta.OfferedResources)
                 .Include(ta => ta.WantedResources)
@@ -348,6 +378,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                         .Sum(or => or.Quantity);
                 }
             }
+
             return tradeIncome;
         }
 
@@ -372,6 +403,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                         .Sum(wr => wr.Amount);
                 }
             }
+
             return tradeExpenses;
         }
 
@@ -381,10 +413,10 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             if (nationId == null)
             {
-                nationId = _nationId;
+                nationId = this._nationId;
             }
 
-            var nation = await _context.Nations
+            var nation = await this._context.Nations
                 .AsNoTracking()
                 .Where(n => n.Id == nationId)
                 .Include(n => n.Localisations)
@@ -394,7 +426,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             if (nation == null)
             {
-                return NotFound($"Nie znaleziono państwa o ID: {nationId}");
+                return this.NotFound($"Nie znaleziono państwa o ID: {nationId}");
             }
 
             var ownedResources = nation.Localisations
@@ -404,11 +436,11 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     ResourceId = g.Key.ResourceId,
                     ResourceName = g.Key.Name,
-                    Amount = g.Sum(lr => lr.Amount)
+                    Amount = g.Sum(lr => lr.Amount),
                 })
                 .ToList();
 
-            return Ok(ownedResources);
+            return this.Ok(ownedResources);
         }
 
         //private int GetEventBalance(Nation nation, int resourceId)

@@ -1,15 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Wg_backend_api.Data;
-using Wg_backend_api.DTO;
-using Wg_backend_api.Models;
-using Wg_backend_api.Services;
-
-namespace Wg_backend_api.Controllers.GameControllers
+﻿namespace Wg_backend_api.Controllers.GameControllers
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.EntityFrameworkCore;
+    using Wg_backend_api.Data;
+    using Wg_backend_api.DTO;
+    using Wg_backend_api.Models;
+    using Wg_backend_api.Services;
+
     [Route("api/[controller]")]
     [ApiController]
     public class CulturesController : Controller
@@ -20,106 +20,125 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public CulturesController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
+
+            this._context = this._gameDbContextFactory.Create(schema);
         }
 
-        // GET: api/Cultures  
-        // GET: api/Cultures/5  
+        // GET: api/Cultures
+        // GET: api/Cultures/5
         [HttpGet("{id?}")]
         public async Task<ActionResult<IEnumerable<CultureDTO>>> GetCultures(int? id)
         {
             if (id.HasValue)
             {
-                var culture = await _context.Cultures.FindAsync(id);
+                var culture = await this._context.Cultures.FindAsync(id);
                 if (culture == null)
                 {
-                    return NotFound();
+                    return this.NotFound();
                 }
-                return Ok(new List<CultureDTO> { new CultureDTO { Id = culture.Id, Name = culture.ToString() } });
+
+                return this.Ok(new List<CultureDTO> { new CultureDTO { Id = culture.Id, Name = culture.Name } });
             }
             else
             {
-                var cultures = await _context.Cultures.ToListAsync();
-                return Ok(cultures.Select(c => new CultureDTO { Id = c.Id, Name = c.ToString() }));
+                var cultures = await this._context.Cultures.ToListAsync();
+                return this.Ok(cultures.Select(c => new CultureDTO { Id = c.Id, Name = c.Name }));
             }
         }
 
-        // PUT: api/Cultures  
+        // PUT: api/Cultures
         [HttpPut]
         public async Task<IActionResult> PutCultures([FromBody] List<CultureDTO> cultureDTOs)
         {
             if (cultureDTOs == null || cultureDTOs.Count == 0)
             {
-                return BadRequest("Brak danych do edycji.");
+                return this.BadRequest("Brak danych do edycji.");
             }
 
             foreach (var cultureDTO in cultureDTOs)
             {
-                var culture = await _context.Cultures.FindAsync(cultureDTO.Id);
+                if (string.IsNullOrWhiteSpace(cultureDTO.Name) || cultureDTO.Name.Length > 64)
+                {
+                    return this.BadRequest("Nazwa kultury jest niepoprawnej długości.");
+                }
+            }
+
+            foreach (var cultureDTO in cultureDTOs)
+            {
+                var culture = await this._context.Cultures.FindAsync(cultureDTO.Id);
                 if (culture == null)
                 {
-                    return NotFound($"Nie znaleziono kultury o ID {cultureDTO.Id}.");
+                    return this.NotFound($"Nie znaleziono kultury o ID {cultureDTO.Id}.");
                 }
+
                 culture.Name = cultureDTO.Name;
-                _context.Entry(culture).State = EntityState.Modified;
+                this._context.Entry(culture).State = EntityState.Modified;
             }
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                return StatusCode(500, "Błąd podczas aktualizacji.");
+                return this.StatusCode(500, "Błąd podczas aktualizacji.");
             }
 
-            return NoContent();
+            return this.NoContent();
         }
 
-        // POST: api/Cultures  
+        // POST: api/Cultures
         [HttpPost]
         public async Task<ActionResult<CultureDTO>> PostCultures([FromBody] List<CultureDTO> cultureDTOs)
         {
             if (cultureDTOs == null || cultureDTOs.Count == 0)
             {
-                return BadRequest("Brak danych do zapisania.");
+                return this.BadRequest("Brak danych do zapisania.");
+            }
+
+            foreach (var cultureDTO in cultureDTOs)
+            {
+                if (string.IsNullOrWhiteSpace(cultureDTO.Name) || cultureDTO.Name.Length > 64)
+                {
+                    return this.BadRequest("Nazwa kultury jest niepoprawnej długości.");
+                }
             }
 
             var cultures = cultureDTOs.Select(dto => new Culture { Name = dto.Name }).ToList();
-            _context.Cultures.AddRange(cultures);
-            await _context.SaveChangesAsync();
+            this._context.Cultures.AddRange(cultures);
+            await this._context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCultures", new { id = cultures[0].Id }, cultureDTOs);
+            return this.CreatedAtAction("GetCultures", new { id = cultures[0].Id }, cultureDTOs);
         }
 
-        // DELETE: api/Cultures  
+        // DELETE: api/Cultures
         [HttpDelete]
         public async Task<ActionResult> DeleteCultures([FromBody] List<int?> ids)
         {
             if (ids == null || ids.Count == 0)
             {
-                return BadRequest("Brak ID do usunięcia.");
+                return this.BadRequest("Brak ID do usunięcia.");
             }
 
-            var cultures = await _context.Cultures.Where(c => ids.Contains(c.Id)).ToListAsync();
+            var cultures = await this._context.Cultures.Where(c => ids.Contains(c.Id)).ToListAsync();
 
             if (cultures.Count == 0)
             {
-                return NotFound("Nie znaleziono kultur do usunięcia.");
+                return this.NotFound("Nie znaleziono kultur do usunięcia.");
             }
 
-            _context.Cultures.RemoveRange(cultures);
-            await _context.SaveChangesAsync();
+            this._context.Cultures.RemoveRange(cultures);
+            await this._context.SaveChangesAsync();
 
-            return Ok();
+            return this.Ok();
         }
     }
 }
