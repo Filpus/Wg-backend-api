@@ -43,12 +43,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
-                return Ok(new List<CultureDTO> { new CultureDTO { Id = culture.Id, Name = culture.ToString() } });
+                return Ok(new List<CultureDTO> { new CultureDTO { Id = culture.Id, Name = culture.Name } });
             }
             else
             {
                 var cultures = await _context.Cultures.ToListAsync();
-                return Ok(cultures.Select(c => new CultureDTO { Id = c.Id, Name = c.ToString() }));
+                return Ok(cultures.Select(c => new CultureDTO { Id = c.Id, Name = c.Name }));
             }
         }
 
