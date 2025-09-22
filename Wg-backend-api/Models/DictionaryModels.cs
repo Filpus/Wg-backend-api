@@ -44,6 +44,8 @@ namespace Wg_backend_api.Models
         [MaxLength(255)]
         public string Name { get; set; }
 
+
+
         public ICollection<Modifiers> Modifiers { get; set; }
         public ICollection<Population> Populations { get; set; }
     }
@@ -59,6 +61,9 @@ namespace Wg_backend_api.Models
         [Required]
         [MaxLength(25)]
         public string Name { get; set; }
+        [Column("icon")]
+        public string? Icon { get; set; }
+
 
         public ICollection<Modifiers> Modifiers { get; set; }
         public ICollection<Population> Populations { get; set; }
@@ -84,9 +89,11 @@ namespace Wg_backend_api.Models
         [Required]
         public int Volunteers { get; set; } // Typ int do przechowywania liczby
 
+        [Column("icon")]
+        public string? Icon { get; set; }
+
         public ICollection<UsedResource> UsedResources { get; set; }
         public ICollection<ProductionShare> ProductionShares { get; set; }
-        public ICollection<Modifiers> Modifiers { get; set; }
         public ICollection<Population> Populations { get; set; }
     }
 

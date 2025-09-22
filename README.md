@@ -7,7 +7,7 @@ Example :
 ```bash
 psql -U postgres -d wg -f wg-init-db-seeder.sql
 ```
-After execute this command change name of default_schema to game_1
+game-schema-init.sql file, is for creating the schema of game_1, without global schema, or any data.
 
 ### before push changes
 
