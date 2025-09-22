@@ -38,5 +38,66 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("happiness")]
         public float Happiness { get; set; }
+
+        [Required]
+        [Column("volunteers")]
+        public int Volunteers { get; set; }
+
+
+        public ICollection<PopulationUsedResource> PopulationUsedResources { get; set; }
+        public ICollection<PopulationProductionShare> PopulationProductionShares { get; set; }
     }
+
+
+    [Table("populationproductionshares")]
+    public class PopulationProductionShare
+    {
+        [Column("id")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
+        public int? Id { get; set; }
+
+        [Required]
+        [Column("fk_population")]
+        public int PopulationId { get; set; }
+        [ForeignKey("PopulationId")]
+        public Population Population { get; set; }
+
+        [Required]
+        [Column("fk_resources")]
+        public int ResourcesId { get; set; }
+        [ForeignKey("ResourcesId")]
+        public Resource Resources { get; set; }
+
+        [Required]
+        [Column("coefficient")]
+        public float Coefficient { get; set; }
+
+
+    }
+
+    [Table("populationusedresource")]
+    public class PopulationUsedResource
+     {
+         [Column("id")]
+         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+         [Key]
+         public int? Id { get; set; }
+
+         [Required]
+         [Column("fk_population")]
+         public int PopulationId { get; set; }
+         [ForeignKey("PopulationId")]
+         public Population Population { get; set; }
+
+         [Required]
+         [Column("fk_resources")]
+         public int ResourcesId { get; set; }
+         [ForeignKey("ResourcesId")]
+         public Resource Resources { get; set; }
+
+         [Required]
+         [Column("amount")]
+         public float Amount { get; set; }
+     }
 }
