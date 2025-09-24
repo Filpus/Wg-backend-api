@@ -62,6 +62,49 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             return Ok(gamesDTOs);
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetSpecificGame(int id)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            //var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized(new
+                {
+                    error = "Unauthorized",
+                    message = "User not authenticated or invalid user ID"
+                });
+            }
+
+            var hasAccess = await _globalDbContext.GameAccesses
+                .AnyAsync(g => g.UserId == userId && g.GameId == id);
+
+            if (!hasAccess)
+            {
+                return NotFound(new
+                {
+                    error = "Not Found",
+                    message = $"Game with ID {id} not found"
+                });
+            }
+
+            var game = await _globalDbContext.Games
+                .Where(g => g.Id == id)
+                .Select(g => new GameDTO(g.Id, g.Name, g.Description, g.Image))
+                .FirstOrDefaultAsync();
+
+            if (game == null)
+            {
+                return NotFound(new
+                {
+                    error = "Not Found",
+                    message = $"Game with ID {id} not found"
+                });
+            }
+
+            return Ok(game);
+        }
 
 
         [HttpPost("select")]
