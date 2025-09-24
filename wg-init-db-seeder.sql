@@ -84,6 +84,8 @@ CREATE TABLE "Global".games (
     name text NOT NULL,
     description text,
     image text,
+    turn integer,
+    "turnStartDate" date,
     "ownerId" integer NOT NULL
 );
 
