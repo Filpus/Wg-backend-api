@@ -54,7 +54,7 @@ namespace Wg_backend_api.Models
         public int? Id { get; set; }
 
         [Required]
-        [Column("fk_Events")]
+        [Column("event_id")]
         public int EventId { get; set; }
         [ForeignKey("EventId")]
         public Event Event { get; set; }
@@ -62,25 +62,10 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("modifireType")]
         public ModifireType modifireType { get; set; }
+        [Required]
+        [Column("effects")]
+        public string Effects { get; set; }
 
-        [Column("fk_Resources")]
-        public int? ResourceId { get; set; }
-        [ForeignKey("ResourceId")]
-        public Resource? Resource { get; set; }
 
-        [Column("fk_SocialGroups")]
-        public int? SocialGroupId { get; set; }
-        [ForeignKey("SocialGroupId")]
-        public SocialGroup? SocialGroup { get; set; }
-
-        [Column("fk_Cultures")]
-        public int? CultureId { get; set; }
-        [ForeignKey("CultureId")]
-        public Culture? Culture { get; set; }
-
-        [Column("fk_Religion")]
-        public int? ReligionId { get; set; }
-        [ForeignKey("ReligionId")]
-        public Religion? Religion { get; set; }
     }
 }

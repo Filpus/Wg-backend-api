@@ -285,7 +285,7 @@
                 .ToListAsync();
         }
 
-        private async Task<Nation> GetNationWithIncludesAsync(int nationId)
+        private async Task<Nation?> GetNationWithIncludesAsync(int nationId)
         {
             return await _context.Nations
                 .AsNoTracking()
@@ -294,12 +294,10 @@
                     .ThenInclude(l => l.LocalisationResources)
                 .Include(n => n.Localisations)
                     .ThenInclude(l => l.Populations)
-                        .ThenInclude(p => p.SocialGroup)
-                            .ThenInclude(sg => sg.UsedResources)
-                .Include(n => n.Localisations)
+                        .ThenInclude(p => p.PopulationUsedResources)
+                 .Include(n => n.Localisations)
                     .ThenInclude(l => l.Populations)
-                        .ThenInclude(p => p.SocialGroup)
-                            .ThenInclude(sg => sg.ProductionShares)
+                        .ThenInclude(p => p.PopulationProductionShares)
                 .Include(n => n.Armies)
                     .ThenInclude(a => a.Troops)
                         .ThenInclude(t => t.UnitType)
@@ -341,20 +339,42 @@
         {
             return nation.Localisations
                 .SelectMany(l => l.Populations)
-                .SelectMany(p => p.SocialGroup.UsedResources
-                    .Where(ur => ur.ResourceId == resourceId)
-                    .Select(ur => ur.Amount))
+                .SelectMany(p => p.PopulationUsedResources
+                    .Where(pur => pur.ResourcesId == resourceId)
+                    .Select(pur => pur.Amount))
                 .Sum();
         }
-
         private float GetPopulationProduction(Nation nation, int resourceId)
         {
             return nation.Localisations
-                .SelectMany(l => l.Populations)
-                .SelectMany(p => p.SocialGroup.ProductionShares
-                    .Where(ps => ps.ResourceId == resourceId)
-                    .Select(ps => ps.Coefficient))
-                .Sum();
+                .Sum(location => GetPopulationProductionByLocation(location, resourceId));
+        }
+        private float GetPopulationProductionByLocation(Localisation location, int resourceId)
+        {
+            if (location == null || location.LocalisationResources == null || !location.LocalisationResources.Any())
+            {
+                return 0;
+            }
+
+            float totalProduction = 0;
+
+            foreach (var population in location.Populations)
+            {
+
+               var productionShare = population.PopulationProductionShares
+                    .First(ps => ps.ResourcesId == resourceId);
+
+               var localisationResource = location.LocalisationResources
+                    .FirstOrDefault(lr => lr.ResourceId == resourceId);
+
+                if (localisationResource == null || productionShare == null)
+                {
+                    continue;
+                }
+                totalProduction += productionShare.Coefficient * localisationResource.Amount;
+            }
+
+            return totalProduction;
         }
 
         private float GetTradeIncome(List<TradeAgreement> tradeAgreements, int nationId, int resourceId)
