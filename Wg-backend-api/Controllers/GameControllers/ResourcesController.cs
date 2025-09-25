@@ -302,9 +302,7 @@
                     .ThenInclude(a => a.Troops)
                         .ThenInclude(t => t.UnitType)
                             .ThenInclude(ut => ut.MaintenaceCosts)
-                .Include(n => n.RelatedEvents)
-                    .ThenInclude(re => re.Event)
-                        .ThenInclude(e => e.Modifiers)
+
                 .FirstOrDefaultAsync();
         }
 
