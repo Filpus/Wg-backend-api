@@ -14,7 +14,6 @@ public class PopulationHappinessProcessor : BaseModifierProcessor<Population>
 
         protected override IQueryable<Population> GetBaseQuery(int nationId)
         {
-            // Poprawione: Include nawigacji Location, nie LocationId
             return _context.Populations
                 .Include(p => p.Location)
                 .Where(p => p.Location != null && p.Location.NationId == nationId);
