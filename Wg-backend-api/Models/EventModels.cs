@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Wg_backend_api.Enums;
 
 namespace Wg_backend_api.Models
 {
@@ -52,14 +53,12 @@ namespace Wg_backend_api.Models
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int? Id { get; set; }
-
         [Required]
         [Column("event_id")]
         public int EventId { get; set; }
         [ForeignKey("EventId")]
         public Event Event { get; set; }
-
-        [Required]
+      [Required]
         [Column("modifireType")]
         public ModifireType modifireType { get; set; }
         [Required]
