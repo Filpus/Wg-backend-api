@@ -7,11 +7,6 @@
         Player
     }
 
-    public enum ModifireType
-    {
-        Percent,
-        Value
-    }
 
 
 }
