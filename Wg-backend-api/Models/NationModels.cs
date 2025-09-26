@@ -39,6 +39,8 @@ namespace Wg_backend_api.Models
         public ICollection<Localisation> Localisations { get; set; }
         public ICollection<MapAccess> MapAccesses { get; set; }
 
+        public ICollection<OwnedResouerce> OwnedResouerces { get; set; }
+
         [InverseProperty("OfFeringNation")]
         public ICollection<TradeAgreement> OfferedTradeAgreements { get; set; }
 

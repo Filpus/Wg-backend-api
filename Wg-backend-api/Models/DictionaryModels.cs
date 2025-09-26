@@ -26,9 +26,13 @@ namespace Wg_backend_api.Models
         public ICollection<MaintenaceCosts> MaintenaceCosts { get; set; }
         public ICollection<UsedResource> UsedResources { get; set; }
         public ICollection<ProductionShare> ProductionShares { get; set; }
+        public ICollection<PopulationUsedResource> PopulationUsedResources { get; set; }
+        public ICollection<PopulationProductionShare> PopulationProductionShares { get; set; }
         public ICollection<Modifiers> Modifiers { get; set; }
         public ICollection<OfferedResource> OfferedResources { get; set; }
         public ICollection<WantedResource> WantedResources { get; set; }
+        public ICollection<OwnedResouerce> OwnedResouerces { get; set; }
+
     }
 
     [Table("cultures")]
@@ -152,4 +156,26 @@ namespace Wg_backend_api.Models
         public float Coefficient { get; set; }
     }
 
+
+    [Table("ownedResources")]
+    public class OwnedResouerce()
+    {
+        [Column("id")]
+        public int? Id { get; set; }
+
+        [Column("fk_nation")]
+        public int NationId { get; set; }
+
+        [ForeignKey ("NationId")]
+        public Nation Nation { get; set; }
+
+        [Column("fk_resource")]
+        public int ResourceId { get; set; }
+
+        [ForeignKey("ResourceId")]
+        public Resource Resource { get; set; }
+
+        [Column("amount")]
+        public float Amount { get; set; }
+    }
 }

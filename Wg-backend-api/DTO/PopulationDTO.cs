@@ -15,6 +15,7 @@ namespace Wg_backend_api.DTO
 
         public int LocationId { get; set; }
         public float Happiness { get; set; }
+        public int Volonteers { get; set; }
     }
 
     public class PopulationReligiousGroupDTO
