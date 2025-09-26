@@ -118,23 +118,46 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         // POST: api/Populations
         [HttpPost]
-        public async Task<ActionResult<PopulationDTO>> PostPopulation(PopulationDTO populationDto)
+        public async Task<ActionResult<IEnumerable<PopulationDTO>>> PostPopulation(List<PopulationDTO> populationDtos)
         {
-            var population = new Population
+            if (populationDtos == null || populationDtos.Count == 0)
             {
-                ReligionId = populationDto.ReligionId,
-                CultureId = populationDto.CultureId,
-                SocialGroupId = populationDto.SocialGroupId,
-                LocationId = populationDto.LocationId,
-                Happiness = populationDto.Happiness
-            };
+                return BadRequest();
+            }
 
-            _context.Populations.Add(population);
-            await _context.SaveChangesAsync();
+            var createdDtos = new List<PopulationDTO>();
 
-            populationDto.Id = population.Id;
+            foreach (var populationDto in populationDtos)
+            {
 
-            return CreatedAtAction("GetPopulation", new { id = populationDto.Id }, populationDto);
+                    var socialGroup = await _context.SocialGroups.FirstOrDefaultAsync(sg => sg.Id == populationDto.SocialGroupId);
+                    if (socialGroup == null)
+                    {
+                        return BadRequest($"Nie znaleziono grupy społecznej o ID {populationDto.SocialGroupId}");
+                    }
+
+                    var population = new Population
+                    {
+                        ReligionId = populationDto.ReligionId,
+                        CultureId = populationDto.CultureId,
+                        SocialGroupId = populationDto.SocialGroupId,
+                        LocationId = populationDto.LocationId,
+                        Happiness = socialGroup.BaseHappiness,
+                        Volunteers = socialGroup.Volunteers,
+                    };
+
+                    _context.Populations.Add(population);
+                    await _context.SaveChangesAsync();
+
+                    populationDto.Id = population.Id;
+                    populationDto.Happiness = population.Happiness;
+                    populationDto.Volonteers = population.Volunteers;
+                    createdDtos.Add(populationDto);
+                }
+
+
+
+            return CreatedAtAction("GetPopulation", createdDtos);
         }
 
         // DELETE: api/Populations/5
