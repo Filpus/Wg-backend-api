@@ -3,7 +3,7 @@ using Wg_backend_api.Data;
 using Wg_backend_api.Enums;
 using Wg_backend_api.Models;
 
-namespace Wg_backend_api.Logic.Modifires.Base
+namespace Wg_backend_api.Logic.Modifiers.Base
 {
     public abstract class BaseModifierProcessor<TEntity> : IModifierProcessor
             where TEntity : class

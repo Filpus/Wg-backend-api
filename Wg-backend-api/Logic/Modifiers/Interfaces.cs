@@ -2,7 +2,7 @@
 using Wg_backend_api.Enums;
 using Wg_backend_api.Models;
 
-namespace Wg_backend_api.Logic.Modifires
+namespace Wg_backend_api.Logic.Modifiers
 {
     /// <summary>
     /// Interfejs dla procesorów modyfikatorów. Każdy typ modyfikatora ma swój procesor.

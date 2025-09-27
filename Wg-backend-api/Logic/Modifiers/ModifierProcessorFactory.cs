@@ -1,7 +1,7 @@
 ﻿using Wg_backend_api.Enums;
-using Wg_backend_api.Logic.Modifires.Processors;
+using Wg_backend_api.Logic.Modifiers.Processors;
 
-namespace Wg_backend_api.Logic.Modifires
+namespace Wg_backend_api.Logic.Modifiers
 {
     public class ModifierProcessorFactory
     {

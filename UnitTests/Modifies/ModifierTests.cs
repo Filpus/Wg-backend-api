@@ -7,10 +7,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Wg_backend_api.Data;
 using Wg_backend_api.Enums;
-using Wg_backend_api.Logic.Modifires.Processors;
+using Wg_backend_api.Logic.Modifiers.Processors;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
-using Wg_backend_api.Logic.Modifires.ConditionBuilder;
+using Wg_backend_api.Logic.Modifiers.ConditionBuilder;
 using Wg_backend_api.Logic;
 namespace ModifierTests
 {

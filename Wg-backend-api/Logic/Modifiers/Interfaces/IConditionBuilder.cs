@@ -1,4 +1,4 @@
-﻿namespace Wg_backend_api.Logic.Modifires.Interfaces
+﻿namespace Wg_backend_api.Logic.Modifiers.Interfaces
 {
     public interface IConditionBuilder<TEntity>
     {

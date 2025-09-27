@@ -465,7 +465,7 @@
         //{
         //    return nation.RelatedEvents
         //        .SelectMany(re => re.Event.Modifiers
-        //            .Where(m => m.ResourceId == resourceId && m.modifireType == ModifireType.Value)
+        //            .Where(m => m.ResourceId == resourceId && m.modifierType == ModifierType.Value)
         //            .Select(m => m.Amount))
         //        .Sum();
         //}

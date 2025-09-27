@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Wg_backend_api.Logic.Modifires;
+using Wg_backend_api.Logic.Modifiers;
 
 namespace Wg_backend_api.Controllers.GameControllers
 {

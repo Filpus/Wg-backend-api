@@ -1,6 +1,6 @@
 ﻿using Wg_backend_api.Models;
 
-namespace Wg_backend_api.Logic.Modifires.ConditionBuilder
+namespace Wg_backend_api.Logic.Modifiers.ConditionBuilder
 {
     public class PopulationConditionBuilder : ConditionBuilder<Population>
     {
