@@ -58,9 +58,9 @@ namespace Wg_backend_api.Models
         public int EventId { get; set; }
         [ForeignKey("EventId")]
         public Event Event { get; set; }
-      [Required]
-        [Column("modifireType")]
-        public ModifireType modifireType { get; set; }
+        [Required]
+        [Column("modifierType")]
+        public ModifierType modiferType { get; set; }
         [Required]
         [Column("effects")]
         public string Effects { get; set; }

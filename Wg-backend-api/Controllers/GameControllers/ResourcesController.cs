@@ -360,7 +360,7 @@
             {
 
                var productionShare = population.PopulationProductionShares
-                    .First(ps => ps.ResourcesId == resourceId);
+                    .FirstOrDefault(ps => ps.ResourcesId == resourceId);
 
                var localisationResource = location.LocalisationResources
                     .FirstOrDefault(lr => lr.ResourceId == resourceId);
@@ -465,7 +465,7 @@
         //{
         //    return nation.RelatedEvents
         //        .SelectMany(re => re.Event.Modifiers
-        //            .Where(m => m.ResourceId == resourceId && m.modifireType == ModifireType.Value)
+        //            .Where(m => m.ResourceId == resourceId && m.modifierType == ModifierType.Value)
         //            .Select(m => m.Amount))
         //        .Sum();
         //}

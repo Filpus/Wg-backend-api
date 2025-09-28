@@ -2,8 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict 18ha0KIDgPS0a5L08c5OVI76rUVb0bbrnOQwDCJZ5LZILdRggcc0re8SXspD6NF
-
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
 
@@ -1513,8 +1511,11 @@ COPY game_1.modifiers (id, event_id, modifier_type, effects) FROM stdin;
 --
 
 COPY game_1.nations (id, name, fk_religions, fk_cultures, flag, color) FROM stdin;
-1	Polska	1	1	\N	green
-8	Rosja	1	1	\N	\N
+1	Królestwo Północy	1	1	\N	red
+2	Cesarstwo Centralne	2	3	\N	yellow
+3	Republika Nadmorska	2	4	\N	red
+4	Księstwo Wschodnie	1	2	\N	green
+5	Kalifat Południowy	3	5	\N	blue
 \.
 
 
@@ -1525,6 +1526,11 @@ COPY game_1.nations (id, name, fk_religions, fk_cultures, flag, color) FROM stdi
 --
 
 COPY game_1.offeredresources (id, fk_resource, fk_tradeagreement, quantity) FROM stdin;
+1	2	1	100
+2	3	1	200
+3	1	3	50
+4	4	3	300
+5	3	4	150
 \.
 
 
@@ -1535,11 +1541,27 @@ COPY game_1.offeredresources (id, fk_resource, fk_tradeagreement, quantity) FROM
 --
 
 COPY game_1."ownedResources" ("Id", fk_nation, fk_resource, amount) FROM stdin;
-2	1	9	0
-3	8	9	0
-4	8	1	0
-5	1	11	0
-6	8	11	0
+1	1	1	4201
+2	1	2	4202
+3	1	3	4203
+4	1	4	4204
+5	1	5	4205
+6	1	6	4206
+7	1	7	4207
+8	1	8	4208
+9	1	9	4209
+10	2	1	2137
+11	2	2	2173
+12	2	3	1237
+13	2	4	2137
+14	2	5	1273
+15	2	6	2137
+16	2	7	1237
+17	2	8	2173
+18	2	9	1237
+19	3	1	69
+20	4	1	69
+21	5	1	69
 \.
 
 
@@ -1551,7 +1573,10 @@ COPY game_1."ownedResources" ("Id", fk_nation, fk_resource, amount) FROM stdin;
 
 COPY game_1.players (id, "fk_User", "playerType") FROM stdin;
 1	1	1
+4	4	1
 2	2	2
+3	3	1
+5	5	1
 \.
 
 
@@ -1562,7 +1587,14 @@ COPY game_1.players (id, "fk_User", "playerType") FROM stdin;
 --
 
 COPY game_1.populationproductionshares (id, fk_population, fk_resources, coefficient) FROM stdin;
-2	12	1	10
+1	1	1	1.1
+2	1	2	2.1
+3	2	1	3.7
+4	3	3	6.9
+5	4	4	1.2
+6	5	5	1.2
+7	6	6	0.9
+8	7	7	1.3
 \.
 
 
@@ -1573,7 +1605,14 @@ COPY game_1.populationproductionshares (id, fk_population, fk_resources, coeffic
 --
 
 COPY game_1.populations (id, fk_religions, fk_cultures, fk_socialgroups, fk_locations, happiness, volunteers) FROM stdin;
-12	1	1	6	1	10	298
+1	1	1	1	1	5.5	3
+2	2	3	2	2	6	3
+3	2	4	3	3	7.2	1
+4	1	2	1	4	4.8	2
+5	3	5	5	5	5.7	2
+6	1	1	2	6	5.2	1
+7	2	3	4	7	6.8	1
+8	2	4	5	8	6.3	1
 \.
 
 
@@ -1584,7 +1623,14 @@ COPY game_1.populations (id, fk_religions, fk_cultures, fk_socialgroups, fk_loca
 --
 
 COPY game_1.populationusedresource (id, fk_population, fk_resources, amount) FROM stdin;
-1	12	1	12
+1	1	1	0.1
+2	1	2	1.1
+3	1	3	2.7
+4	3	3	0.9
+5	4	4	1.2
+6	5	5	1.4
+7	6	6	0.7
+8	7	7	1.3
 \.
 
 
@@ -1595,6 +1641,16 @@ COPY game_1.populationusedresource (id, fk_population, fk_resources, amount) FRO
 --
 
 COPY game_1."productionCost" (id, "fk_UnitTypes", "fk_Resources", amount) FROM stdin;
+1	1	1	10
+2	1	2	5
+3	2	1	8
+4	2	3	10
+5	3	1	20
+6	3	2	15
+7	4	1	30
+8	4	3	25
+9	5	1	50
+10	5	2	30
 \.
 
 
@@ -1605,7 +1661,16 @@ COPY game_1."productionCost" (id, "fk_UnitTypes", "fk_Resources", amount) FROM s
 --
 
 COPY game_1."productionShares" (id, "fk_SocialGroups", "fk_Resources", coefficient) FROM stdin;
-11	6	1	10
+1	1	3	2
+2	1	4	3
+3	2	1	1.5
+4	2	6	2
+5	3	2	1
+6	3	5	1.5
+7	4	1	1
+8	4	7	0.5
+9	5	1	2.5
+10	5	8	2
 \.
 
 
@@ -1616,6 +1681,16 @@ COPY game_1."productionShares" (id, "fk_SocialGroups", "fk_Resources", coefficie
 --
 
 COPY game_1."relatedEvents" (id, "fk_Events", "fk_Nations") FROM stdin;
+1	1	1
+2	1	2
+3	2	3
+4	2	4
+5	3	1
+6	3	5
+7	4	2
+8	4	4
+9	5	1
+10	5	3
 \.
 
 
@@ -1626,7 +1701,11 @@ COPY game_1."relatedEvents" (id, "fk_Events", "fk_Nations") FROM stdin;
 --
 
 COPY game_1.religions (id, name, icon) FROM stdin;
-1	xd	\N
+1	Pogaństwo	\N
+2	Chrześcijaństwo	\N
+3	Islam	\N
+4	Judaizm	\N
+5	Zoroastrianizm	\N
 \.
 
 
@@ -1637,8 +1716,15 @@ COPY game_1.religions (id, name, icon) FROM stdin;
 --
 
 COPY game_1.resources (id, name, ismain, icon) FROM stdin;
+1	Złoto	t	\N
+2	Żelazo	t	\N
+3	Drewno	t	\N
+4	Żywność	t	\N
+5	Kamień	t	\N
+6	Tkaniny	f	\N
+7	Przyprawy	f	\N
+8	Wino	f	\N
 9	Drewno	t	\N
-1	12	t	\N
 11	Miód	t	\N
 \.
 
@@ -1650,7 +1736,11 @@ COPY game_1.resources (id, name, ismain, icon) FROM stdin;
 --
 
 COPY game_1.socialgroups (id, name, basehappiness, volunteers, icon) FROM stdin;
-6	test	10	100	\N
+1	Chłopi	        5	10	\N
+2	Mieszczanie	    6	20	\N
+3	Szlachta	    7	30	\N
+4	Duchowieństwo	8	5	\N
+5	Kupcy	        6.5	15	\N
 \.
 
 
@@ -1661,6 +1751,11 @@ COPY game_1.socialgroups (id, name, basehappiness, volunteers, icon) FROM stdin;
 --
 
 COPY game_1.tradeagreements (id, fk_nationoffering, fk_nationreceiving, status, duration, description) FROM stdin;
+1	1	2	0	10	I am description
+2	1	3	0	5	I am also description
+3	2	4	3	8	But I m not description
+4	3	5	1	12	What about me?
+5	4	5	2	6	
 \.
 
 
@@ -1671,6 +1766,14 @@ COPY game_1.tradeagreements (id, fk_nationoffering, fk_nationreceiving, status, 
 --
 
 COPY game_1.troops (id, "fk_UnitTypes", "fk_Armies", quantity) FROM stdin;
+1	1	1	500
+2	2	1	300
+3	3	2	400
+4	1	2	600
+5	5	3	20
+6	1	4	300
+7	3	4	150
+8	3	5	500
 \.
 
 
@@ -1681,6 +1784,16 @@ COPY game_1.troops (id, "fk_UnitTypes", "fk_Armies", quantity) FROM stdin;
 --
 
 COPY game_1."unitOrders" (id, "fk_UnitTypes", "fk_Nations", quantity) FROM stdin;
+3	3	2	3
+4	4	2	1
+5	1	3	8
+6	5	3	5
+7	1	4	6
+8	2	4	4
+9	1	5	1
+10	3	5	4
+12	1	1	1
+1	1	1	1
 \.
 
 
@@ -1691,6 +1804,11 @@ COPY game_1."unitOrders" (id, "fk_UnitTypes", "fk_Nations", quantity) FROM stdin
 --
 
 COPY game_1."unitTypes" (id, name, description, melee, range, defense, speed, morale, "volunteersNeeded", "isNaval") FROM stdin;
+1	Piechota	Podstawowa jednostka piechoty	5	0	3	3	5	100	f
+2	Łucznicy	Jednostka łuczników	1	6	2	3	4	80	f
+3	Kawaleria	Szybka jednostka kawalerii	7	0	4	6	7	120	f
+4	Oblężnicza	Machiny oblężnicze	1	8	1	2	3	150	f
+5	Okręty wojenne	Okręty bojowe	6	4	5	4	6	200	t
 \.
 
 
@@ -1701,8 +1819,16 @@ COPY game_1."unitTypes" (id, name, description, melee, range, defense, speed, mo
 --
 
 COPY game_1."usedResources" (id, "fk_SocialGroups", "fk_Resources", amount) FROM stdin;
-13	9	1	10
-14	6	1	12
+1	1	4	100
+2	1	3	50
+3	2	4	75
+4	2	6	25
+5	3	4	50
+6	3	8	30
+7	4	4	30
+8	4	7	10
+9	5	4	60
+10	5	6	40
 \.
 
 
@@ -1713,6 +1839,11 @@ COPY game_1."usedResources" (id, "fk_SocialGroups", "fk_Resources", amount) FROM
 --
 
 COPY game_1.wantedresources (id, fk_resource, fk_tradeagreement, amount) FROM stdin;
+1	1	1	50
+2	4	1	100
+3	2	3	75
+4	5	3	200
+5	7	4	25
 \.
 
 
@@ -2941,6 +3072,4 @@ ALTER TABLE ONLY game_1.populationusedresource
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict 18ha0KIDgPS0a5L08c5OVI76rUVb0bbrnOQwDCJZ5LZILdRggcc0re8SXspD6NF
 

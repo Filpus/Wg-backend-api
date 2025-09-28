@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace Wg_backend_api.Logic.Modifires.Base
+namespace Wg_backend_api.Logic.Modifiers.Base
 {
     public abstract class ConditionBuilder<TEntity> : IConditionBuilder<TEntity>
            where TEntity : class

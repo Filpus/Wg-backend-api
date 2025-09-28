@@ -1259,7 +1259,7 @@ COPY game_1."mapAccess" ("fk_Users", "fk_Maps") FROM stdin;
 -- Data for Name: modifiers; Type: TABLE DATA; Schema: game_1; Owner: postgres
 --
 
-COPY game_1.modifiers (id, "fk_Events", "modifireType", "fk_Resources", "fk_SocialGroups", "fk_Cultures", "fk_Religion") FROM stdin;
+COPY game_1.modifiers (id, "fk_Events", "modifierType", "fk_Resources", "fk_SocialGroups", "fk_Cultures", "fk_Religion") FROM stdin;
 1	1	1	2	\N	\N	\N
 2	1	2	\N	3	\N	\N
 3	2	3	4	\N	\N	\N

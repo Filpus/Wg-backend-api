@@ -1,6 +1,6 @@
 ﻿using Wg_backend_api.Enums;
 
-namespace Wg_backend_api.Logic.Modifires
+namespace Wg_backend_api.Logic.Modifiers
 {
     public static class OperationProcessor
     {
