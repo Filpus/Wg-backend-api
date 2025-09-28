@@ -2,8 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict 18ha0KIDgPS0a5L08c5OVI76rUVb0bbrnOQwDCJZ5LZILdRggcc0re8SXspD6NF
-
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
 
@@ -1275,7 +1273,7 @@ COPY "Global".gameaccess (id, "fk_Users", "fk_Games", "accessType", "isArchived"
 --
 
 COPY "Global".games (id, name, description, image, "ownerId") FROM stdin;
-1	game_1	Demo testowe\n	\N	2
+1	default_schema	Demo testowe\n	\N	2
 \.
 
 
@@ -1727,7 +1725,6 @@ COPY game_1.resources (id, name, ismain, icon) FROM stdin;
 7	Przyprawy	f	\N
 8	Wino	f	\N
 9	Drewno	t	\N
-1	12	t	\N
 11	Miód	t	\N
 \.
 
@@ -3075,6 +3072,4 @@ ALTER TABLE ONLY game_1.populationusedresource
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict 18ha0KIDgPS0a5L08c5OVI76rUVb0bbrnOQwDCJZ5LZILdRggcc0re8SXspD6NF
 

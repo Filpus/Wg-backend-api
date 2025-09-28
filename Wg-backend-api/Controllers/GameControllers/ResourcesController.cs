@@ -360,7 +360,7 @@
             {
 
                var productionShare = population.PopulationProductionShares
-                    .First(ps => ps.ResourcesId == resourceId);
+                    .FirstOrDefault(ps => ps.ResourcesId == resourceId);
 
                var localisationResource = location.LocalisationResources
                     .FirstOrDefault(lr => lr.ResourceId == resourceId);
