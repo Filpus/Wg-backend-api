@@ -32,14 +32,7 @@ namespace Wg_backend_api.Logic.Modifiers
         /// <returns>Wynik usunięcia modyfikatora</returns>
         Task<ModifierApplicationResult> RevertAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
 
-        /// <summary>
-        /// Sprawdza czy modyfikator może być zastosowany do danego narodu
-        /// </summary>
-        /// <param name="nationId">ID narodu</param>
-        /// <param name="effects">Lista efektów do sprawdzenia</param>
-        /// <param name="context">Kontekst bazy danych</param>
-        /// <returns>True jeśli można zastosować</returns>
-        Task<bool> CanApplyAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
+
     }
     /// <summary>
     /// Interfejs dla builderów warunków. Pozwala na dynamiczne budowanie zapytań z warunkami.

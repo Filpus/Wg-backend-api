@@ -1,17 +1,19 @@
 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using System.Configuration;
-using Wg_backend_api.Services;
-using Wg_backend_api.Data.Seeders;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using Wg_backend_api.Auth;
-using Microsoft.AspNetCore.Cors.Infrastructure;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
+using System.Configuration;
+using System.Security.Claims;
+using System.Text;
+using Wg_backend_api.Auth;
+using Wg_backend_api.Data.Seeders;
+using Wg_backend_api.Logic.Modifiers;
+using Wg_backend_api.Logic.Modifiers.Processors;
+using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Data
 {
@@ -23,7 +25,7 @@ namespace Wg_backend_api.Data
             var connectionString = "";
             if (builder.Environment.IsDevelopment())
             {
-                connectionString = builder.Configuration.GetConnectionString("DevConection");
+                connectionString = builder.Configuration.GetConnectionString("FilipConnection");
 
             }
             else
@@ -115,7 +117,16 @@ namespace Wg_backend_api.Data
             builder.Services.AddSwaggerGen();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ISessionDataService, SessionDataService>();
+            builder.Services.AddScoped<ResourceChangeProcessor>();
+            builder.Services.AddScoped<PopulationHappinessProcessor>();
+            builder.Services.AddScoped<PopulationResourceProductionProcessor>();
+            builder.Services.AddScoped<PopulationResourceUsageProcessor>();
+            builder.Services.AddScoped<PopulationVolunteerProcessor>();
+            builder.Services.AddScoped<FactionPowerProcessor>();
+            builder.Services.AddScoped<FactionContentmentProcessor>();
 
+            // rejestracja factory
+            builder.Services.AddScoped<ModifierProcessorFactory>();
 
             builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 

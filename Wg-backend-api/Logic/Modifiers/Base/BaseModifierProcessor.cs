@@ -58,16 +58,5 @@ namespace Wg_backend_api.Logic.Modifiers.Base
             return new ModifierApplicationResult { Success = true, Message = "Revert not implemented yet" };
         }
 
-        public virtual async Task<bool> CanApplyAsync(int nationId, List<ModifierEffect> effects, GameDbContext context)
-        {
-            try
-            {
-                return await GetBaseQuery(nationId).AnyAsync();
-            }
-            catch
-            {
-                return false;
-            }
-        }
     }
 }

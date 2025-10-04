@@ -9,6 +9,5 @@ namespace Wg_backend_api.Logic.Modifiers.Interfaces
         ModifierType SupportedType { get; }
         Task<ModifierApplicationResult> ProcessAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
         Task<ModifierApplicationResult> RevertAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
-        Task<bool> CanApplyAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
     }
 }

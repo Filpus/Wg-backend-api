@@ -4,24 +4,17 @@ namespace Wg_backend_api.Enums
 {
     public enum ModifierType
     {
-        [Description("Zadowolenie populacji")]
         PopulationHappiness,
 
-        [Description("Produkcja zasobów")]
         ResourceProduction,
 
-        [Description("Dodanie zasobów")]
-        ResourceAddition,
+        ResourceChange,
 
-        [Description("Bonus ochotników")]
-        VolunteerBonus,
+        VoluneerChange,
 
-        [Description("Siła frakcji")]
         FactionPower,
+        FactionContenment,
 
-        [Description("Koszty utrzymania")]
-        MaintenanceCost,
-        [Description("Zużycie zasobów")]
         ResouerceUsage,
     }
 }

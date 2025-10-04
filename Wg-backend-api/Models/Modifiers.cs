@@ -1,4 +1,6 @@
 ﻿using System.Text.Json;
+using Wg_backend_api.Enums;
+using Wg_backend_api.Logic.Modifiers.Interfaces;
 
 namespace Wg_backend_api.Models
 {
@@ -75,46 +77,28 @@ namespace Wg_backend_api.Models
     /// Reprezentuje pojedynczy efekt modyfikatora z JSON
     /// </summary>
 
+    public class ModifierEffect<TConditions> where TConditions : IBaseModifierConditions
+    {
+        public ModifierOperation Operation { get; set; }
+        public decimal Value { get; set; }
+        public TConditions Conditions { get; set; }
+
+        public string ConditionsJson => JsonSerializer.Serialize(Conditions.ToDictionary());
+
+    }
+
     public class ModifierEffect
     {
-        /// <summary>
-        /// Typ operacji: "add", "multiply", "percentage", "set"
-        /// </summary>
         public string Operation { get; set; }
-
-        /// <summary>
-        /// Wartość modyfikatora
-        /// </summary>
-        public decimal Value { get; set; }
-
-        /// <summary>
-        /// Warunki targetowania z JSON
-        /// </summary>
+        public float Value { get; set; }
         public Dictionary<string, object> Conditions { get; set; } = new();
 
-        /// <summary>
-        /// Pomocnicza metoda do pobierania warunków z bezpieczną konwersją
-        /// </summary>
-        public T GetCondition<T>(string key, T defaultValue = default(T))
+        public T GetConditions<T>() where T : IBaseModifierConditions
         {
-            if (Conditions?.ContainsKey(key) == true)
-            {
-                try
-                {
-                    var value = Conditions[key];
-                    if (value is JsonElement element)
-                    {
-                        return JsonSerializer.Deserialize<T>(element.GetRawText());
-                    }
-                    return (T)Convert.ChangeType(value, typeof(T));
-                }
-                catch
-                {
-                    return defaultValue;
-                }
-            }
-            return defaultValue;
+            var json = JsonSerializer.Serialize(Conditions);
+            return JsonSerializer.Deserialize<T>(json);
         }
     }
+
 
 }

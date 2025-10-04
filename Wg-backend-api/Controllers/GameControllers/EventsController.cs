@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
+using Wg_backend_api.Logic.Modifiers;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
@@ -13,6 +16,7 @@ namespace Wg_backend_api.Controllers.GameControllers
     {
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
+        private readonly ModifierProcessorFactory _processorFactory;
         private GameDbContext _context;
         private int? _nationId;
 
@@ -32,23 +36,130 @@ namespace Wg_backend_api.Controllers.GameControllers
             _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
-        [HttpDelete]
-        public async Task<ActionResult> DeleteEvents([FromBody] List<int?> ids)
+
+        [HttpPost("events")]
+        public async Task<ActionResult> CreateEvent([FromBody] EventDto dto)
         {
-            if (ids == null || ids.Count == 0)
-            {
-                return BadRequest("Brak ID do usunięcia.");
-            }
-
-            var events = await _context.Events.Where(r => ids.Contains(r.Id)).ToListAsync();
-
-            if (events.Count == 0)
-            {
-                return NotFound("Nie znaleziono wydarzeń do usunięcia.");
-            }
-
-            _context.Events.RemoveRange(events);
+            var ev = new Event { Name = dto.Name, Description = dto.Description };
+            _context.Add(ev);
             await _context.SaveChangesAsync();
+            foreach (var m in dto.Modifiers)
+            {
+                var mod = new Modifiers
+                {
+                    EventId = ev.Id.Value,
+                    modiferType = m.ModifierType,
+                    Effects = JsonSerializer.Serialize(new[]
+                    {
+                    new { Operation = m.Effect.Operation, Value = m.Effect.Value, Conditions = m.Effect.Conditions.ToDictionary() }
+                })
+                };
+                _context.Add(mod);
+            }
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(null, new { ev.Id });
+        }
+
+        // Delete Event + cascade Modifiers
+        [HttpDelete("events/{eventId}")]
+        public async Task<ActionResult> DeleteEvent(int eventId)
+        {
+            var ev = await _context.Events
+                .Include(e => e.Modifiers)
+                .FirstOrDefaultAsync(e => e.Id == eventId);
+            if (ev == null) return NotFound();
+            _context.RemoveRange(ev.Modifiers);
+            _context.Remove(ev);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        // Edit Event + Modifiers
+        [HttpPut("events/{eventId}")]
+        public async Task<ActionResult> UpdateEvent(int eventId, [FromBody] EventDto dto)
+        {
+            var ev = await _context.Events
+                .Include(e => e.Modifiers)
+                .FirstOrDefaultAsync(e => e.Id == eventId);
+            if (ev == null) return NotFound();
+            ev.Name = dto.Name;
+            ev.Description = dto.Description;
+            _context.Modifiers.RemoveRange(ev.Modifiers);
+            foreach (var m in dto.Modifiers)
+            {
+                _context.Add(new Modifiers
+                {
+                    EventId = eventId,
+                    modiferType = m.ModifierType,
+                    Effects = JsonSerializer.Serialize(new[]
+                    {
+                    new { Operation = m.Effect.Operation, Value = m.Effect.Value, Conditions = m.Effect.Conditions.ToDictionary() }
+                })
+                });
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        // Delete only Modifiers by IDs
+        [HttpDelete]
+        public async Task<ActionResult> DeleteModifiers([FromBody] List<int?> ids)
+        {
+            if (ids == null || !ids.Any()) return BadRequest("Brak ID do usunięcia.");
+            var mods = await _context.Modifiers.Where(m => ids.Contains(m.Id)).ToListAsync();
+            if (!mods.Any()) return NotFound();
+            _context.Modifiers.RemoveRange(mods);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPost("events/assign")]
+        public async Task<ActionResult> AssignEvent([FromBody] AssignEventDto dto)
+        {
+            _context.Add(new RelatedEvents { EventId = dto.EventId, NationId = dto.NationId });
+            await _context.SaveChangesAsync();
+
+            var modifiers = await _context.Modifiers
+                .Where(m => m.EventId == dto.EventId)
+                .ToListAsync();
+
+            foreach (var group in modifiers.GroupBy(m => m.modiferType))
+            {
+                var processor = _processorFactory.GetProcessor(group.Key);
+                var effects = group
+                    .Select(m => JsonSerializer.Deserialize<ModifierEffect>(m.Effects)!)
+                    .ToList();
+                await processor.ProcessAsync(dto.NationId, effects, _context);
+            }
+
+            return Ok();
+        }
+
+
+        [HttpDelete("events/assign")]
+        public async Task<ActionResult> UnassignEvent([FromBody] AssignEventDto dto)
+        {
+
+            var rel = await _context.RelatedEvents
+                .FirstOrDefaultAsync(r => r.EventId == dto.EventId && r.NationId == dto.NationId);
+            if (rel == null) return NotFound();
+            _context.Remove(rel);
+            await _context.SaveChangesAsync();
+
+
+            var modifiers = await _context.Modifiers
+                .Where(m => m.EventId == dto.EventId)
+                .ToListAsync();
+
+
+            foreach (var group in modifiers.GroupBy(m => m.modiferType))
+            {
+                var processor = _processorFactory.GetProcessor(group.Key);
+                var effects = group
+                    .Select(m => JsonSerializer.Deserialize<ModifierEffect>(m.Effects)!)
+                    .ToList();
+                await processor.RevertAsync(dto.NationId, effects, _context);
+            }
 
             return Ok();
         }
