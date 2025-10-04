@@ -9,33 +9,39 @@ namespace Wg_backend_api.Models
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Key] // Oznaczenie klucza głównego
-        public int Id { get; set; }
+        public int Id { get; set; } 
+
         [Required]
         [Column("name")]
         public string Name { get; set; }
+
         [Column("description")]
         public string? Description { get; set; }
+
         [Column("image")]
         public string? Image { get; set; }
+
         [Column("ownerId")]
         [Required]
         public int OwnerId { get; set; }
+
         public User Owner { get; set; }
+
         public ICollection<GameAccess> GameAccesses { get; set; }
     }
 
     [Table("gameaccess")]
     public class GameAccess
     {
-
-
         [Column("id")]
         [Key]
         public int? Id { get; set; }
+
         [Column("fk_Users")]
         [Required]
 
         public int UserId { get; set; }
+
         [ForeignKey("UserId")]
         public User User { get; set; }
 
@@ -43,6 +49,7 @@ namespace Wg_backend_api.Models
         [Required]
 
         public int GameId { get; set; }
+
         [ForeignKey("GameId")]
         public Game Game { get; set; }
 

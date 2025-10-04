@@ -585,7 +585,7 @@ ALTER TABLE game_1.map OWNER TO postgres;
 --
 
 CREATE TABLE game_1."mapAccess" (
-    "fk_Users" integer NOT NULL,
+    "fk_Nations" integer NOT NULL,
     "fk_Maps" integer NOT NULL
 );
 
@@ -1482,7 +1482,7 @@ COPY game_1.map (id, name, "mapLocation", "mapIconLocation") FROM stdin;
 -- Data for Name: mapAccess; Type: TABLE DATA; Schema: game_1; Owner: postgres
 --
 
-COPY game_1."mapAccess" ("fk_Users", "fk_Maps") FROM stdin;
+COPY game_1."mapAccess" ("fk_Nations", "fk_Maps") FROM stdin;
 1	1
 1	4
 2	2
@@ -1573,9 +1573,9 @@ COPY game_1."ownedResources" ("Id", fk_nation, fk_resource, amount) FROM stdin;
 
 COPY game_1.players (id, "fk_User", "playerType") FROM stdin;
 1	1	1
-4	4	1
 2	2	2
 3	3	1
+4	4	1
 5	5	1
 \.
 
@@ -2285,7 +2285,7 @@ ALTER TABLE ONLY game_1.map
 --
 
 ALTER TABLE ONLY game_1."mapAccess"
-    ADD CONSTRAINT "PK_mapAccess" PRIMARY KEY ("fk_Users", "fk_Maps");
+    ADD CONSTRAINT "PK_mapAccess" PRIMARY KEY ("fk_Nations", "fk_Maps");
 
 
 --

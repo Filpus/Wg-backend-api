@@ -29,23 +29,35 @@ namespace Wg_backend_api.Models
         [ForeignKey("CultureId")]
         public Culture Culture { get; set; }
 
+        [Column("flag")]
+        public string? Flag { get; set; }
+
+        [Required]
+        [Column("color")]
+        public string Color { get; set; }
+
         public ICollection<Army> Armies { get; set; }
+
         public ICollection<UnitOrder> UnitOrders { get; set; }
+
         public ICollection<Action> Actions { get; set; }
+
         public Assignment Assignment { get; set; }
 
         public ICollection<RelatedEvents> RelatedEvents { get; set; }
+
         public ICollection<Faction> Factions { get; set; }
+
         public ICollection<Localisation> Localisations { get; set; }
+
         public ICollection<MapAccess> MapAccesses { get; set; }
 
-        public ICollection<OwnedResouerce> OwnedResouerces { get; set; }
+        public ICollection<OwnedResources> OwnedResources { get; set; }
 
-        [InverseProperty("OfFeringNation")]
+        [InverseProperty("OfferingNation")]
         public ICollection<TradeAgreement> OfferedTradeAgreements { get; set; }
 
         [InverseProperty("ReceivingNation")]
         public ICollection<TradeAgreement> ReceivedTradeAgreements { get; set; }
     }
-
 }

@@ -18,6 +18,7 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("mapLocation")]
         public string MapLocation { get; set; }
+
         [Required]
         [Column("mapIconLocation")]
         public string MapIconLocation { get; set; }
@@ -25,19 +26,20 @@ namespace Wg_backend_api.Models
         public ICollection<MapAccess> MapAccesses { get; set; }
     }
 
-
     [Table("mapAccess")]
     public class MapAccess
     {
         [Column("fk_Nations")]
         [Key]
         public int NationId { get; set; }
+
         [ForeignKey("NationId")]
         public Nation Nation { get; set; }
 
         [Column("fk_Maps")]
         [Key]
         public int MapId { get; set; }
+
         [ForeignKey("MapId")]
         public Map Map { get; set; }
     }

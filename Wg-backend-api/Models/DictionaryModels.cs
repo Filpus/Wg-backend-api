@@ -19,20 +19,29 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("ismain")]
         public bool IsMain { get; set; } // Typ logiczny
+
         [Column("icon")]
         public string? Icon { get; set; }
 
         public ICollection<ProductionCost> ProductionCosts { get; set; }
-        public ICollection<MaintenaceCosts> MaintenaceCosts { get; set; }
-        public ICollection<UsedResource> UsedResources { get; set; }
-        public ICollection<ProductionShare> ProductionShares { get; set; }
-        public ICollection<PopulationUsedResource> PopulationUsedResources { get; set; }
-        public ICollection<PopulationProductionShare> PopulationProductionShares { get; set; }
-        public ICollection<Modifiers> Modifiers { get; set; }
-        public ICollection<OfferedResource> OfferedResources { get; set; }
-        public ICollection<WantedResource> WantedResources { get; set; }
-        public ICollection<OwnedResouerce> OwnedResouerces { get; set; }
 
+        public ICollection<MaintenaceCosts> MaintenaceCosts { get; set; }
+
+        public ICollection<UsedResource> UsedResources { get; set; }
+
+        public ICollection<ProductionShare> ProductionShares { get; set; }
+
+        public ICollection<PopulationUsedResource> PopulationUsedResources { get; set; }
+
+        public ICollection<PopulationProductionShare> PopulationProductionShares { get; set; }
+
+        public ICollection<Modifiers> Modifiers { get; set; }
+
+        public ICollection<OfferedResource> OfferedResources { get; set; }
+
+        public ICollection<WantedResource> WantedResources { get; set; }
+
+        public ICollection<OwnedResources> OwnedResources { get; set; }
     }
 
     [Table("cultures")]
@@ -48,11 +57,11 @@ namespace Wg_backend_api.Models
         [MaxLength(255)]
         public string Name { get; set; }
 
-
-
         public ICollection<Modifiers> Modifiers { get; set; }
+
         public ICollection<Population> Populations { get; set; }
     }
+
     [Table("religions")]
     public class Religion
     {
@@ -65,13 +74,15 @@ namespace Wg_backend_api.Models
         [Required]
         [MaxLength(25)]
         public string Name { get; set; }
+
         [Column("icon")]
         public string? Icon { get; set; }
 
-
         public ICollection<Modifiers> Modifiers { get; set; }
+
         public ICollection<Population> Populations { get; set; }
     }
+
     [Table("socialgroups")]
     public class SocialGroup
     {
@@ -97,10 +108,11 @@ namespace Wg_backend_api.Models
         public string? Icon { get; set; }
 
         public ICollection<UsedResource> UsedResources { get; set; }
+
         public ICollection<ProductionShare> ProductionShares { get; set; }
+
         public ICollection<Population> Populations { get; set; }
     }
-
 
     [Table("usedResources")]
     public class UsedResource
@@ -156,9 +168,8 @@ namespace Wg_backend_api.Models
         public float Coefficient { get; set; }
     }
 
-
     [Table("ownedResources")]
-    public class OwnedResouerce()
+    public class OwnedResources()
     {
         [Column("id")]
         public int? Id { get; set; }

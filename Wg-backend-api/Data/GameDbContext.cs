@@ -15,9 +15,9 @@ namespace Wg_backend_api.Data
         public GameDbContext(DbContextOptions<GameDbContext> options, string schema = "") // Fuszera drut this default schema name
             : base(options)
         {
-
-            _schema = schema ?? throw new ArgumentNullException(nameof(schema));
+            this._schema = schema ?? throw new ArgumentNullException(nameof(schema));
         }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
@@ -25,10 +25,8 @@ namespace Wg_backend_api.Data
             if (!optionsBuilder.IsConfigured)
             {
                 optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg");
-
             }
         }
-
 
         public DbSet<Player> Players { get; set; }
         public DbSet<Action> Actions { get; set; }
@@ -61,25 +59,24 @@ namespace Wg_backend_api.Data
         public DbSet<WantedResource> WantedResources { get; set; }
         public DbSet<PopulationUsedResource> populationUsedResources { get; set; }
         public DbSet<PopulationProductionShare> PopulationProductionShares { get; set; }
+        public DbSet<OwnedResources> OwnedResources { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            if (!string.IsNullOrEmpty(_schema))
+            if (!string.IsNullOrEmpty(this._schema))
             {
-                modelBuilder.HasDefaultSchema(_schema);  // Set the schema dynamically based on the provided schema
+                modelBuilder.HasDefaultSchema(this._schema);  // Set the schema dynamically based on the provided schema
             }
 
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 entityType.SetTableName(entityType.GetTableName());
-                entityType.SetSchema(_schema); // Ustawienie dynamicznego schematu
-
+                entityType.SetSchema(this._schema); // Ustawienie dynamicznego schematu
             }
-            modelBuilder.HasDefaultSchema(_schema);
 
-
-
-
+            modelBuilder.HasDefaultSchema(this._schema);
 
             modelBuilder.Entity<MapAccess>()
                 .HasKey(ma => new { ma.NationId, ma.MapId });
