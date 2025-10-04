@@ -60,16 +60,38 @@ namespace Wg_backend_api.Controllers.GameControllers
             return CreatedAtAction(null, new { ev.Id });
         }
 
-        // Delete Event + cascade Modifiers
         [HttpDelete("events/{eventId}")]
         public async Task<ActionResult> DeleteEvent(int eventId)
         {
             var ev = await _context.Events
                 .Include(e => e.Modifiers)
                 .FirstOrDefaultAsync(e => e.Id == eventId);
-            if (ev == null) return NotFound();
+            if (ev == null)
+                return NotFound();
+
+            var related = await _context.RelatedEvents
+                .Where(re => re.EventId == eventId)
+                .ToListAsync();
+
+            var modifiers = ev.Modifiers.ToList();
+            foreach (var rel in related)
+            {
+                var nationId = rel.NationId;
+                foreach (var group in modifiers.GroupBy(m => m.modiferType))
+                {
+                    var processor = _processorFactory.GetProcessor(group.Key);
+                    var effects = group
+                        .Select(m => JsonSerializer.Deserialize<ModifierEffect>(m.Effects)!)
+                        .ToList();
+                    await processor.RevertAsync(nationId, effects, _context);
+                }
+            }
+
+            _context.RemoveRange(related);
+
             _context.RemoveRange(ev.Modifiers);
             _context.Remove(ev);
+
             await _context.SaveChangesAsync();
             return Ok();
         }
