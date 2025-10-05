@@ -14,13 +14,11 @@
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
-        private GlobalDbContext _globalContext;
 
-        public NationController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService, GlobalDbContext globalDbContext)
+        public NationController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
             this._gameDbContextFactory = gameDbFactory;
             this._sessionDataService = sessionDataService;
-            this._globalContext = globalDbContext;
 
             string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
