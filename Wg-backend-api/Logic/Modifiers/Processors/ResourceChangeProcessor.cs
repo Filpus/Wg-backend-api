@@ -45,8 +45,9 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             var modifiers = await _context.RelatedEvents
                 .Where(re => re.NationId == nationId)
                 .SelectMany(re => re.Event.Modifiers)
-                .Where(m => m.modiferType == ModifierType.ResourceChange)
+                .Where(m => m.modiferType.ToString() == ModifierType.ResourceChange.ToString())
                 .ToListAsync();
+
 
             if (!modifiers.Any())
                 return 0f;

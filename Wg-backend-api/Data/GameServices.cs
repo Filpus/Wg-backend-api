@@ -20,7 +20,7 @@ namespace Wg_backend_api.Data
             string script = File.ReadAllText(sqlScriptPath);
 
             // Zamień domyślny schemat na docelowy schemat
-            script = script.Replace("default_schema", schema);
+            script = script.Replace("game_1", schema);
 
             using var connection = new NpgsqlConnection(connectionString);
             connection.Open();

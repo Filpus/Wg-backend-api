@@ -20,11 +20,11 @@ namespace Wg_backend_api.Controllers.GameControllers
         private GameDbContext _context;
         private readonly int? _nationId;
 
-        public EventsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+        public EventsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService, ModifierProcessorFactory processorFactory)
         {
             _gameDbContextFactory = gameDbFactory;
             _sessionDataService = sessionDataService;
-
+            _processorFactory = processorFactory;
             string schema = _sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
@@ -86,7 +86,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     await processor.RevertAsync(nationId, effects, _context);
                 }
             }
-
+            
             _context.RemoveRange(related);
 
             _context.RemoveRange(ev.Modifiers);

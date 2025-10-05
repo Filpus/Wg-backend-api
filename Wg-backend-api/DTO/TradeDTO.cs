@@ -40,7 +40,8 @@
         Pending,
         Accepted,
         Rejected,
-        Cancelled
+        Cancelled,
+        Ended
     }
 
 }

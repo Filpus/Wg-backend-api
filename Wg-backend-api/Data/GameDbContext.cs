@@ -21,7 +21,7 @@ namespace Wg_backend_api.Data
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
-
+            optionsBuilder.EnableServiceProviderCaching(false);
             if (!optionsBuilder.IsConfigured)
             {
                 optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg");
@@ -76,7 +76,6 @@ namespace Wg_backend_api.Data
 
             }
             modelBuilder.HasDefaultSchema(_schema);
-
 
 
 

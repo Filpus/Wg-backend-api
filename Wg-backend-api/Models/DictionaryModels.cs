@@ -28,7 +28,6 @@ namespace Wg_backend_api.Models
         public ICollection<ProductionShare> ProductionShares { get; set; }
         public ICollection<PopulationUsedResource> PopulationUsedResources { get; set; }
         public ICollection<PopulationProductionShare> PopulationProductionShares { get; set; }
-        public ICollection<Modifiers> Modifiers { get; set; }
         public ICollection<OfferedResource> OfferedResources { get; set; }
         public ICollection<WantedResource> WantedResources { get; set; }
         public ICollection<OwnedResouerce> OwnedResouerces { get; set; }
@@ -50,7 +49,6 @@ namespace Wg_backend_api.Models
 
 
 
-        public ICollection<Modifiers> Modifiers { get; set; }
         public ICollection<Population> Populations { get; set; }
     }
     [Table("religions")]
@@ -69,7 +67,6 @@ namespace Wg_backend_api.Models
         public string? Icon { get; set; }
 
 
-        public ICollection<Modifiers> Modifiers { get; set; }
         public ICollection<Population> Populations { get; set; }
     }
     [Table("socialgroups")]

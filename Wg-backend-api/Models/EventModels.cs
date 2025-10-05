@@ -59,7 +59,7 @@ namespace Wg_backend_api.Models
         [ForeignKey("EventId")]
         public Event Event { get; set; }
         [Required]
-        [Column("modifierType")]
+        [Column("modifier_type")]
         public ModifierType modiferType { get; set; }
         [Required]
         [Column("effects")]
