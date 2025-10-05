@@ -11,7 +11,6 @@ namespace Wg_backend_api.Logic.Modifiers
                 ModifierOperation.Add => currentValue + modifierValue,
                 ModifierOperation.Multiply => currentValue * modifierValue,
                 ModifierOperation.Percentage => currentValue * (1 + modifierValue / 100),
-                ModifierOperation.Set => modifierValue,
                 _ => currentValue
             };
         }
@@ -23,7 +22,6 @@ namespace Wg_backend_api.Logic.Modifiers
                 ModifierOperation.Add => currentValue - modifierValue,
                 ModifierOperation.Multiply => modifierValue != 0 ? currentValue / modifierValue : currentValue,
                 ModifierOperation.Percentage => currentValue / (1 + modifierValue / 100),
-                ModifierOperation.Set => currentValue,
                 _ => currentValue
             };
         }

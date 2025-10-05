@@ -59,7 +59,8 @@ namespace Wg_backend_api.Data
         public DbSet<TradeAgreement> TradeAgreements { get; set; }
         public DbSet<OfferedResource> OfferedResources { get; set; }
         public DbSet<WantedResource> WantedResources { get; set; }
-
+        public DbSet<PopulationUsedResource> populationUsedResources { get; set; }
+        public DbSet<PopulationProductionShare> PopulationProductionShares { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

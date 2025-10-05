@@ -5,6 +5,7 @@
     using Microsoft.EntityFrameworkCore;
     using Wg_backend_api.Data;
     using Wg_backend_api.DTO;
+    using Wg_backend_api.Logic.Modifiers.Processors;
     using Wg_backend_api.Models;
     using Wg_backend_api.Services;
 
@@ -256,14 +257,18 @@
                     EventBalance = 0,
                 };
 
+
                 resourceBalance.TotalBalance =
                     resourceBalance.PopulationProduction
                     + resourceBalance.TradeIncome
-                    + resourceBalance.EventBalance
                     - resourceBalance.ArmyMaintenanceExpenses
                     - resourceBalance.PopulationExpenses
                     - resourceBalance.TradeExpenses;
 
+
+                ResourceChangeProcessor resourceChangeProcessor = new ResourceChangeProcessor(this._context, null);
+                resourceBalance.EventBalance = await resourceChangeProcessor.CalculateChangeAsync((int)nationId, resourceBalance);
+                resourceBalance.TotalBalance += resourceBalance.EventBalance;
                 result.ResourceBalances.Add(resourceBalance);
             }
 
