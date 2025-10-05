@@ -23,9 +23,11 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("password")]
         public string Password { get; set; }
+
         [Required]
         [Column("issso")]
         public bool IsSSO { get; set; }
+
         [Column("image")]
         public string? Image { get; set; }
 
@@ -50,12 +52,17 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("fk_User")]
         public int UserId { get; set; }
+
         [ForeignKey("UserId")]
         public User User { get; set; }
 
         [Required]
         [Column("playerType")]
         public UserRole Role { get; set; }
+
+        [Required]
+        [Column("name")]
+        public string Name { get; set; }
 
         public Assignment Assignment { get; set; }
 

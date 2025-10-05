@@ -585,7 +585,7 @@ ALTER TABLE game_1.map OWNER TO postgres;
 --
 
 CREATE TABLE game_1."mapAccess" (
-    "fk_Users" integer NOT NULL,
+    "fk_Nations" integer NOT NULL,
     "fk_Maps" integer NOT NULL
 );
 
@@ -757,7 +757,8 @@ ALTER SEQUENCE game_1."ownedResources_Id_seq" OWNED BY game_1."ownedResources"."
 CREATE TABLE game_1.players (
     id integer NOT NULL,
     "fk_User" integer NOT NULL,
-    "playerType" integer NOT NULL
+    "playerType" integer NOT NULL,
+    "name" text NOT NULL
 );
 
 
@@ -1323,8 +1324,6 @@ COPY game_1.accessestonations (id, fk_nations, fk_users, dateacquired, isactive)
 3	3	3	2025-01-03 00:00:00+01	t
 4	4	4	2025-01-04 00:00:00+01	t
 5	5	5	2025-01-05 00:00:00+01	t
-6	1	2	2001-01-25 00:00:00+01	t
-7	2	2	2001-01-25 00:00:00+01	t
 \.
 
 
@@ -1482,7 +1481,7 @@ COPY game_1.map (id, name, "mapLocation", "mapIconLocation") FROM stdin;
 -- Data for Name: mapAccess; Type: TABLE DATA; Schema: game_1; Owner: postgres
 --
 
-COPY game_1."mapAccess" ("fk_Users", "fk_Maps") FROM stdin;
+COPY game_1."mapAccess" ("fk_Nations", "fk_Maps") FROM stdin;
 1	1
 1	4
 2	2
@@ -1516,6 +1515,7 @@ COPY game_1.nations (id, name, fk_religions, fk_cultures, flag, color) FROM stdi
 3	Republika Nadmorska	2	4	\N	red
 4	Księstwo Wschodnie	1	2	\N	green
 5	Kalifat Południowy	3	5	\N	blue
+6	Górskie Księstwo	1	1	\N	brown
 \.
 
 
@@ -1571,12 +1571,12 @@ COPY game_1."ownedResources" ("Id", fk_nation, fk_resource, amount) FROM stdin;
 -- Data for Name: players; Type: TABLE DATA; Schema: game_1; Owner: postgres
 --
 
-COPY game_1.players (id, "fk_User", "playerType") FROM stdin;
-1	1	1
-4	4	1
-2	2	2
-3	3	1
-5	5	1
+COPY game_1.players (id, "fk_User", "playerType", "name") FROM stdin;
+1	1	1	admin
+2	2	2	Test
+3	3	1	admin
+4	4	1	admin
+5	5	1	admin
 \.
 
 
@@ -2285,7 +2285,7 @@ ALTER TABLE ONLY game_1.map
 --
 
 ALTER TABLE ONLY game_1."mapAccess"
-    ADD CONSTRAINT "PK_mapAccess" PRIMARY KEY ("fk_Users", "fk_Maps");
+    ADD CONSTRAINT "PK_mapAccess" PRIMARY KEY ("fk_Nations", "fk_Maps");
 
 
 --
