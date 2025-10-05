@@ -60,6 +60,10 @@ namespace Wg_backend_api.Models
         [Column("playerType")]
         public UserRole Role { get; set; }
 
+        [Required]
+        [Column("name")]
+        public string Name { get; set; }
+
         public Assignment Assignment { get; set; }
 
     }

@@ -95,34 +95,35 @@
         {
             // TODO ensure only mg can call this endpoint
 
-            var nationsWithUsersId = await this._context.Nations
-                .Join(_context.Assignments,
+            var nationsWithUsers = await _context.Nations
+                .GroupJoin(
+                    _context.Assignments.Where(a => a.IsActive),
                     n => n.Id,
                     a => a.NationId,
-                    (n, a) => new { Id = n.Id, Name = n.Name, Flag = n.Flag, Color = n.Color, OwnerId = a.UserId})
-                .Join(_context.Players,
-                    r => r.OwnerId,
+                    (n, assignments) => new { n, assignments }
+                )
+                .SelectMany(
+                    x => x.assignments.DefaultIfEmpty(),
+                    (x, a) => new { x.n, a }
+                )
+                .GroupJoin(
+                    _context.Players,
+                    na => na.a.UserId,
                     p => p.Id,
-                    (r, p) => new
+                    (na, players) => new { na, players }
+                )
+                .SelectMany(
+                    x => x.players.DefaultIfEmpty(),
+                    (x, p) => new NationWithOwnerDTO
                     {
-                        Id = r.Id!.Value,
-                        Name = r.Name,
-                        Flag = r.Flag,
-                        Color = r.Color,
-                        OwnerId = p.UserId,
-                    })
+                        Id = x.na.n.Id,
+                        Name = x.na.n.Name,
+                        Flag = x.na.n.Flag,
+                        Color = x.na.n.Color,
+                        OwnerName = p != null ? p.Name : null
+                    }
+                )
                 .ToListAsync();
-
-            var players = await this._globalContext.Users.Select(u => new {u.Id, u.Name}).ToListAsync();
-
-            var nationsWithUsers = nationsWithUsersId.Select(n => new NationWithOwnerDTO
-            {
-                Id = n.Id,
-                Name = n.Name,
-                Flag = n.Flag,
-                Color = n.Color,
-                OwnerName = players.FirstOrDefault(p => p.Id == n.OwnerId)?.Name,
-            }).ToList();
 
             return nationsWithUsers;
         }

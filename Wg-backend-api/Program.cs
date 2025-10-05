@@ -25,7 +25,7 @@ namespace Wg_backend_api.Data
             var connectionString = "";
             if (builder.Environment.IsDevelopment())
             {
-                connectionString = builder.Configuration.GetConnectionString("FilipConnection");
+                connectionString = builder.Configuration.GetConnectionString("DevConection");
 
             }
             else
