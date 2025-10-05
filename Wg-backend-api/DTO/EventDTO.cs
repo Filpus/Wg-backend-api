@@ -30,5 +30,14 @@ namespace Wg_backend_api.DTO
         public int NationId { get; set; }
     }
 
+    public class AssignEventInfoDto
+    {
+        public int EventId { get; set; }
+        public string EventName { get; set; }
+        public string? EventDescription { get; set; }
+        public int NationId { get; set; }
+        public string NationName { get; set; }
+    }
+
 
 }

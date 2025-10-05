@@ -18,7 +18,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly ISessionDataService _sessionDataService;
         private readonly ModifierProcessorFactory _processorFactory;
         private GameDbContext _context;
-        private int? _nationId;
+        private readonly int? _nationId;
 
         public EventsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -37,7 +37,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
 
-        [HttpPost("events")]
+        [HttpPost]
         public async Task<ActionResult> CreateEvent([FromBody] EventDto dto)
         {
             var ev = new Event { Name = dto.Name, Description = dto.Description };
@@ -60,7 +60,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return CreatedAtAction(null, new { ev.Id });
         }
 
-        [HttpDelete("events/{eventId}")]
+        [HttpDelete("{eventId}")]
         public async Task<ActionResult> DeleteEvent(int eventId)
         {
             var ev = await _context.Events
@@ -97,7 +97,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         // Edit Event + Modifiers
-        [HttpPut("events/{eventId}")]
+        [HttpPut("{eventId}")]
         public async Task<ActionResult> UpdateEvent(int eventId, [FromBody] EventDto dto)
         {
             var ev = await _context.Events
@@ -124,7 +124,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         // Delete only Modifiers by IDs
-        [HttpDelete]
+        [HttpDelete("modifiers")]
         public async Task<ActionResult> DeleteModifiers([FromBody] List<int?> ids)
         {
             if (ids == null || !ids.Any()) return BadRequest("Brak ID do usunięcia.");
@@ -135,7 +135,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok();
         }
 
-        [HttpPost("events/assign")]
+        [HttpPost("assign")]
         public async Task<ActionResult> AssignEvent([FromBody] AssignEventDto dto)
         {
             _context.Add(new RelatedEvents { EventId = dto.EventId, NationId = dto.NationId });
@@ -158,7 +158,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
 
-        [HttpDelete("events/assign")]
+        [HttpDelete("assign")]
         public async Task<ActionResult> UnassignEvent([FromBody] AssignEventDto dto)
         {
 
@@ -185,5 +185,31 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
+
+        [HttpGet("assigned/{nationId?}")]
+        public async Task<ActionResult<List<AssignEventInfoDto>>> GetAssignedEvents(int? nationId)
+        {
+
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
+            var assignedEvents = await _context.RelatedEvents
+                .Where(re => re.NationId == nationId)
+                .Include(re => re.Event)
+                .Include(re => re.Nation)
+                .Select(re => new AssignEventInfoDto
+                {
+                    EventId = re.EventId,
+                    EventName = re.Event.Name,
+                    EventDescription = re.Event.Description,
+                    NationId = (int)nationId,
+                    NationName = re.Nation.Name
+                })
+                .ToListAsync();
+
+            return Ok(assignedEvents);
+        }
+
     }
 }
