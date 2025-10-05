@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
-using Wg_backend_api.DTO;
 using System.Runtime.InteropServices;
+using Wg_backend_api.Enums;
 
 namespace Wg_backend_api.Models
 {

@@ -35,8 +35,6 @@ namespace Wg_backend_api.Models
 
         public ICollection<PopulationProductionShare> PopulationProductionShares { get; set; }
 
-        public ICollection<Modifiers> Modifiers { get; set; }
-
         public ICollection<OfferedResource> OfferedResources { get; set; }
 
         public ICollection<WantedResource> WantedResources { get; set; }
@@ -57,8 +55,6 @@ namespace Wg_backend_api.Models
         [MaxLength(255)]
         public string Name { get; set; }
 
-        public ICollection<Modifiers> Modifiers { get; set; }
-
         public ICollection<Population> Populations { get; set; }
     }
 
@@ -77,8 +73,6 @@ namespace Wg_backend_api.Models
 
         [Column("icon")]
         public string? Icon { get; set; }
-
-        public ICollection<Modifiers> Modifiers { get; set; }
 
         public ICollection<Population> Populations { get; set; }
     }
