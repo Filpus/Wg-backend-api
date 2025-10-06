@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
+using Wg_backend_api.Enums;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 

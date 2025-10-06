@@ -1,4 +1,6 @@
-﻿namespace Wg_backend_api.DTO
+﻿using Wg_backend_api.Enums;
+
+namespace Wg_backend_api.DTO
 {
     public class TradeAgreementDTO
     {
@@ -33,14 +35,6 @@
         public string Description { get; set; } = "";
         public List<ResourceAmountDto> offeredResources { get; set; } = new List<ResourceAmountDto>();
         public List<ResourceAmountDto> requestedResources { get; set; } = new List<ResourceAmountDto>();
-    }
-
-    public enum TradeStatus
-    {
-        Pending,
-        Accepted,
-        Rejected,
-        Cancelled
     }
 
 }
