@@ -66,7 +66,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var nation in nations)
             {
-                var ownedResources = await _context.Set<OwnedResouerce>()
+                var ownedResources = await _context.Set<OwnedResources>()
                     .Where(or => or.NationId == nation.Id)
                     .ToListAsync();
 
