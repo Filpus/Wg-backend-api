@@ -1,11 +1,17 @@
 ﻿namespace Wg_backend_api.Controllers.GameControllers
 {
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Build.Framework;
     using Microsoft.EntityFrameworkCore;
+    using Microsoft.EntityFrameworkCore.Internal;
+    using System.Net;
+    using System;
+    using System.Runtime.InteropServices;
     using Wg_backend_api.Data;
     using Wg_backend_api.DTO;
     using Wg_backend_api.Models;
     using Wg_backend_api.Services;
+    using System.Linq;
 
     [Route("api/Nations")]
     [ApiController]
@@ -73,7 +79,7 @@
 
             if (string.IsNullOrEmpty(nationId))
             {
-                return new List<NationBaseInfoDTO>();
+                return [];
             }
 
             int id = int.Parse(nationId);
@@ -93,7 +99,7 @@
         {
             // TODO ensure only mg can call this endpoint
 
-            var nationsWithUsers = await _context.Nations
+            var nationsWithUsers = await this._context.Nations
                 .GroupJoin(
                     _context.Assignments.Where(a => a.IsActive),
                     n => n.Id,
@@ -124,6 +130,46 @@
                 .ToListAsync();
 
             return nationsWithUsers;
+        }
+
+        [HttpGet("detailed-nation/{id}")]
+        public async Task<ActionResult<NationDetailedDTO>> GetNationDetailedDTO(int id)
+        {
+            var nation = await this._context.Nations
+                .Where(n => n.Id == id)
+                .Select(n => new NationDetailedDTO
+                {
+                    Id = n.Id!.Value,
+                    Name = n.Name,
+                    Flag = n.Flag,
+                    Color = n.Color,
+
+                    Culture = new CultureDTO
+                    {
+                        Id = n.Culture.Id,
+                        Name = n.Culture.Name,
+                    },
+
+                    Religion = new ReligionDTO
+                    {
+                        Id = n.Religion.Id,
+                        Name = n.Religion.Name,
+                    },
+
+                    OwnerName = this._context.Assignments
+                        .Where(a => a.NationId == n.Id && a.IsActive)
+                        .Join(
+                            this._context.Players,
+                            a => a.UserId,
+                            p => p.Id,
+                            (a, p) => p.Name)
+                        .FirstOrDefault() ?? null,
+                })
+                .FirstOrDefaultAsync();
+
+            if (nation == null) return this.NotFound();
+
+            return this.Ok(nation);
         }
 
         [HttpPut]
@@ -216,6 +262,121 @@
             await this._context.SaveChangesAsync();
 
             return this.Ok();
+        }
+
+        // TODO make sub functions
+        [HttpPatch]
+        public async Task<IActionResult> PatchNations([FromBody] List<PatchNationDTO> nations)
+        {
+            if (nations == null || nations.Count == 0)
+            {
+                return this.BadRequest("No data to edit.");
+            }
+
+            foreach (var nationDto in nations)
+            {
+                var nation = await this._context.Nations.FindAsync(nationDto.Id);
+                if (nation == null)
+                {
+                    return this.NotFound($"Didn't find nation with ID {nationDto.Id}.");
+                }
+
+                if (nationDto.Name != null)
+                {
+                    nation.Name = nationDto.Name;
+                }
+
+                if (nationDto.Religion != null)
+                {
+                    var religion = await this._context.Religions.FindAsync(nationDto.Religion);
+                    if (religion == null)
+                    {
+                        return this.NotFound($"Didn't find Religion with ID {nationDto.Religion}.");
+                    }
+
+                    nation.Religion = religion;
+                }
+
+                if (nationDto.Culture != null)
+                {
+                    var culture = await this._context.Cultures.FindAsync(nationDto.Culture);
+                    if (culture == null)
+                    {
+                        return this.NotFound($"Didn't find culture with ID {nationDto.Culture}.");
+                    }
+
+                    nation.Culture = culture;
+                }
+
+                if (nationDto.Color != null)
+                {
+                    nation.Color = nationDto.Color;
+                }
+
+                if (nationDto.Flag != null)
+                {
+                    try
+                    {
+                        if (nationDto.Flag.Length == 0)
+                        {
+                            return this.BadRequest("Didn't choose image");
+                        }
+
+                        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                        var fileExtension = Path.GetExtension(nationDto.Flag.FileName).ToLower();
+
+                        if (!allowedExtensions.Contains(fileExtension))
+                        {
+                            return this.BadRequest($"This file is not supported. Allowded files extensions: {string.Join(", ", allowedExtensions)}");
+                        }
+
+                        const int maxFileSize = 20 * 1024 * 1024; // 5MB
+                        if (nationDto.Flag.Length > maxFileSize)
+                        {
+                            return this.BadRequest($"Max file size is {maxFileSize / 1024 / 1024} MB");
+                        }
+
+                        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+                        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Images");
+
+                        if (!Directory.Exists(uploadsFolder))
+                        {
+                            Directory.CreateDirectory(uploadsFolder);
+                        }
+
+                        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await nationDto.Flag.CopyToAsync(stream);
+                        }
+
+                        nation.Flag = $"/images/{uniqueFileName}";
+                        //$"{Request.Scheme}://{Request.Host}{imageUrl}",
+
+                    }
+                    catch (Exception ex)
+                    {
+                        return this.StatusCode(
+                            StatusCodes.Status500InternalServerError,
+                            $"Wystąpił błąd podczas przetwarzania pliku: {ex.Message}");
+                    }
+                }
+
+                this._context.Entry(nation).State = EntityState.Modified;
+            }
+
+            try
+            {
+                await this._context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return this.StatusCode(500, "Błąd podczas aktualizacji.");
+            }
+
+            // TODO ensure to delete/not save uploaded images but error occurs
+
+            return this.NoContent();
         }
 
         private bool IsNationDependency(int id)
