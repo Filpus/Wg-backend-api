@@ -22,17 +22,18 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public MapController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
-            string nationIdStr = _sessionDataService.GetNation();
-            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
+
+            this._context = this._gameDbContextFactory.Create(schema);
+            string nationIdStr = this._sessionDataService.GetNation();
+            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         [HttpGet("{id?}")]
@@ -45,11 +46,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
+
                 return Ok(new List<MapDTO> { new MapDTO { Id = map.Id, Name = map.MapLocation, MapLocation = map.MapLocation, MapIconLocation = map.MapIconLocation } });
             }
             else
             {
-                var maps = await _context.Maps
+                var maps = await this._context.Maps
                     .Select(map => new MapDTO { Id = map.Id, Name = map.MapLocation, MapLocation = map.MapLocation, MapIconLocation = map.MapIconLocation })
                     .ToListAsync();
                 return Ok(maps);
@@ -66,19 +68,19 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var mapDTO in mapDTOs)
             {
-                var map = await _context.Maps.FindAsync(mapDTO.Id);
+                var map = await this._context.Maps.FindAsync(mapDTO.Id);
                 if (map == null)
                 {
                     return NotFound($"Mapa o ID {mapDTO.Id} nie istnieje.");
                 }
 
                 map.MapLocation = mapDTO.MapLocation;
-                _context.Entry(map).State = EntityState.Modified;
+                this._context.Entry(map).State = EntityState.Modified;
             }
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
