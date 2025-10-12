@@ -78,6 +78,5 @@
         public IFormFile? Flag { get; set; }
 
         public string? Color { get; set; }
-
     }
 }

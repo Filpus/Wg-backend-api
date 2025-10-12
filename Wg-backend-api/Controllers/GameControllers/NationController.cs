@@ -12,6 +12,7 @@
     using Wg_backend_api.Models;
     using Wg_backend_api.Services;
     using System.Linq;
+    using System.Text.RegularExpressions;
 
     [Route("api/Nations")]
     [ApiController]
@@ -101,7 +102,7 @@
 
             var nationsWithUsers = await this._context.Nations
                 .GroupJoin(
-                    _context.Assignments.Where(a => a.IsActive),
+                    this._context.Assignments.Where(a => a.IsActive),
                     n => n.Id,
                     a => a.NationId,
                     (n, assignments) => new { n, assignments }
@@ -111,7 +112,7 @@
                     (x, a) => new { x.n, a }
                 )
                 .GroupJoin(
-                    _context.Players,
+                    this._context.Players,
                     na => na.a.UserId,
                     p => p.Id,
                     (na, players) => new { na, players }
@@ -132,11 +133,29 @@
             return nationsWithUsers;
         }
 
-        [HttpGet("detailed-nation/{id}")]
-        public async Task<ActionResult<NationDetailedDTO>> GetNationDetailedDTO(int id)
+        [HttpGet("detailed-nation/{id?}")]
+        public async Task<ActionResult<NationDetailedDTO>> GetNationDetailedDTO(int? id)
         {
+            int nationId;
+
+            if (id == null)
+            {
+                var nationIdStr = this._sessionDataService.GetNation();
+
+                if (string.IsNullOrEmpty(nationIdStr))
+                {
+                    return this.BadRequest("No nation in session");
+                }
+
+                nationId = int.Parse(nationIdStr);
+            }
+            else
+            {
+                nationId = id.Value;
+            }
+
             var nation = await this._context.Nations
-                .Where(n => n.Id == id)
+                .Where(n => n.Id == nationId)
                 .Select(n => new NationDetailedDTO
                 {
                     Id = n.Id!.Value,
@@ -167,7 +186,10 @@
                 })
                 .FirstOrDefaultAsync();
 
-            if (nation == null) return this.NotFound();
+            if (nation == null)
+            {
+                return this.NotFound();
+            }
 
             return this.Ok(nation);
         }
@@ -264,117 +286,124 @@
             return this.Ok();
         }
 
-        // TODO make sub functions
         [HttpPatch]
-        public async Task<IActionResult> PatchNations([FromBody] List<PatchNationDTO> nations)
+        public async Task<IActionResult> PatchNations([FromForm] PatchNationDTO nationDto)
         {
-            if (nations == null || nations.Count == 0)
+            if (nationDto == null)
             {
                 return this.BadRequest("No data to edit.");
             }
 
-            foreach (var nationDto in nations)
+            var uploadedFiles = new List<string>();
+
+            var nation = await this._context.Nations.FindAsync(nationDto.Id);
+            if (nation == null)
             {
-                var nation = await this._context.Nations.FindAsync(nationDto.Id);
-                if (nation == null)
-                {
-                    return this.NotFound($"Didn't find nation with ID {nationDto.Id}.");
-                }
-
-                if (nationDto.Name != null)
-                {
-                    nation.Name = nationDto.Name;
-                }
-
-                if (nationDto.Religion != null)
-                {
-                    var religion = await this._context.Religions.FindAsync(nationDto.Religion);
-                    if (religion == null)
-                    {
-                        return this.NotFound($"Didn't find Religion with ID {nationDto.Religion}.");
-                    }
-
-                    nation.Religion = religion;
-                }
-
-                if (nationDto.Culture != null)
-                {
-                    var culture = await this._context.Cultures.FindAsync(nationDto.Culture);
-                    if (culture == null)
-                    {
-                        return this.NotFound($"Didn't find culture with ID {nationDto.Culture}.");
-                    }
-
-                    nation.Culture = culture;
-                }
-
-                if (nationDto.Color != null)
-                {
-                    nation.Color = nationDto.Color;
-                }
-
-                if (nationDto.Flag != null)
-                {
-                    try
-                    {
-                        if (nationDto.Flag.Length == 0)
-                        {
-                            return this.BadRequest("Didn't choose image");
-                        }
-
-                        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-                        var fileExtension = Path.GetExtension(nationDto.Flag.FileName).ToLower();
-
-                        if (!allowedExtensions.Contains(fileExtension))
-                        {
-                            return this.BadRequest($"This file is not supported. Allowded files extensions: {string.Join(", ", allowedExtensions)}");
-                        }
-
-                        const int maxFileSize = 20 * 1024 * 1024; // 5MB
-                        if (nationDto.Flag.Length > maxFileSize)
-                        {
-                            return this.BadRequest($"Max file size is {maxFileSize / 1024 / 1024} MB");
-                        }
-
-                        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-                        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Images");
-
-                        if (!Directory.Exists(uploadsFolder))
-                        {
-                            Directory.CreateDirectory(uploadsFolder);
-                        }
-
-                        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await nationDto.Flag.CopyToAsync(stream);
-                        }
-
-                        nation.Flag = $"/images/{uniqueFileName}";
-                        //$"{Request.Scheme}://{Request.Host}{imageUrl}",
-
-                    }
-                    catch (Exception ex)
-                    {
-                        return this.StatusCode(
-                            StatusCodes.Status500InternalServerError,
-                            $"Wystąpił błąd podczas przetwarzania pliku: {ex.Message}");
-                    }
-                }
-
-                this._context.Entry(nation).State = EntityState.Modified;
+                return this.NotFound($"Didn't find nation with ID {nationDto.Id}.");
             }
+
+            if (nationDto.Name != null)
+            {
+                nation.Name = nationDto.Name;
+            }
+
+            if (nationDto.Religion != null)
+            {
+                var religion = await this._context.Religions.FindAsync(nationDto.Religion);
+                if (religion == null)
+                {
+                    return this.NotFound($"Didn't find Religion with ID {nationDto.Religion}.");
+                }
+
+                nation.Religion = religion;
+            }
+
+            if (nationDto.Culture != null)
+            {
+                var culture = await this._context.Cultures.FindAsync(nationDto.Culture);
+                if (culture == null)
+                {
+                    return this.NotFound($"Didn't find culture with ID {nationDto.Culture}.");
+                }
+
+                nation.Culture = culture;
+            }
+
+            if (nationDto.Color != null)
+            {
+                if (!this.IsProperColor(nationDto.Color))
+                {
+                    return this.BadRequest("Color is not proper");
+                }
+
+                nation.Color = nationDto.Color;
+            }
+
+            if (nationDto.Flag != null)
+            {
+                if (nationDto.Flag.Length == 0)
+                {
+                    return this.BadRequest("Didn't choose image");
+                }
+
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                var fileExtension = Path.GetExtension(nationDto.Flag.FileName).ToLower();
+
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    return this.BadRequest($"This file is not supported. Allowed files extensions: {string.Join(", ", allowedExtensions)}");
+                }
+
+                const int maxFileSize = 20 * 1024 * 1024; // 5MB
+                if (nationDto.Flag.Length > maxFileSize)
+                {
+                    return this.BadRequest($"Max file size is {maxFileSize / 1024 / 1024} MB");
+                }
+
+                var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Images");
+
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await nationDto.Flag.CopyToAsync(stream);
+                }
+
+                //$"{Request.Scheme}://{Request.Host}{imageUrl}",
+                nation.Flag = $"/images/{uniqueFileName}";
+                uploadedFiles.Add(filePath);
+            }
+
+            this._context.Entry(nation).State = EntityState.Modified;
 
             try
             {
                 await this._context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                return this.StatusCode(500, "Błąd podczas aktualizacji.");
-            }
+                foreach (var path in uploadedFiles)
+                {
+                    try
+                    {
+                        if (System.IO.File.Exists(path))
+                        {
+                            System.IO.File.Delete(path);
+                        }
+                    }
+                    catch
+                    {
+                        // TODO log error
+                    }
+                }
 
-            // TODO ensure to delete/not save uploaded images but error occurs
+                return this.StatusCode(500, "Error updating nations {ex.Message}");
+            }
 
             return this.NoContent();
         }
@@ -392,6 +421,36 @@
                                   this._context.UnitOrders.Any(e => e.NationId == id);
 
             return hasDependencies;
+        }
+
+        private bool IsProperColor(string color)
+        {
+            if (string.IsNullOrWhiteSpace(color))
+            {
+                return false;
+            }
+
+            //var hexPattern = @"^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$";
+            //if (Regex.IsMatch(color, hexPattern))
+            //{
+            //    return true;
+            //}
+
+            var allowedColors = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "red", "green", "blue", "black", "white",
+                "yellow", "purple", "orange", "pink", "brown",
+                "gray", "grey", "cyan", "magenta", "lime",
+                "teal", "navy", "maroon", "olive", "silver",
+                "gold",
+            };
+
+            if (allowedColors.Contains(color))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }
