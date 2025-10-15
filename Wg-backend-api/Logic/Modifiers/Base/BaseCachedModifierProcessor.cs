@@ -31,26 +31,50 @@ namespace Wg_backend_api.Logic.Modifiers.Base
         {
             var result = new ModifierApplicationResult { Success = true };
 
-            foreach (var effect in effects)
+            try
             {
-                var conditions = ModifierConditionsMapper.CreateConditions(SupportedType, effect.Conditions) as TConditions;
-
-
-                var entities = await GetTargetEntities(nationId, conditions).ToListAsync();
-                var operation = Enum.Parse<ModifierOperation>(effect.Operation, true);
-
-                foreach (var entity in entities)
+                foreach (var effect in effects)
                 {
-                    ApplyToEntity(entity, operation, effect.Value);
+                    var conditions = ModifierConditionsMapper.CreateConditions(SupportedType, effect.Conditions) as TConditions;
+
+                    if (conditions == null)
+                    {
+                        result.Success = false;
+                        result.Message = $"Nieprawidłowe warunki dla {SupportedType}";
+                        return result;
+                    }
+
+                    var entities = await GetTargetEntities(nationId, conditions).ToListAsync();
+
+                    if (!entities.Any())
+                    {
+                        result.Success = false;
+                        result.Message = $"Nie znaleziono encji do modyfikacji dla {SupportedType}";
+                        return result;
+                    }
+
+                    var operation = Enum.Parse<ModifierOperation>(effect.Operation, true);
+
+                    foreach (var entity in entities)
+                    {
+                        ApplyToEntity(entity, operation, effect.Value);
+                    }
+
+                    result.AffectedEntities.Add($"affected_{typeof(TEntity).Name}_count", entities.Count);
                 }
 
-                result.AffectedEntities.Add($"affected_{typeof(TEntity).Name}_count", entities.Count);
+                await context.SaveChangesAsync();
+                result.Message = $"Zakończono efekty modyfikatora {SupportedType}";
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Message = $"Błąd podczas aplikowania {SupportedType}: {ex.Message}";
             }
 
-            await context.SaveChangesAsync();
-            result.Message = $"Zakashowano efekty modyfikatora {SupportedType}";
             return result;
         }
+
 
         public async Task<ModifierApplicationResult> RevertAsync(int nationId, List<ModifierEffect> effects, GameDbContext context)
         {

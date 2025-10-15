@@ -10,7 +10,7 @@ namespace Wg_backend_api.Logic.Modifiers.ModifierConditions
         public override Dictionary<string, object> ToDictionary()
         {
             var dict = new Dictionary<string, object>();
-            if (FactionId.HasValue) dict["faction_id"] = FactionId.Value;
+            if (FactionId.HasValue) dict["FactionId"] = FactionId.Value;
             return dict;
         }
     }
