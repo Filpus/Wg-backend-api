@@ -1,22 +1,11 @@
-﻿// Plan (pseudokod, szczegółowo):
-// 1. Utworzyć listę testowych encji Population z różnymi wartościami CultureId, SocialGroupId i LocationId.
-// 2. Dla każdego scenariusza utworzyć PopulationConditionBuilder z baseQuery = list.AsQueryable().
-// 3. Przygotować słownik conditions z różnymi typami wartości:
-//    - int bezpośrednio,
-//    - JsonElement (JsonDocument.Parse(...).RootElement),
-//    - string reprezentujący liczbę.
-// 4. Wywołać ApplyConditions(conditions) i Build().Sprawdzić, że wyniki są poprawnie przefiltrowane.
-// 5. Sprawdzić, że wartości domyślne (0) są ignorowane i że Reset() przywraca oryginalne query.
-// 6. Użyć NUnit do asercji wyników.
-
-// Testy NUnit dla ConditionBuilder i PopulationConditionBuilder
+﻿
 
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using Wg_backend_api.Logic.Modifiers.ConditionBuilder;
-using Wg_backend_api.Models; // dopasuj przestrzeń nazw projektu, jeśli inna
+using Wg_backend_api.Models; 
 
 namespace Tests
 {
