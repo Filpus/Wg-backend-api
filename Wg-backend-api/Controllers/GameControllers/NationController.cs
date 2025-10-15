@@ -13,6 +13,7 @@
     using Wg_backend_api.Services;
     using System.Linq;
     using System.Text.RegularExpressions;
+    using Microsoft.CodeAnalysis.Options;
 
     [Route("api/Nations")]
     [ApiController]
@@ -21,6 +22,15 @@
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+
+        private class FileUploadResult
+        {
+            public bool Success { get; set; }
+
+            public string? FilePath { get; set; }
+
+            public string? ErrorMessage { get; set; }
+        }
 
         public NationController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -230,31 +240,52 @@
         }
 
         [HttpPost]
-        public async Task<ActionResult<NationDTO>> PostNations([FromBody] List<NationDTO> nations)
+        public async Task<ActionResult<NationDTO>> PostNations([FromForm] PostNationDTO nations)
         {
-            if (nations == null || nations.Count == 0)
+            if (nations == null)
             {
-                return BadRequest("Brak danych do zapisania.");
+                return this.BadRequest("Brak danych do zapisania.");
             }
 
-            var newNations = nations.Select(nationDto => new Nation
-            {
-                Name = nationDto.Name,
-                ReligionId = nationDto.ReligionId,
-                CultureId = nationDto.CultureId,
-            }).ToList();
+            var nationWithSameName = await this._context.Nations
+                .FirstOrDefaultAsync(n => n.Name.ToLower() == nations.Name.ToLower());
 
-            this._context.Nations.AddRange(newNations);
+            if (nationWithSameName != null) { 
+                return this.BadRequest("Państwo o takiej nazwie już istnieje.");
+            }
+
+            string? flagPath = null;
+
+            if (nations.Flag is not null)
+            {
+                var uploadResult = await this.UploadFile(nations.Flag);
+                if (!uploadResult.Success)
+                    return this.BadRequest(uploadResult.ErrorMessage);
+
+                flagPath = uploadResult.FilePath;
+            }
+
+            var newNation = new Nation
+            {
+                Name = nations.Name,
+                ReligionId = nations.Religion,
+                CultureId = nations.Culture,
+                Color = nations.Color,
+                Flag = flagPath,
+            };
+
+            this._context.Nations.Add(newNation);
             await this._context.SaveChangesAsync();
 
-            return CreatedAtAction("GetNations", new { id = newNations[0].Id }, newNations.Select(n => new NationDTO
+            return this.CreatedAtAction(nameof(GetNations), new { id = newNation.Id }, new NationDTO
             {
-                Id = n.Id,
-                Name = n.Name,
-                ReligionId = n.ReligionId,
-                CultureId = n.CultureId,
-                Color = n.Color,
-            }));
+                Id = newNation.Id,
+                Name = newNation.Name,
+                ReligionId = newNation.ReligionId,
+                CultureId = newNation.CultureId,
+                Color = newNation.Color,
+                Flag = newNation.Flag,
+            });
         }
 
         [HttpDelete]
@@ -293,8 +324,6 @@
             {
                 return this.BadRequest("No data to edit.");
             }
-
-            var uploadedFiles = new List<string>();
 
             var nation = await this._context.Nations.FindAsync(nationDto.Id);
             if (nation == null)
@@ -339,44 +368,17 @@
                 nation.Color = nationDto.Color;
             }
 
+            string? flagPath = null;
+
             if (nationDto.Flag != null)
             {
-                if (nationDto.Flag.Length == 0)
+                var result = await this.UploadFile(nationDto.Flag);
+                if (!result.Success)
                 {
-                    return this.BadRequest("Didn't choose image");
+                    return this.BadRequest(result.ErrorMessage);
                 }
 
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-                var fileExtension = Path.GetExtension(nationDto.Flag.FileName).ToLower();
-
-                if (!allowedExtensions.Contains(fileExtension))
-                {
-                    return this.BadRequest($"This file is not supported. Allowed files extensions: {string.Join(", ", allowedExtensions)}");
-                }
-
-                const int maxFileSize = 20 * 1024 * 1024; // 5MB
-                if (nationDto.Flag.Length > maxFileSize)
-                {
-                    return this.BadRequest($"Max file size is {maxFileSize / 1024 / 1024} MB");
-                }
-
-                var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Images");
-
-                if (!Directory.Exists(uploadsFolder))
-                {
-                    Directory.CreateDirectory(uploadsFolder);
-                }
-
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await nationDto.Flag.CopyToAsync(stream);
-                }
-
-                //$"{Request.Scheme}://{Request.Host}{imageUrl}",
-                nation.Flag = $"/images/{uniqueFileName}";
-                uploadedFiles.Add(filePath);
+                nation.Flag = result.FilePath;
             }
 
             this._context.Entry(nation).State = EntityState.Modified;
@@ -387,25 +389,71 @@
             }
             catch (Exception ex)
             {
-                foreach (var path in uploadedFiles)
+                try
                 {
-                    try
+                    if (System.IO.File.Exists(flagPath))
                     {
-                        if (System.IO.File.Exists(path))
-                        {
-                            System.IO.File.Delete(path);
-                        }
+                        System.IO.File.Delete(flagPath);
                     }
-                    catch
-                    {
-                        // TODO log error
-                    }
+                }
+                catch
+                {
+                    // TODO log error
                 }
 
                 return this.StatusCode(500, "Error updating nations {ex.Message}");
             }
 
             return this.NoContent();
+        }
+
+        private async Task<FileUploadResult> UploadFile(IFormFile file)
+        {
+            if (file.Length == 0)
+            {
+                return new FileUploadResult { Success = false, ErrorMessage = "No file was uploaded." };
+            }
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLower();
+
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return new FileUploadResult
+                {
+                    Success = false,
+                    ErrorMessage = $"This file type is not supported. Allowed extensions: {string.Join(", ", allowedExtensions)}",
+                };
+            }
+
+            const int maxFileSize = 20 * 1024 * 1024; // 5MB
+            if (file.Length > maxFileSize)
+            {
+                return new FileUploadResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Max file size is {maxFileSize / 1024 / 1024} MB.",
+                };
+            }
+
+            var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Images");
+
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            //$"{Request.Scheme}://{Request.Host}{imageUrl}",
+            var pathFile = $"/images/{uniqueFileName}";
+
+            return new FileUploadResult { Success = true, FilePath = pathFile };
         }
 
         private bool IsNationDependency(int id)

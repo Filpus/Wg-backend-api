@@ -1515,7 +1515,6 @@ COPY game_1.nations (id, name, fk_religions, fk_cultures, flag, color) FROM stdi
 3	Republika Nadmorska	2	4	\N	red
 4	Księstwo Wschodnie	1	2	\N	green
 5	Kalifat Południowy	3	5	\N	blue
-6	Górskie Księstwo	1	1	\N	brown
 \.
 
 
@@ -1559,9 +1558,33 @@ COPY game_1."ownedResources" ("Id", fk_nation, fk_resource, amount) FROM stdin;
 16	2	7	1237
 17	2	8	2173
 18	2	9	1237
-19	3	1	69
-20	4	1	69
-21	5	1	69
+19	3	1	4201
+20	3	2	4202
+21	3	3	4203
+22	3	4	4204
+23	3	5	4205
+24	3	6	4206
+25	3	7	4207
+26	3	8	4208
+27	3	9	4209
+28	4	1	2137
+29	4	2	2173
+30	4	3	1237
+31	4	4	2137
+32	4	5	1273
+33	4	6	2137
+34	4	7	1237
+35	4	8	2173
+36	4	9	1237
+37	5	1	2137
+38	5	2	2173
+39	5	3	1237
+40	5	4	2137
+41	5	5	1273
+42	5	6	2137
+43	5	7	1237
+44	5	8	2173
+45	5	9	1237
 \.
 
 
@@ -1784,6 +1807,8 @@ COPY game_1.troops (id, "fk_UnitTypes", "fk_Armies", quantity) FROM stdin;
 --
 
 COPY game_1."unitOrders" (id, "fk_UnitTypes", "fk_Nations", quantity) FROM stdin;
+1	1	1	1
+2	1	2	1
 3	3	2	3
 4	4	2	1
 5	1	3	8
@@ -1792,8 +1817,7 @@ COPY game_1."unitOrders" (id, "fk_UnitTypes", "fk_Nations", quantity) FROM stdin
 8	2	4	4
 9	1	5	1
 10	3	5	4
-12	1	1	1
-1	1	1	1
+12	2	1	1
 \.
 
 
@@ -1853,7 +1877,7 @@ COPY game_1.wantedresources (id, fk_resource, fk_tradeagreement, amount) FROM st
 -- Name: gameaccess_id_seq; Type: SEQUENCE SET; Schema: Global; Owner: postgres
 --
 
-SELECT pg_catalog.setval('"Global".gameaccess_id_seq', 1, false);
+SELECT pg_catalog.setval('"Global".gameaccess_id_seq', 2, true);
 
 
 --
@@ -1862,7 +1886,7 @@ SELECT pg_catalog.setval('"Global".gameaccess_id_seq', 1, false);
 -- Name: games_id_seq; Type: SEQUENCE SET; Schema: Global; Owner: postgres
 --
 
-SELECT pg_catalog.setval('"Global".games_id_seq', 1, false);
+SELECT pg_catalog.setval('"Global".games_id_seq', 1, true);
 
 
 --
@@ -1871,7 +1895,7 @@ SELECT pg_catalog.setval('"Global".games_id_seq', 1, false);
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: Global; Owner: postgres
 --
 
-SELECT pg_catalog.setval('"Global".users_id_seq', 1, false);
+SELECT pg_catalog.setval('"Global".users_id_seq', 2, true);
 
 
 --
@@ -1889,7 +1913,7 @@ SELECT pg_catalog.setval('game_1."accessToUnits_id_seq"', 12, true);
 -- Name: accessestonations_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: postgres
 --
 
-SELECT pg_catalog.setval('game_1.accessestonations_id_seq', 6, true);
+SELECT pg_catalog.setval('game_1.accessestonations_id_seq', 5, true);
 
 
 --
@@ -1988,7 +2012,7 @@ SELECT pg_catalog.setval('game_1.modifiers_id_seq', 1, false);
 -- Name: nations_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: postgres
 --
 
-SELECT pg_catalog.setval('game_1.nations_id_seq', 8, true);
+SELECT pg_catalog.setval('game_1.nations_id_seq', 5, true);
 
 
 --
@@ -2006,7 +2030,7 @@ SELECT pg_catalog.setval('game_1.offeredresources_id_seq', 5, true);
 -- Name: ownedResources_Id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: postgres
 --
 
-SELECT pg_catalog.setval('game_1."ownedResources_Id_seq"', 6, true);
+SELECT pg_catalog.setval('game_1."ownedResources_Id_seq"', 45, true);
 
 
 --
@@ -2015,7 +2039,7 @@ SELECT pg_catalog.setval('game_1."ownedResources_Id_seq"', 6, true);
 -- Name: players_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: postgres
 --
 
-SELECT pg_catalog.setval('game_1.players_id_seq', 1, false);
+SELECT pg_catalog.setval('game_1.players_id_seq', 5, true);
 
 
 --
@@ -2024,7 +2048,7 @@ SELECT pg_catalog.setval('game_1.players_id_seq', 1, false);
 -- Name: populationproductionshares_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: postgres
 --
 
-SELECT pg_catalog.setval('game_1.populationproductionshares_id_seq', 2, true);
+SELECT pg_catalog.setval('game_1.populationproductionshares_id_seq', 8, true);
 
 
 --
@@ -2033,7 +2057,7 @@ SELECT pg_catalog.setval('game_1.populationproductionshares_id_seq', 2, true);
 -- Name: populations_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: postgres
 --
 
-SELECT pg_catalog.setval('game_1.populations_id_seq', 12, true);
+SELECT pg_catalog.setval('game_1.populations_id_seq', 8, true);
 
 
 --
@@ -2042,7 +2066,7 @@ SELECT pg_catalog.setval('game_1.populations_id_seq', 12, true);
 -- Name: populationusedresource_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: postgres
 --
 
-SELECT pg_catalog.setval('game_1.populationusedresource_id_seq', 1, true);
+SELECT pg_catalog.setval('game_1.populationusedresource_id_seq', 8, true);
 
 
 --
@@ -2060,7 +2084,7 @@ SELECT pg_catalog.setval('game_1."productionCost_id_seq"', 10, true);
 -- Name: productionShares_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: postgres
 --
 
-SELECT pg_catalog.setval('game_1."productionShares_id_seq"', 11, true);
+SELECT pg_catalog.setval('game_1."productionShares_id_seq"', 10, true);
 
 
 --
@@ -2096,7 +2120,7 @@ SELECT pg_catalog.setval('game_1.resources_id_seq', 11, true);
 -- Name: socialgroups_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: postgres
 --
 
-SELECT pg_catalog.setval('game_1.socialgroups_id_seq', 6, true);
+SELECT pg_catalog.setval('game_1.socialgroups_id_seq', 5, true);
 
 
 --
@@ -2141,7 +2165,7 @@ SELECT pg_catalog.setval('game_1."unitTypes_id_seq"', 5, true);
 -- Name: usedResources_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: postgres
 --
 
-SELECT pg_catalog.setval('game_1."usedResources_id_seq"', 14, true);
+SELECT pg_catalog.setval('game_1."usedResources_id_seq"', 10, true);
 
 
 --
@@ -3020,6 +3044,10 @@ ALTER TABLE ONLY game_1."ownedResources"
 
 ALTER TABLE ONLY game_1."ownedResources"
     ADD CONSTRAINT "Resource" FOREIGN KEY (fk_resource) REFERENCES game_1.resources(id);
+
+--     ALTER TABLE game_1."ownedResources"
+-- ADD CONSTRAINT ownedResources_unique_nation_resource
+-- UNIQUE(fk_nation, fk_resource);
 
 
 --
