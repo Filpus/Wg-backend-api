@@ -52,22 +52,9 @@
         public string? OwnerName { get; set; }
     }
 
-    public class PostNationDTO
+    public class NationCreateDTO
     {
-        public string Name { get; set; }
-
-        public int Religion { get; set; }
-
-        public int Culture { get; set; }
-
-        public IFormFile? Flag { get; set; }
-
-        public string Color { get; set; }
-    }
-
-    public class PatchNationDTO
-    {
-        public int Id { get; set; }
+        public int? Id { get; set; }
 
         public string? Name { get; set; }
 

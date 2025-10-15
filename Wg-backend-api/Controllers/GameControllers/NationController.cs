@@ -14,6 +14,7 @@
     using System.Linq;
     using System.Text.RegularExpressions;
     using Microsoft.CodeAnalysis.Options;
+    using Castle.Core.Logging;
 
     [Route("api/Nations")]
     [ApiController]
@@ -240,17 +241,23 @@
         }
 
         [HttpPost]
-        public async Task<ActionResult<NationDTO>> PostNations([FromForm] PostNationDTO nations)
+        public async Task<ActionResult<NationDTO>> PostNations([FromForm] NationCreateDTO nations)
         {
             if (nations == null)
             {
                 return this.BadRequest("Brak danych do zapisania.");
             }
 
+            if (nations.Religion == null || nations.Culture == null || nations.Color == null || nations.Name == null)
+            {
+                return this.BadRequest("Religion, Culture, Color are required.");
+            }
+
             var nationWithSameName = await this._context.Nations
                 .FirstOrDefaultAsync(n => n.Name.ToLower() == nations.Name.ToLower());
 
-            if (nationWithSameName != null) { 
+            if (nationWithSameName != null)
+            {
                 return this.BadRequest("Państwo o takiej nazwie już istnieje.");
             }
 
@@ -260,7 +267,9 @@
             {
                 var uploadResult = await this.UploadFile(nations.Flag);
                 if (!uploadResult.Success)
+                {
                     return this.BadRequest(uploadResult.ErrorMessage);
+                }
 
                 flagPath = uploadResult.FilePath;
             }
@@ -268,8 +277,8 @@
             var newNation = new Nation
             {
                 Name = nations.Name,
-                ReligionId = nations.Religion,
-                CultureId = nations.Culture,
+                ReligionId = (int)nations.Religion,
+                CultureId = (int)nations.Culture,
                 Color = nations.Color,
                 Flag = flagPath,
             };
@@ -318,11 +327,16 @@
         }
 
         [HttpPatch]
-        public async Task<IActionResult> PatchNations([FromForm] PatchNationDTO nationDto)
+        public async Task<IActionResult> PatchNations([FromForm] NationCreateDTO nationDto)
         {
             if (nationDto == null)
             {
                 return this.BadRequest("No data to edit.");
+            }
+
+            if (nationDto.Id == null)
+            {
+                return this.BadRequest("Nation ID is required.");
             }
 
             var nation = await this._context.Nations.FindAsync(nationDto.Id);

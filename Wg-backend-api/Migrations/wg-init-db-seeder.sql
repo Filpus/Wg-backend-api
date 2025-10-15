@@ -1813,7 +1813,7 @@ COPY game_1."unitOrders" (id, "fk_UnitTypes", "fk_Nations", quantity) FROM stdin
 4	4	2	1
 5	1	3	8
 6	5	3	5
-7	1	4	6
+7	1	    	6
 8	2	4	4
 9	1	5	1
 10	3	5	4
@@ -3044,10 +3044,6 @@ ALTER TABLE ONLY game_1."ownedResources"
 
 ALTER TABLE ONLY game_1."ownedResources"
     ADD CONSTRAINT "Resource" FOREIGN KEY (fk_resource) REFERENCES game_1.resources(id);
-
---     ALTER TABLE game_1."ownedResources"
--- ADD CONSTRAINT ownedResources_unique_nation_resource
--- UNIQUE(fk_nation, fk_resource);
 
 
 --
