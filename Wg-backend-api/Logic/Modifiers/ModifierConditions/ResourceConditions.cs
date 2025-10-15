@@ -9,7 +9,7 @@ namespace Wg_backend_api.Logic.Modifiers.ModifierConditions
 
         public override Dictionary<string, object> ToDictionary()
         {
-            var dict = new Dictionary<string, object> { ["resource_id"] = ResourceId };
+            var dict = new Dictionary<string, object> { ["ResourceId"] = ResourceId };
             return dict;
         }
     }

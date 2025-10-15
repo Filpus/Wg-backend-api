@@ -88,6 +88,7 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
                 }
             }
 
+            totalChange = (float)Math.Round(totalChange, 3);
             return totalChange;
         }
 

@@ -12,10 +12,10 @@ namespace Wg_backend_api.Logic.Modifiers.ModifierConditions
 
         public override Dictionary<string, object> ToDictionary()
         {
-            var dict = new Dictionary<string, object> { ["resource_id"] = ResourceId };
-            if (CultureId.HasValue) dict["culture_id"] = CultureId.Value;
-            if (SocialGroupId.HasValue) dict["social_group_id"] = SocialGroupId.Value;
-            if (ReligionId.HasValue) dict["religion_id"] = ReligionId.Value;
+            var dict = new Dictionary<string, object> { ["ResourceId"] = ResourceId };
+            if (CultureId.HasValue) dict["CultureId"] = CultureId.Value;
+            if (SocialGroupId.HasValue) dict["SocialGroupId"] = SocialGroupId.Value;
+            if (ReligionId.HasValue) dict["ReligionId"] = ReligionId.Value;
             return dict;
         }
     }
