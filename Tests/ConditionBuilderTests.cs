@@ -1,107 +1,74 @@
 ﻿
-
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using Wg_backend_api.Logic.Modifiers.ConditionBuilder;
-using Wg_backend_api.Models; 
+using Wg_backend_api.Enums;
+using Wg_backend_api.Logic.Modifiers;
+using Wg_backend_api.Logic.Modifiers.ModifierConditions;
+using Wg_backend_api.Models;
 
 namespace Tests
 {
     [TestFixture]
     public class ConditionBuilderTests
     {
-        private List<Population> _populations;
-
-        [SetUp]
-        public void SetUp()
+        private static IReadOnlyDictionary<ModifierType, Type> ExpectedMappings = new Dictionary<ModifierType, Type>
         {
-            // Przygotowanie danych testowych
-            _populations = new List<Population>
+            // Tylko populacja
+            { ModifierType.PopulationHappiness, typeof(PopulationConditions) },
+            { ModifierType.VoluneerChange, typeof(PopulationConditions) },
+
+            // Populacja + zasób
+            { ModifierType.ResourceProduction, typeof(PopulationResourceConditions) },
+            { ModifierType.ResouerceUsage, typeof(PopulationResourceConditions) },
+
+            // Tylko zasób
+            { ModifierType.ResourceChange, typeof(ResourceConditions) },
+
+            // Tylko frakcja
+            { ModifierType.FactionPower, typeof(FactionConditions) },
+            { ModifierType.FactionContenment, typeof(FactionConditions) }
+        };
+
+        [Test]
+        public void GetConditionsType_ReturnsExpectedTypes_ForAllKnownModifiers()
+        {
+            foreach (var kv in ExpectedMappings)
             {
-                new Population { CultureId = 1, SocialGroupId = 1, LocationId = 1 },
-                new Population { CultureId = 2, SocialGroupId = 2, LocationId = 2 },
-                new Population { CultureId = 2, SocialGroupId = 3, LocationId = 3 },
-                new Population { CultureId = 3, SocialGroupId = 2, LocationId = 3 }
-            };
+                var modifier = kv.Key;
+                var expectedType = kv.Value;
+
+                var actual = ModifierConditionsMapper.GetConditionsType(modifier);
+
+                Assert.AreEqual(expectedType, actual, $"Expected type for {modifier} to be {expectedType}, but was {actual}.");
+            }
         }
 
         [Test]
-        public void ApplyConditions_FiltersByCultureId_WhenIntProvided()
+        public void CreateConditions_ReturnsInstanceOfExpectedType_ForAllKnownModifiers()
         {
-            var builder = new PopulationConditionBuilder(_populations.AsQueryable());
-            var conditions = new Dictionary<string, object>
+            var emptyDict = new Dictionary<string, object>();
+
+            foreach (var kv in ExpectedMappings)
             {
-                { "culture_id", 2 }
-            };
+                var modifier = kv.Key;
+                var expectedType = kv.Value;
 
-            var result = builder.ApplyConditions(conditions).Build().ToList();
+                var result = ModifierConditionsMapper.CreateConditions(modifier, emptyDict);
 
-            Assert.AreEqual(2, result.Count);
-            Assert.IsTrue(result.All(p => p.CultureId == 2));
+                Assert.IsNotNull(result, $"CreateConditions returned null for modifier {modifier}");
+                Assert.IsInstanceOf(expectedType, result, $"CreateConditions returned wrong type for {modifier}");
+            }
         }
 
         [Test]
-        public void ApplyConditions_FiltersBySocialGroupId_WhenJsonElementProvided()
+        public void UnsupportedModifier_ThrowsNotSupportedException_ForBothMethods()
         {
-            var builder = new PopulationConditionBuilder(_populations.AsQueryable());
-            var jsonElement = JsonDocument.Parse("2").RootElement;
-            var conditions = new Dictionary<string, object>
-            {
-                { "social_group_id", jsonElement }
-            };
+            var unsupported = (ModifierType)int.MaxValue;
+            var emptyDict = new Dictionary<string, object>();
 
-            var result = builder.ApplyConditions(conditions).Build().ToList();
-
-            Assert.AreEqual(2, result.Count);
-            Assert.IsTrue(result.All(p => p.SocialGroupId == 2));
-        }
-
-        [Test]
-        public void ApplyConditions_FiltersByLocalisationId_WhenStringNumberProvided()
-        {
-            var builder = new PopulationConditionBuilder(_populations.AsQueryable());
-            var conditions = new Dictionary<string, object>
-            {
-                { "localisation_id", "3" } // powinno konwertować string -> int
-            };
-
-            var result = builder.ApplyConditions(conditions).Build().ToList();
-
-            Assert.AreEqual(2, result.Count);
-            Assert.IsTrue(result.All(p => p.LocationId == 3));
-        }
-
-        [Test]
-        public void ApplyConditions_IgnoresDefaultZeroValue_And_ResetRestoresOriginalQuery()
-        {
-            var builder = new PopulationConditionBuilder(_populations.AsQueryable());
-
-            // zero powinno być traktowane jako brak warunku
-            var conditionsWithZero = new Dictionary<string, object>
-            {
-                { "culture_id", 0 }
-            };
-
-            var resultZero = builder.ApplyConditions(conditionsWithZero).Build().ToList();
-            Assert.AreEqual(_populations.Count, resultZero.Count);
-
-            // zastosuj rzeczywisty filtr
-            var conditions = new Dictionary<string, object>
-            {
-                { "culture_id", 2 }
-            };
-            var filtered = builder.ApplyConditions(conditions).Build().ToList();
-            Assert.AreEqual(2, filtered.Count);
-
-            // reset powinien przywrócić oryginalne query
-            builder.Reset();
-            var all = builder.Build().ToList();
-            Assert.AreEqual(_populations.Count, all.Count);
+            Assert.Throws<NotSupportedException>(() => ModifierConditionsMapper.GetConditionsType(unsupported));
+            Assert.Throws<NotSupportedException>(() => ModifierConditionsMapper.CreateConditions(unsupported, emptyDict));
         }
     }
-
-
-
 }
