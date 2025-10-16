@@ -27,6 +27,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
+
             _context = _gameDbContextFactory.Create(schema);
             string nationIdStr = _sessionDataService.GetNation();
             _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
@@ -42,6 +43,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
+
                 return Ok(new List<ActionDTO> { MapToDTO(action) });
             }
             else
@@ -91,7 +93,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            var actions = actionDTOs.Select(dto => MapFromDTO(dto)).ToList();
+            var actions = actionDTOs.Select(dto => MapFromDTO(new ActionDTO(dto) { NationId = this._nationId ?? dto.NationId })).ToList();
             _context.Actions.AddRange(actions);
             await _context.SaveChangesAsync();
 
