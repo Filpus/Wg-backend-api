@@ -31,6 +31,44 @@ namespace Wg_backend_api.Controllers.GameControllers
             _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
+        [HttpGet("{mapId?}")]
+        public async Task<ActionResult<List<MapAccessInfoDTO>>> GetAllMapAccesses(int? mapId)
+        {
+
+            if (mapId.HasValue)
+            {
+
+                var mapAccesses = await _context.MapAccesses
+                   .Include(ma => ma.Map)
+                   .Include(ma => ma.Nation)
+                   .Where(ma => ma.MapId == mapId)
+                   .ToListAsync();
+            }
+            else
+            {
+                var mapAccesses = await _context.MapAccesses
+                   .Include(ma => ma.Map)
+                   .Include(ma => ma.Nation)
+                   .ToListAsync();
+            }
+
+        
+
+            var result = await _context.MapAccesses
+                .Select(ma => new MapAccessInfoDTO
+                {
+                    NationId = ma.NationId,
+                    MapId = ma.MapId,
+                    NationName = ma.Nation.Name,
+                    NationImage = ma.Nation != null ? ma.Nation.Flag ?? string.Empty : string.Empty,
+                    MapName = ma.Map.Name,
+                })
+                .ToListAsync();
+
+            return Ok(result);
+        }
+
+
 
         [HttpDelete]
         public async Task<ActionResult> DeleteMapAccesses([FromBody] List<(int nationId, int mapId)> ids)
@@ -55,6 +93,5 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
-
     }
 }
