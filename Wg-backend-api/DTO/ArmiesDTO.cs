@@ -123,4 +123,26 @@ namespace Wg_backend_api.DTO
 
 
     }
+
+
+    public class UnitTypeResourceDTO
+    {
+
+       public int? Id { get; set; }
+
+       public int UnitTypeId { get; set; }
+        public int ResourceId { get; set; }
+        public float Amount { get; set; }
+    }
+
+    public class UnitTypeResourceInfoDTO
+    {
+        public int Id { get; set; }
+        public int UnitTypeId { get; set; }
+        public string UnitTypeName { get; set; }
+        public int ResourceId { get; set; }
+        public string ResourceName { get; set; }
+        public float Amount { get; set; }
+    }
+
 }
