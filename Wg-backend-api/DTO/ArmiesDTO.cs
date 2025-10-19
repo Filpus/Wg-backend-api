@@ -144,5 +144,17 @@ namespace Wg_backend_api.DTO
         public string ResourceName { get; set; }
         public float Amount { get; set; }
     }
+    public class UnitTypeAccessCreateDTO
+    {
+        public int NationId { get; set; }
+        public int UnitTypeId { get; set; }
+    }
 
+    public class UnitTypeAccessInfoDTO
+    {
+        public int NationId { get; set; }
+        public int UnitTypeId { get; set; }
+        public string NationName { get; set; }
+        public string UnitTypeName { get; set; }
+    }
 }
