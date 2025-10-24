@@ -1,38 +1,39 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Wg_backend_api.Data;
-using Wg_backend_api.DTO;
-using Wg_backend_api.Models;
-using Wg_backend_api.Services;
-namespace Wg_backend_api.Controllers.GameControllers
+﻿namespace Wg_backend_api.Controllers.GameControllers
 {
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.EntityFrameworkCore;
+    using Wg_backend_api.Data;
+    using Wg_backend_api.DTO;
+    using Wg_backend_api.Models;
+    using Wg_backend_api.Services;
+
     [Route("api/UnitOrders")]
     [ApiController]
     public class UnitOrdersController : Controller
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-        private int? _nationId;
+        private readonly IGameDbContextFactory gameDbContextFactory;
+        private readonly ISessionDataService sessionDataService;
+        private readonly GameDbContext context;
+        private readonly int? nationId;
 
         public UnitOrdersController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this.gameDbContextFactory = gameDbFactory;
+            this.sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this.sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
-            string nationIdStr = _sessionDataService.GetNation();
-            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
+
+            this.context = this.gameDbContextFactory.Create(schema);
+            string nationIdStr = this.sessionDataService.GetNation();
+            this.nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
+
         // GET: api/UnitOrders
         // GET: api/UnitOrders/5
-
 
         // DELETE: api/UnitOrders
         [HttpDelete]
@@ -40,20 +41,20 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (ids == null || ids.Count == 0)
             {
-                return BadRequest("Brak ID do usunięcia.");
+                return this.BadRequest("Brak ID do usunięcia.");
             }
 
-            var unitOrders = await _context.UnitOrders.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var unitOrders = await this.context.UnitOrders.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (unitOrders.Count == 0)
             {
-                return NotFound("Nie znaleziono zamówień jednostek do usunięcia.");
+                return this.NotFound("Nie znaleziono zamówień jednostek do usunięcia.");
             }
 
-            _context.UnitOrders.RemoveRange(unitOrders);
-            await _context.SaveChangesAsync();
+            this.context.UnitOrders.RemoveRange(unitOrders);
+            await this.context.SaveChangesAsync();
 
-            return Ok();
+            return this.Ok();
         }
 
         [HttpGet("GetUnitOrdersByNationId/{nationId?}")]
@@ -61,9 +62,10 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (nationId == null)
             {
-                nationId = _nationId;
+                nationId = this.nationId;
             }
-            var unitOrders = await _context.UnitOrders
+
+            var unitOrders = await this.context.UnitOrders
                 .Where(uo => uo.NationId == nationId)
                 .Select(uo => new UnitOrderInfoDTO
                 {
@@ -72,23 +74,22 @@ namespace Wg_backend_api.Controllers.GameControllers
                     UnitTypeId = uo.UnitTypeId,
 
                     Quantity = uo.Quantity,
-                    UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded // Calculate used manpower  
-
+                    UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded, // Calculate used manpower
                 })
                 .ToListAsync();
 
-            return Ok(unitOrders);
+            return this.Ok(unitOrders);
         }
-
 
         [HttpGet("GetNavalUnitOrdersByNationId/{nationId?}")]
         public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetNavalUnitOrdersByNationId(int? nationId)
         {
             if (nationId == null)
             {
-                nationId = _nationId;
+                nationId = this.nationId;
             }
-            var navalUnitOrders = await _context.UnitOrders
+
+            var navalUnitOrders = await this.context.UnitOrders
                 .Where(uo => uo.NationId == nationId && uo.UnitType.IsNaval) // Assuming UnitType has an IsNaval property
                 .Select(uo => new UnitOrderInfoDTO
                 {
@@ -97,12 +98,11 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Quantity = uo.Quantity,
                     UnitTypeId = uo.UnitTypeId,
 
-                    UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded // Calculate used manpower  
-
+                    UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded, // Calculate used manpower
                 })
                 .ToListAsync();
 
-            return Ok(navalUnitOrders);
+            return this.Ok(navalUnitOrders);
         }
 
         [HttpGet("GetLandUnitOrdersByNationId/{nationId?}")]
@@ -110,9 +110,10 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (nationId == null)
             {
-                nationId = _nationId;
+                nationId = this.nationId;
             }
-            var landUnitOrders = await _context.UnitOrders
+
+            var landUnitOrders = await this.context.UnitOrders
                 .Where(uo => uo.NationId == nationId && !uo.UnitType.IsNaval) // Assuming UnitType has an IsNaval property
                 .Select(uo => new UnitOrderInfoDTO
                 {
@@ -120,53 +121,49 @@ namespace Wg_backend_api.Controllers.GameControllers
                     UnitTypeName = uo.UnitType.Name,
                     UnitTypeId = uo.UnitTypeId,
                     Quantity = uo.Quantity,
-                    UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded // Calculate used manpower  
-
+                    UsedManpower = uo.Quantity * uo.UnitType.VolunteersNeeded, // Calculate used manpower
                 })
                 .ToListAsync();
 
-            return Ok(landUnitOrders);
+            return this.Ok(landUnitOrders);
         }
-
-
 
         [HttpPost("AddRecruitOrder/{nationId?}")]
         public async Task<IActionResult> AddRecruitOrder(int? nationId, [FromBody] RecruitOrderDTO recruitOrder)
         {
-
             if (nationId == null)
             {
-                nationId = _nationId;
+                nationId = this.nationId;
             }
 
             if (recruitOrder == null || recruitOrder.Count <= 0)
             {
-                return BadRequest("Nieprawidłowe dane zlecenia rekrutacji.");
+                return this.BadRequest("Nieprawidłowe dane zlecenia rekrutacji.");
             }
 
-            var nationExists = await _context.Nations.AnyAsync(n => n.Id == nationId);
+            var nationExists = await this.context.Nations.AnyAsync(n => n.Id == nationId);
             if (!nationExists)
             {
-                return NotFound("Nie znaleziono państwa o podanym ID.");
+                return this.NotFound("Nie znaleziono państwa o podanym ID.");
             }
 
-            var unitTypeExists = await _context.UnitTypes.AnyAsync(ut => ut.Id == recruitOrder.TroopTypeId);
+            var unitTypeExists = await this.context.UnitTypes.AnyAsync(ut => ut.Id == recruitOrder.TroopTypeId);
             if (!unitTypeExists)
             {
-                return NotFound("Nie znaleziono typu jednostki o podanym ID.");
+                return this.NotFound("Nie znaleziono typu jednostki o podanym ID.");
             }
 
             var newUnitOrder = new UnitOrder
             {
                 NationId = (int)nationId,
                 UnitTypeId = recruitOrder.TroopTypeId,
-                Quantity = recruitOrder.Count
+                Quantity = recruitOrder.Count,
             };
 
-            _context.UnitOrders.Add(newUnitOrder);
-            await _context.SaveChangesAsync();
+            this.context.UnitOrders.Add(newUnitOrder);
+            await this.context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUnitOrders", new { id = newUnitOrder.Id }, newUnitOrder);
+            return this.Ok(newUnitOrder);
         }
 
         [HttpPatch("UpdateRecruitmentCount")]
@@ -174,32 +171,29 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (editOrder == null || editOrder.OrderId <= 0 || editOrder.NewCount < 0)
             {
-                return BadRequest("Nieprawidłowe dane zlecenia edycji.");
+                return this.BadRequest("Nieprawidłowe dane zlecenia edycji.");
             }
 
-            var unitOrder = await _context.UnitOrders.FindAsync(editOrder.OrderId);
+            var unitOrder = await this.context.UnitOrders.FindAsync(editOrder.OrderId);
             if (unitOrder == null)
             {
-                return NotFound("Nie znaleziono zamówienia jednostek o podanym ID.");
+                return this.NotFound("Nie znaleziono zamówienia jednostek o podanym ID.");
             }
 
             unitOrder.Quantity = editOrder.NewCount;
 
-            _context.Entry(unitOrder).State = EntityState.Modified;
+            this.context.Entry(unitOrder).State = EntityState.Modified;
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this.context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                return StatusCode(500, "Błąd podczas aktualizacji.");
+                return this.StatusCode(500, "Błąd podczas aktualizacji.");
             }
 
-            return Ok(unitOrder);
+            return this.Ok(unitOrder);
         }
-
-
-
     }
 }
