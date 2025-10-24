@@ -1,20 +1,14 @@
 ﻿namespace Wg_backend_api.Controllers.GameControllers
 {
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Build.Framework;
-    using Microsoft.EntityFrameworkCore;
-    using Microsoft.EntityFrameworkCore.Internal;
-    using System.Net;
     using System;
-    using System.Runtime.InteropServices;
+    using System.Linq;
+    using System.Text.RegularExpressions;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.EntityFrameworkCore;
     using Wg_backend_api.Data;
     using Wg_backend_api.DTO;
     using Wg_backend_api.Models;
     using Wg_backend_api.Services;
-    using System.Linq;
-    using System.Text.RegularExpressions;
-    using Microsoft.CodeAnalysis.Options;
-    using Castle.Core.Logging;
 
     [Route("api/Nations")]
     [ApiController]
@@ -464,7 +458,7 @@
                 await file.CopyToAsync(stream);
             }
 
-            //$"{Request.Scheme}://{Request.Host}{imageUrl}",
+            // $"{Request.Scheme}://{Request.Host}{imageUrl}",
             var pathFile = $"/images/{uniqueFileName}";
 
             return new FileUploadResult { Success = true, FilePath = pathFile };
@@ -492,24 +486,10 @@
                 return false;
             }
 
-            //var hexPattern = @"^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$";
-            //if (Regex.IsMatch(color, hexPattern))
-            //{
-            //    return true;
-            //}
-
-            var allowedColors = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            var hexPattern = @"^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$";
+            if (Regex.IsMatch(color, hexPattern))
             {
-                "red", "green", "blue", "black", "white",
-                "yellow", "purple", "orange", "pink", "brown",
-                "gray", "grey", "cyan", "magenta", "lime",
-                "teal", "navy", "maroon", "olive", "silver",
-                "gold",
-            };
-
-            if (allowedColors.Contains(color))
-            {
-                return true;
+               return true;
             }
 
             return false;
