@@ -166,7 +166,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             _context.UnitOrders.Add(newUnitOrder);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUnitOrders", new { id = newUnitOrder.Id }, newUnitOrder);
+            return Ok(newUnitOrder);
         }
 
         [HttpPatch("UpdateRecruitmentCount")]
