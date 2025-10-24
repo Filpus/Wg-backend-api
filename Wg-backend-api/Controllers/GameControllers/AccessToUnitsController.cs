@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
@@ -49,5 +50,104 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
+
+        [HttpGet("ByNation/{nationId}")]
+        public async Task<ActionResult<IEnumerable<UnitTypeAccessInfoDTO>>> GetAccessByNation(int nationId)
+        {
+            if (nationId <= 0)
+            {
+                return BadRequest("Nieprawidłowe ID państwa.");
+            }
+
+            var list = await _context.AccessToUnits
+                .Where(a => a.NationId == nationId)
+                .Select(a => new UnitTypeAccessInfoDTO
+                {
+                    NationId = a.NationId,
+                    UnitTypeId = a.UnitTypeId,
+                    NationName = a.Nation.Name,
+                    UnitTypeName = a.UnitType.Name
+                })
+                .ToListAsync();
+
+            return Ok(list);
+        }
+
+        [HttpGet("ByUnitType/{unitTypeId}")]
+        public async Task<ActionResult<IEnumerable<AccessToUnit>>> GetAccessByUnitType(int unitTypeId)
+        {
+            if (unitTypeId <= 0)
+            {
+                return BadRequest("Nieprawidłowe ID typu jednostki.");
+            }
+
+            var list = await _context.AccessToUnits
+                .Where(a => a.UnitTypeId == unitTypeId)
+                .Select(a => new UnitTypeAccessInfoDTO
+                {
+                    NationId = a.NationId,
+                    UnitTypeId = a.UnitTypeId,
+                    NationName = a.Nation.Name,
+                    UnitTypeName = a.UnitType.Name
+                })
+                .ToListAsync();
+
+            return Ok(list);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> CreateAccess([FromBody] List<UnitTypeAccessCreateDTO> dtos)
+        {
+            if (dtos == null || dtos.Count == 0)
+            {
+                return BadRequest("Brak danych do utworzenia.");
+            }
+
+            var accessToUnits = dtos
+                .Where(dto => dto.NationId > 0 && dto.UnitTypeId > 0)
+                .Select(dto => new AccessToUnit
+                {
+                    NationId = dto.NationId,
+                    UnitTypeId = dto.UnitTypeId,
+                })
+                .ToList();
+
+
+
+            _context.AccessToUnits.AddRange(accessToUnits);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpPut]
+        public async Task<ActionResult> EditAccessList([FromBody] List<AccessToUnit> dtos)
+        {
+            if (dtos == null || dtos.Count == 0)
+            {
+                return BadRequest("Brak danych do aktualizacji.");
+            }
+
+            var ids = dtos.Select(dto => dto.Id).Where(id => id.HasValue).Select(id => id.Value).ToList();
+            var existingRecords = await _context.AccessToUnits.Where(a => ids.Contains(a.Id.Value)).ToListAsync();
+
+            if (existingRecords.Count != dtos.Count)
+            {
+                return NotFound("Niektóre rekordy do aktualizacji nie zostały znalezione.");
+            }
+
+            foreach (var dto in dtos)
+            {
+                var existing = existingRecords.FirstOrDefault(e => e.Id == dto.Id);
+                if (existing != null)
+                {
+                    _context.Entry(existing).CurrentValues.SetValues(dto);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok("Rekordy zostały zaktualizowane.");
+        }
+
     }
 }
