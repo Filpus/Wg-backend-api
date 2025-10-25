@@ -27,6 +27,8 @@ namespace Wg_backend_api.Models
 
         public User Owner { get; set; }
 
+        [Column("game_code")]
+        public string? GameCode { get; set; }
         public ICollection<GameAccess> GameAccesses { get; set; }
     }
 

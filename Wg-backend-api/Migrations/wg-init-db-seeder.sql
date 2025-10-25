@@ -205,7 +205,9 @@ CREATE TABLE "Global".games (
     name text NOT NULL,
     description text,
     image text,
-    "ownerId" integer NOT NULL
+    "ownerId" integer NOT NULL,
+    game_code text DEFAULT upper(substr(md5((random())::text), 1, 6))
+
 );
 
 
@@ -1273,8 +1275,8 @@ COPY "Global".gameaccess (id, "fk_Users", "fk_Games", "accessType", "isArchived"
 -- Data for Name: games; Type: TABLE DATA; Schema: Global; Owner: postgres
 --
 
-COPY "Global".games (id, name, description, image, "ownerId") FROM stdin;
-1	default_schema	Demo testowe\n	\N	2
+COPY "Global".games (id, name, description, image, "ownerId", game_code) FROM stdin;
+1	default_schema	Demo testowe\n	\N	2 XIWDFW
 \.
 
 

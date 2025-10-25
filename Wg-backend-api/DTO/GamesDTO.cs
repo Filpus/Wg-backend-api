@@ -11,13 +11,15 @@
         public string Name { get; set; }
         public string? Description { get; set; }
         public string? Image { get; set; }
+        public string? GameCode { get; set; }
 
-        public GameDTO(int? id, string name, string? description, string? image)
+        public GameDTO(int? id, string name, string? description, string? image, string? gameCode)
         {
             Id = id;
             Name = name;
             Description = description;
             Image = image;
+            GameCode = gameCode;
         }
     }
 
