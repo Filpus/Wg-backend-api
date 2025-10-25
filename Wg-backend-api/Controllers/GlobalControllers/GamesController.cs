@@ -57,7 +57,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 .Where(g => gamesAccess.Contains((int)g.Id))
                 .ToListAsync();
 
-            var gamesDTOs = games.Select(game => new GameDTO(game.Id, game.Name, game.Description, game.Image)).ToList();
+            var gamesDTOs = games.Select(game => new GameDTO(game.Id, game.Name, game.Description, game.Image, game.GameCode)).ToList();
 
             return Ok(gamesDTOs);
         }
@@ -91,7 +91,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             var game = await _globalDbContext.Games
                 .Where(g => g.Id == id)
-                .Select(g => new GameDTO(g.Id, g.Name, g.Description, g.Image))
+                .Select(g => new GameDTO(g.Id, g.Name, g.Description, g.Image, g.GameCode))
                 .FirstOrDefaultAsync();
 
             if (game == null)
@@ -105,6 +105,77 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             return Ok(game);
         }
+        [HttpPost("joinGame")]
+        public async Task<IActionResult> JoinGame([FromBody] string gameCode)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized(new
+                {
+                    error = "Unauthorized",
+                    message = "User not authenticated or invalid user ID"
+                });
+            }
+            var game = await _globalDbContext.Games
+                .Where(g => g.GameCode == gameCode)
+                .FirstOrDefaultAsync();
+            if (game == null)
+            {
+                return NotFound(new
+                {
+                    error = "Not Found",
+                    message = "Game with the provided code does not exist."
+                });
+            }
+            var existingAccess = await _globalDbContext.GameAccesses
+                .Where(a => a.GameId == game.Id && a.UserId == userId)
+                .FirstOrDefaultAsync();
+            if (existingAccess != null)
+            {
+                return Conflict(new
+                {
+                    error = "Conflict",
+                    message = "User already has access to this game."
+                });
+            }
+            var gameAccess = new GameAccess
+            {
+                GameId = game.Id,
+                UserId = userId,
+                Role = UserRole.Player,
+                IsArchived = false
+            };
+            _globalDbContext.GameAccesses.Add(gameAccess);
+            await _globalDbContext.SaveChangesAsync();
+
+            var user = await _globalDbContext.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new
+                {
+                    error = "Not Found",
+                    message = "User not found."
+                });
+            }
+
+            var gameDbContext = _gameDbContextFactory.Create($"game_{game.Id}");
+            var player = new Player
+            {
+                UserId = userId,
+                Role = UserRole.Player,
+                Name = user.Name
+            };
+            gameDbContext.Players.Add(player);
+            await gameDbContext.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Successfully joined the game.",
+                game = new GameDTO(game.Id, game.Name, game.Description, game.Image, game.GameCode)
+            });
+        }
+
 
 
         [HttpPost("select")]
@@ -331,9 +402,76 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             return Ok(new
             {
                 message = "Game created successfully",
-                game = new GameDTO(newGame.Id, newGame.Name, newGame.Description, newGame.Image)
+                game = new GameDTO(newGame.Id, newGame.Name, newGame.Description, newGame.Image, newGame.GameCode)
             });
         }
+        [HttpDelete("removePlayer/{gameId}/{userId}")]
+        public async Task<IActionResult> RemovePlayer(int gameId, int userId)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int requestingUserId))
+            {
+                return Unauthorized(new
+                {
+                    error = "Unauthorized",
+                    message = "User not authenticated or invalid user ID"
+                });
+            }
 
+            var game = await _globalDbContext.Games.FindAsync(gameId);
+            if (game == null)
+            {
+                return NotFound(new
+                {
+                    error = "Not Found",
+                    message = "Game not found"
+                });
+            }
+
+            var access = await _globalDbContext.GameAccesses
+                .Where(a => a.GameId == gameId && a.UserId == requestingUserId)
+                .FirstOrDefaultAsync();
+
+            if (access == null || access.Role != UserRole.GameMaster)
+            {
+                return Unauthorized(new
+                {
+                    error = "Unauthorized",
+                    message = "Only the Game Master can remove players from the game"
+                });
+            }
+
+            var playerAccess = await _globalDbContext.GameAccesses
+                .Where(a => a.GameId == gameId && a.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (playerAccess == null)
+            {
+                return NotFound(new
+                {
+                    error = "Not Found",
+                    message = "Player does not have access to this game"
+                });
+            }
+
+            _globalDbContext.GameAccesses.Remove(playerAccess);
+            await _globalDbContext.SaveChangesAsync();
+
+            var gameDbContext = _gameDbContextFactory.Create($"game_{gameId}");
+            var player = await gameDbContext.Players
+                .Where(p => p.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (player != null)
+            {
+                gameDbContext.Players.Remove(player);
+                await gameDbContext.SaveChangesAsync();
+            }
+
+            return Ok(new
+            {
+                message = "Player successfully removed from the game"
+            });
+        }
     }
 }
