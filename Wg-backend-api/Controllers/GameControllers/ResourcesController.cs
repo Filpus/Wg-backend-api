@@ -243,32 +243,93 @@
                 nationId = this._nationId;
             }
 
-            var nation = await this._context.Nations
-                .AsNoTracking()
-                .Where(n => n.Id == nationId)
-                .Include(n => n.Localisations)
-                    .ThenInclude(l => l.LocalisationResources)
-                        .ThenInclude(lr => lr.Resource)
-                .FirstOrDefaultAsync();
-
-            if (nation == null)
+            if (nationId == null)
             {
-                return this.NotFound($"Nie znaleziono państwa o ID: {nationId}");
+                return this.BadRequest("Brak ID państwa.");
             }
 
-            var ownedResources = nation.Localisations
-                .SelectMany(l => l.LocalisationResources)
-                .GroupBy(lr => new { lr.ResourceId, lr.Resource.Name })
+            var query = this._context.OwnedResources
+                .AsNoTracking()
+                .Include(or => or.Resource)
+                .Where(or => or.NationId == nationId);
+
+
+            var ownedList = await query.ToListAsync();
+
+            if (ownedList == null || ownedList.Count == 0)
+            {
+                return this.NotFound($"Nie znaleziono zasobów przypisanych do państwa o ID: {nationId}");
+            }
+
+            var ownedResources = await _context.OwnedResources
+                .Where(or => or.NationId == nationId)
+                .GroupBy(or => new { or.ResourceId, ResourceName = or.Resource.Name })
                 .Select(g => new ResourceAmountDto
                 {
                     ResourceId = g.Key.ResourceId,
-                    ResourceName = g.Key.Name,
-                    Amount = g.Sum(lr => lr.Amount),
+                    ResourceName = g.Key.ResourceName,
+                    Amount = g.Sum(x => x.Amount) 
                 })
-                .ToList();
+                .ToListAsync();
 
             return this.Ok(ownedResources);
         }
+
+
+        [HttpPut("nation/{nationId?}/owned-resources")]
+        public async Task<IActionResult> PutOwnedResources(int? nationId, [FromBody] List<ResourceAmountDto> resources)
+        {
+            // Ustal nationId domyślnie
+            if (nationId == null)
+            {
+                nationId = this._nationId;
+            }
+
+            if (nationId == null)
+            {
+                return this.BadRequest("Brak ID państwa.");
+            }
+
+            if (resources == null || !resources.Any())
+            {
+                return this.BadRequest("Brak danych do zapisania.");
+            }
+
+
+            using var transaction = await this._context.Database.BeginTransactionAsync();
+            try
+            {
+                var existingOwned = await this._context.OwnedResources
+                    .Where(or => or.NationId == nationId)
+                    .ToListAsync();
+
+                foreach (var dto in resources)
+                {
+
+                    var match = existingOwned.FirstOrDefault(e => e.ResourceId == dto.ResourceId);
+                    if (match != null)
+                    {
+                        if (Math.Abs(match.Amount - dto.Amount) > float.Epsilon)
+                        {
+                            match.Amount = dto.Amount;
+                            this._context.Entry(match).State = EntityState.Modified;
+                        }
+                    }
+                }
+
+
+                await this._context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return this.NoContent();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return this.StatusCode(500, $"Błąd podczas aktualizacji zasobów: {ex.Message}");
+            }
+        }
+
 
 
 
