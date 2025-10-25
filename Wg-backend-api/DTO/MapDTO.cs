@@ -15,8 +15,10 @@ namespace Wg_backend_api.DTO
 
     public class MapCreateDTO
     {
-        public string Name { get; set; }
+        public int? id { get; set; }
 
-        public IFormFile ImageFile { get; set; }
+        public string? Name { get; set; }
+
+        public IFormFile? ImageFile { get; set; }
     }
 }
