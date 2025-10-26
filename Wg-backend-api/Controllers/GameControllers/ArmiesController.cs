@@ -177,7 +177,62 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok(manpowerInfo);
         }
+        [HttpPost]
+        public async Task<ActionResult> CreateArmy([FromBody] ArmiesDTO armyDto)
+        {
+            if (armyDto == null)
+            {
+                return BadRequest("Nieprawidłowe dane wejściowe.");
+            }
 
+            if (_nationId == null)
+            {
+                return BadRequest("Brak ID państwa.");
+            }
+
+            var newArmy = new Army
+            {
+                Name = armyDto.ArmyName,
+                NationId = _nationId.Value,
+                LocationId = armyDto.LocationId,
+                IsNaval = armyDto.IsNaval
+            };
+
+            await _context.Armies.AddAsync(newArmy);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetLandArmiesByNationId), new { nationId = _nationId }, newArmy);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdateArmy(int id, [FromBody] ArmiesDTO armyDto)
+        {
+            if (armyDto == null)
+            {
+                return BadRequest("Nieprawidłowe dane wejściowe.");
+            }
+
+            var existingArmy = await _context.Armies.FirstOrDefaultAsync(a => a.Id == id);
+
+            if (existingArmy == null)
+            {
+                return NotFound("Nie znaleziono armii do edycji.");
+            }
+
+            if (existingArmy.NationId != _nationId)
+            {
+                return Forbid("Nie masz uprawnień do edycji tej armii.");
+            }
+
+            existingArmy.Name = armyDto.ArmyName;
+            existingArmy.LocationId = armyDto.LocationId;
+            existingArmy.IsNaval = armyDto.IsNaval;
+
+            _context.Armies.Update(existingArmy);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
 
 
 

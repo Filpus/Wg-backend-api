@@ -6,7 +6,7 @@ namespace Wg_backend_api.DTO
 {
     public class ArmiesDTO
     {
-        public int ArmyId { get; set; }
+        public int? ArmyId { get; set; }
         public string ArmyName { get; set; }
         public int LocationId { get; set; }
         public string NationId { get; set; }
