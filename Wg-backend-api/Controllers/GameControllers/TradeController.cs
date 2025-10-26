@@ -197,13 +197,24 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTradeAgreement(int id)
         {
-            var tradeAgreement = await _context.TradeAgreements.FindAsync(id);
+            var tradeAgreement = await _context.TradeAgreements
+                .Include(t => t.OfferedResources)
+                .Include(t => t.WantedResources)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
             if (tradeAgreement == null)
             {
                 return NotFound(new { error = "Umowa handlowa nie została znaleziona." });
             }
+
+            // Usunięcie powiązanych zasobów
+            _context.OfferedResources.RemoveRange(tradeAgreement.OfferedResources);
+            _context.WantedResources.RemoveRange(tradeAgreement.WantedResources);
+
+            // Usunięcie umowy handlowej
             _context.TradeAgreements.Remove(tradeAgreement);
             await _context.SaveChangesAsync();
+
             return NoContent();
         }
 
@@ -260,6 +271,64 @@ namespace Wg_backend_api.Controllers.GameControllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Umowa handlowa została odrzucona." });
         }
+        [HttpPut("EditTradeAgreement/{id}")]
+        public async Task<IActionResult> EditTradeAgreement(int id, [FromBody] TradeAgreementInfoDTO updatedTradeAgreementDTO)
+        {
+            var tradeAgreement = await _context.TradeAgreements
+                .Include(t => t.OfferedResources)
+                .Include(t => t.WantedResources)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (tradeAgreement == null)
+            {
+                return NotFound(new { error = "Umowa handlowa nie została znaleziona." });
+            }
+
+            if (updatedTradeAgreementDTO == null ||
+                (updatedTradeAgreementDTO.OfferedResources.Count == 0 && updatedTradeAgreementDTO.RequestedResources.Count == 0))
+            {
+                return BadRequest("Brak danych do edycji.");
+            }
+
+            tradeAgreement.Description = updatedTradeAgreementDTO.Description ?? tradeAgreement.Description;
+            tradeAgreement.Duration = updatedTradeAgreementDTO.Duration;
+
+            _context.OfferedResources.RemoveRange(tradeAgreement.OfferedResources);
+            tradeAgreement.OfferedResources = updatedTradeAgreementDTO.OfferedResources.Select(r => new OfferedResource
+            {
+                ResourceId = r.ResourceId,
+                TradeAgreementId = tradeAgreement.Id.Value,
+                Quantity = r.Amount
+            }).ToList();
+
+            _context.WantedResources.RemoveRange(tradeAgreement.WantedResources);
+            tradeAgreement.WantedResources = updatedTradeAgreementDTO.RequestedResources.Select(r => new WantedResource
+            {
+                ResourceId = r.ResourceId,
+                TradeAgreementId = tradeAgreement.Id.Value,
+                Amount = r.Amount
+            }).ToList();
+
+            if (!string.IsNullOrEmpty(updatedTradeAgreementDTO.Status))
+            {
+                if (Enum.TryParse(updatedTradeAgreementDTO.Status, out TradeStatus status))
+                {
+                    tradeAgreement.Status = status;
+                }
+                else
+                {
+                    return BadRequest(new { error = "Nieprawidłowy status umowy handlowej." });
+                }
+            }
+
+            // Zapisanie zmian w bazie danych
+            _context.TradeAgreements.Update(tradeAgreement);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Umowa handlowa została zaktualizowana." });
+        }
+
+
     }
 }
 
