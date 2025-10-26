@@ -1276,7 +1276,7 @@ COPY "Global".gameaccess (id, "fk_Users", "fk_Games", "accessType", "isArchived"
 --
 
 COPY "Global".games (id, name, description, image, "ownerId", game_code) FROM stdin;
-1	default_schema	Demo testowe\n	\N	2 XIWDFW
+1	default_schema	Demo testowe\n	\N	2	XIWDFW
 \.
 
 
@@ -1815,7 +1815,7 @@ COPY game_1."unitOrders" (id, "fk_UnitTypes", "fk_Nations", quantity) FROM stdin
 4	4	2	1
 5	1	3	8
 6	5	3	5
-7	1	    	6
+7	1	4	2
 8	2	4	4
 9	1	5	1
 10	3	5	4
