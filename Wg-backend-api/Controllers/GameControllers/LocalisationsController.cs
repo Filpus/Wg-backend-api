@@ -78,25 +78,22 @@ namespace Wg_backend_api.Controllers.GameControllers
             return localisation;
         }
 
-        // PUT: api/Localisations/5  
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutLocalisation(int? id, LocalisationDTO localisationDto)
+        [HttpPut]
+        public async Task<IActionResult> PutLocalisation(List<LocalisationDTO> localisationDtos)
         {
-            if (id != localisationDto.Id)
+            foreach (var localisationDto in localisationDtos)
             {
-                return BadRequest();
+                var localisation = await _context.Localisations.FindAsync(localisationDto.Id);
+                if (localisation == null)
+                {
+                    return NotFound($"Localisation with ID {localisationDto.Id} not found.");
+                }
+
+                localisation.Name = localisationDto.Name;
+                localisation.NationId = localisationDto.NationId;
+
+                _context.Entry(localisation).State = EntityState.Modified;
             }
-
-            var localisation = await _context.Localisations.FindAsync(id);
-            if (localisation == null)
-            {
-                return NotFound();
-            }
-
-            localisation.Name = localisationDto.Name;
-            localisation.NationId = localisationDto.NationId;
-
-            _context.Entry(localisation).State = EntityState.Modified;
 
             try
             {
@@ -104,50 +101,61 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!LocalisationExists(id))
+                foreach (var localisationDto in localisationDtos)
                 {
-                    return NotFound();
+                    if (!LocalisationExists(localisationDto.Id))
+                    {
+                        return NotFound($"Localisation with ID {localisationDto.Id} not found.");
+                    }
                 }
-                else
-                {
-                    throw;
-                }
+                throw;
             }
 
             return NoContent();
         }
 
-        // POST: api/Localisations  
         [HttpPost]
-        public async Task<ActionResult<LocalisationDTO>> PostLocalisation(LocalisationDTO localisationDto)
+        public async Task<ActionResult<IEnumerable<LocalisationDTO>>> PostLocalisations(List<LocalisationDTO> localisationDtos)
         {
-            var localisation = new Localisation
+            var localisations = new List<Localisation>();
+
+            foreach (var localisationDto in localisationDtos)
             {
-                Name = localisationDto.Name,
-                NationId = localisationDto.NationId,
-                Fortification = localisationDto.Fortification,
-                Size = localisationDto.Size
-            };
+                var localisation = new Localisation
+                {
+                    Name = localisationDto.Name,
+                    NationId = localisationDto.NationId,
+                    Fortification = localisationDto.Fortification,
+                    Size = localisationDto.Size
+                };
 
-            _context.Localisations.Add(localisation);
-            await _context.SaveChangesAsync();
-
-            localisationDto.Id = localisation.Id;
-
-            return CreatedAtAction("GetLocalisation", new { id = localisation.Id }, localisationDto);
-        }
-
-        // DELETE: api/Localisations/5  
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteLocalisation(int? id)
-        {
-            var localisation = await _context.Localisations.FindAsync(id);
-            if (localisation == null)
-            {
-                return NotFound();
+                localisations.Add(localisation);
             }
 
-            _context.Localisations.Remove(localisation);
+            _context.Localisations.AddRange(localisations);
+            await _context.SaveChangesAsync();
+
+            for (int i = 0; i < localisations.Count; i++)
+            {
+                localisationDtos[i].Id = localisations[i].Id;
+            }
+
+            return CreatedAtAction("GetLocalisation", localisationDtos);
+        }
+
+
+        public async Task<IActionResult> DeleteLocalisations([FromBody] List<int?> ids)
+        {
+            var localisations = await _context.Localisations
+                .Where(l => ids.Contains(l.Id))
+                .ToListAsync();
+
+            if (localisations == null || !localisations.Any())
+            {
+                return NotFound("No localisations found for the provided IDs.");
+            }
+
+            _context.Localisations.RemoveRange(localisations);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -204,6 +212,8 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok(localisation);
         }
+
+
 
         private List<LocalisationResourceProductionDTO> GetLocalisationResourceProductions(int localisationId)
         {
@@ -314,6 +324,99 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Amount = lr.Amount
                 })
                 .ToList();
+        }
+        // POST: api/Localisations/Resources
+        [HttpPost("Resources")]
+        public async Task<IActionResult> CreateLocalisationResources([FromBody] List<LocalisationResourceDTO> localisationResourceDtos)
+        {
+            if (localisationResourceDtos == null || !localisationResourceDtos.Any())
+            {
+                return BadRequest("Invalid data.");
+            }
+
+            var localisationResources = localisationResourceDtos.Select(dto => new LocalisationResource
+            {
+                LocationId = dto.LocationId,
+                ResourceId = dto.ResourceId,
+                Amount = dto.Amount
+            }).ToList();
+
+            _context.LocalisationResources.AddRange(localisationResources);
+            await _context.SaveChangesAsync();
+
+            for (int i = 0; i < localisationResources.Count; i++)
+            {
+                localisationResourceDtos[i].Id = localisationResources[i].Id;
+            }
+
+            return Ok(localisationResourceDtos);
+        }
+
+        // PUT: api/Localisations/Resources
+        [HttpPut("Resources")]
+        public async Task<IActionResult> UpdateLocalisationResources([FromBody] List<LocalisationResourceDTO> localisationResourceDtos)
+        {
+            if (localisationResourceDtos == null || !localisationResourceDtos.Any())
+            {
+                return BadRequest("Invalid data.");
+            }
+
+            foreach (var dto in localisationResourceDtos)
+            {
+                var localisationResource = await _context.LocalisationResources.FindAsync(dto.Id);
+                if (localisationResource == null)
+                {
+                    return NotFound($"LocalisationResource with ID {dto.Id} not found.");
+                }
+
+                localisationResource.LocationId = dto.LocationId;
+                localisationResource.ResourceId = dto.ResourceId;
+                localisationResource.Amount = dto.Amount;
+
+                _context.Entry(localisationResource).State = EntityState.Modified;
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                foreach (var dto in localisationResourceDtos)
+                {
+                    if (!_context.LocalisationResources.Any(lr => lr.Id == dto.Id))
+                    {
+                        return NotFound($"LocalisationResource with ID {dto.Id} not found.");
+                    }
+                }
+                throw;
+            }
+
+            return NoContent();
+        }
+
+        // DELETE: api/Localisations/Resources
+        [HttpDelete("Resources")]
+        public async Task<IActionResult> DeleteLocalisationResources([FromBody] List<int> ids)
+        {
+            if (ids == null || !ids.Any())
+            {
+                return BadRequest("Invalid data.");
+            }
+
+            var localisationResources = await _context.LocalisationResources
+                .Where(lr => ids.Contains(lr.Id.Value))
+                .ToListAsync();
+
+            if (localisationResources == null || !localisationResources.Any())
+            {
+                return NotFound("No LocalisationResources found for the provided IDs.");
+            }
+
+            _context.LocalisationResources.RemoveRange(localisationResources);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }
