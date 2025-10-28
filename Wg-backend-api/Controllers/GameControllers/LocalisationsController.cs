@@ -143,7 +143,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return CreatedAtAction("GetLocalisation", localisationDtos);
         }
 
-
+        [HttpDelete]
         public async Task<IActionResult> DeleteLocalisations([FromBody] List<int?> ids)
         {
             var localisations = await _context.Localisations
