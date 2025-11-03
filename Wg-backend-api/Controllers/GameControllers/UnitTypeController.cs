@@ -30,6 +30,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             string nationIdStr = _sessionDataService.GetNation();
             _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
+
         // GET: api/UnitTypes  
         // GET: api/UnitTypes/5  
         [HttpGet("{id?}")]

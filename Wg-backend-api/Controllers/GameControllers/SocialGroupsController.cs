@@ -30,6 +30,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             _context = _gameDbContextFactory.Create(schema);
         }
+
         // GET: api/SocialGroups
         // GET: api/SocialGroups/5
         [HttpGet("{id?}")]

@@ -57,6 +57,7 @@ namespace Wg_backend_api.Data
             });
 
             // Authentication and Authorization setup  
+
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
