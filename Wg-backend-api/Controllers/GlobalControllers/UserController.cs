@@ -30,7 +30,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-
             if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
             {
                 return Unauthorized(new { message = "Unauthorized access: User ID mismatch." });

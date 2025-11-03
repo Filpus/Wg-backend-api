@@ -1,14 +1,16 @@
 ﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Wg_backend_api.Data;
 using Wg_backend_api.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Wg_backend_api.Models;
-using System.IO;
-using System.Threading.Tasks;
-using BCrypt.Net;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
+using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
@@ -17,10 +19,14 @@ namespace Wg_backend_api.Controllers.GlobalControllers
     public class AuthController : ControllerBase
     {
         private readonly GlobalDbContext _context;
+        private readonly IConfiguration _config;
+        private readonly ISessionDataService _sessionDataService;
 
-        public AuthController(GlobalDbContext context)
+        public AuthController(GlobalDbContext context, IConfiguration config, ISessionDataService sessionDataService)
         {
             _context = context;
+            _config = config;
+            _sessionDataService = sessionDataService;
         }
 
         [AllowAnonymous]
@@ -34,7 +40,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return Unauthorized(new
                 {
                     error = "Unauthorized",
-                    message = "Wrong username or password"
+                    message = "Wrong username or password",
                 });
             }
 
@@ -43,38 +49,86 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return Unauthorized(new
                 {
                     error = "Unauthorized",
-                    message = errorMessage
+                    message = errorMessage,
                 });
             }
 
-            var claims = new List<Claim>
+            var playerId = user.Id;
+            var accessToken = GenerateJwtToken((int)playerId);
+            var refreshToken = GenerateRefreshToken();
+
+            this._context.RefreshTokens.Add(new RefreshToken
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Name)
-            };
+                Token = refreshToken.ToString(),
+                UserId = user.Id.Value,
+                ExpiresAt = DateTime.UtcNow.AddDays(this._config.GetValue<int>("Jwt:RefreshTokenLifetimeDays")),
+            });
 
-            var identity = new ClaimsIdentity(claims, "MyCookieAuth");
-            var principal = new ClaimsPrincipal(identity);
+            await this._context.SaveChangesAsync();
 
-            await HttpContext.SignInAsync("MyCookieAuth", principal);
-
-            return Ok(new
+            return Ok(new AuthResponse
             {
-                message = "Login successful"
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+            });
+        }
+
+        [AllowAnonymous]
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshRequest req)
+        {
+            var result = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == req.RefreshToken);
+
+            if (result == null || result.ExpiresAt <= DateTime.UtcNow || result.RevokedAt != null)
+            {
+                return Unauthorized(new
+                {
+                    error = "Unauthorized",
+                    message = "Invalid or expired refresh token",
+                });
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == result.UserId);
+            if (user == null)
+            {
+                return Unauthorized(new
+                {
+                    error = "Unauthorized",
+                    message = "User not found",
+                });
+            }
+
+            var accessToken = GenerateJwtToken(user.Id.Value);
+            var newRefreshToken = GenerateRefreshToken();
+
+            result.RevokedAt = DateTime.UtcNow;
+            _context.RefreshTokens.Add(new RefreshToken
+            {
+                Token = newRefreshToken,
+                UserId = user.Id.Value,
+                ExpiresAt = DateTime.UtcNow.AddDays(this._config.GetValue<int>("Jwt:RefreshTokenLifetimeDays")),
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok(new AuthResponse
+            {
+                AccessToken = accessToken,
+                RefreshToken = newRefreshToken,
             });
         }
 
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout()
-        {
-            await HttpContext.SignOutAsync("MyCookieAuth");
-            HttpContext.Session.Remove("Schema");
-
-
-            return Ok(new
+        public async Task<IActionResult> Logout([FromBody] RefreshRequest req) {
+            var result = await this._context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == req.RefreshToken);
+            if (result != null && result.RevokedAt == null)
             {
-                message = "Logout successful"
-            });
+                result.RevokedAt = DateTime.UtcNow;
+                await this._context.SaveChangesAsync();
+            }
+
+            this.HttpContext.Session.Clear();
+
+            return Ok();
         }
 
         [AllowAnonymous]
@@ -95,73 +149,121 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 isAuthenticated = false
             });
         }
+
+        // TODO add enpoint me that returns user access
         [AllowAnonymous]
-        [HttpGet("google-login")]
-        public IActionResult GoogleLogin(string returnUrl = "http://localhost:4200/loggedin")
+        [HttpGet("me")]
+        public async Task<IActionResult> StatusMe()
         {
-            var props = new AuthenticationProperties
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+                return Unauthorized();
+
+            var game = _sessionDataService.GetSchema();
+
+            if (game == null)
             {
-                RedirectUri = Url.Action(nameof(GoogleCallback), new { returnUrl })
-            };
-
-            return Challenge(props, "Google");
-        }
-        [AllowAnonymous]
-        [HttpGet("google-callback")]
-        public async Task<IActionResult> GoogleCallback(string returnUrl)
-        {
-            var result = await HttpContext.AuthenticateAsync("Google");
-
-            if (!result.Succeeded) return Unauthorized();
-
-            var externalUser = result.Principal;
-            var email = externalUser.FindFirst(ClaimTypes.Email)?.Value;
-            if (email == null)
-            {
-                return BadRequest(new { error = "Email not found in external user data" });
+                return Ok(new
+                {
+                    isAuthenticated = true,
+                    username = User.Identity.Name
+                });
             }
-
-            var user = _context.Users.FirstOrDefault(u => u.Email == email);
-            var register = false;
-            if (user == null)
+            else
             {
-                register = true;
-                string base64Guid = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-                user = new User
+                var nation = _sessionDataService.GetNation();
+                var playerRole = _context.GameAccesses.FirstOrDefault(a => a.GameId.ToString() == game && a.UserId.ToString() == userId)?.Role;
+                if (nation != null)
                 {
-                    Name = $"user{base64Guid}",
-                    Email = email,
-                    Password = BCrypt.Net.BCrypt.HashPassword(""),
-                    IsSSO = true,
-                    IsArchived = false,
-                };
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-
-                string[] parts_url = returnUrl.Split('/');
-                if (parts_url.Length > 3)
-                {
-                    returnUrl = string.Join("/", parts_url.Take(3)) + "/set-username";
+                    return Ok(new
+                    {
+                        isAuthenticated = true,
+                        username = User.Identity.Name,
+                        nation = nation,
+                        role = playerRole
+                    });
                 }
-                // TODO else
+                else
+                {
+                    return Ok(new
+                    {
+                        isAuthenticated = true,
+                        username = User.Identity.Name,
+                        role = playerRole
+                    });
+                }
             }
-            else if (user.IsArchived)
-            {
-                return Unauthorized(new { error = "User is archived" });
-            }
-
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Name),
-            };
-            Console.WriteLine(user.Id.ToString());
-
-            var identity = new ClaimsIdentity(claims, "MyCookieAuth");
-            await HttpContext.SignInAsync("MyCookieAuth", new ClaimsPrincipal(identity));
-
-            return Redirect(returnUrl);
         }
+
+        // [AllowAnonymous]
+        // [HttpGet("google-login")]
+        // public IActionResult GoogleLogin(string returnUrl = "http://localhost:4200/loggedin")
+        // {
+        //     var props = new AuthenticationProperties
+        //     {
+        //         RedirectUri = Url.Action(nameof(GoogleCallback), new { returnUrl })
+        //     };
+
+        //     return Challenge(props, "Google");
+        // }
+
+        // [AllowAnonymous]
+        // [HttpGet("google-callback")]
+        // public async Task<IActionResult> GoogleCallback(string returnUrl)
+        // {
+        //     var result = await HttpContext.AuthenticateAsync("Google");
+
+        //     if (!result.Succeeded) return Unauthorized();
+
+        //     var externalUser = result.Principal;
+        //     var email = externalUser.FindFirst(ClaimTypes.Email)?.Value;
+        //     if (email == null)
+        //     {
+        //         return BadRequest(new { error = "Email not found in external user data" });
+        //     }
+
+        //     var user = _context.Users.FirstOrDefault(u => u.Email == email);
+        //     var register = false;
+        //     if (user == null)
+        //     {
+        //         register = true;
+        //         string base64Guid = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+        //         user = new User
+        //         {
+        //             Name = $"user{base64Guid}",
+        //             Email = email,
+        //             Password = BCrypt.Net.BCrypt.HashPassword(""),
+        //             IsSSO = true,
+        //             IsArchived = false,
+        //         };
+        //         _context.Users.Add(user);
+        //         await _context.SaveChangesAsync();
+
+        //         string[] parts_url = returnUrl.Split('/');
+        //         if (parts_url.Length > 3)
+        //         {
+        //             returnUrl = string.Join("/", parts_url.Take(3)) + "/set-username";
+        //         }
+        //         // TODO else
+        //     }
+        //     else if (user.IsArchived)
+        //     {
+        //         return Unauthorized(new { error = "User is archived" });
+        //     }
+
+        //     var claims = new List<Claim>
+        //     {
+        //         new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        //         new Claim(ClaimTypes.Name, user.Name),
+        //     };
+        //     Console.WriteLine(user.Id.ToString());
+
+        //     var identity = new ClaimsIdentity(claims, "MyCookieAuth");
+        //     await HttpContext.SignInAsync("MyCookieAuth", new ClaimsPrincipal(identity));
+
+        //     return Redirect(returnUrl);
+        // }
 
         private bool IsUserEligibleForLogin(User user, string password, out string errorMessage)
         {
@@ -187,5 +289,31 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             return true;
         }
 
+        private string GenerateJwtToken(int playerId)
+        {
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this._config["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, playerId.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, playerId.ToString()),
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: this._config["Jwt:Issuer"],
+                audience: this._config["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(this._config.GetValue<int>("Jwt:TokenLifetime")), // TODO set appropriate expiration
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GenerateRefreshToken() {
+            var randomBytes = RandomNumberGenerator.GetBytes(64);
+            return Convert.ToBase64String(randomBytes);
+        }
     }
 }

@@ -15,24 +15,24 @@ namespace Wg_backend_api.Auth
         {
             // If anonymous addnotation doesn't work
 
-            var endpoint = context.GetEndpoint();
-            if (endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute>() != null)
-            {
-                await _next(context);
-                return;
-            }
+            // var endpoint = context.GetEndpoint();
+            // if (endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute>() != null)
+            // {
+            //     await _next(context);
+            //     return;
+            // }
 
-            if (context.User.Identity?.IsAuthenticated == true)
-            {
-                var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            // if (context.User.Identity?.IsAuthenticated == true)
+            // {
+            //     var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                if (!int.TryParse(userId, out _))
-                {
-                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                    await context.Response.WriteAsync("Invalid UserId claim.");
-                    return;
-                }
-            }
+            //     if (!int.TryParse(userId, out _))
+            //     {
+            //         context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            //         await context.Response.WriteAsync("Invalid UserId claim.");
+            //         return;
+            //     }
+            // }
 
             await _next(context);
         }

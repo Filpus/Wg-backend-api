@@ -38,6 +38,7 @@ namespace Wg_backend_api.Models
         public ICollection<Game> OwnedGames { get; set; }
 
         public ICollection<GameAccess> GameAccesses { get; set; }
+        public RefreshToken RefreshToken { get; set; }
     }
 
 
@@ -66,5 +67,34 @@ namespace Wg_backend_api.Models
 
         public Assignment Assignment { get; set; }
 
+    }
+
+    [Table("refresh_tokens")]
+    public class RefreshToken
+    {
+        [Key]
+        [Column("id")]
+        public Guid Id { get; set; } = Guid.NewGuid();
+
+        [Required]
+        [Column("user_id")]
+        public int UserId { get; set; }
+
+        [ForeignKey("UserId")]
+        public User User { get; set; }
+
+        [Required]
+        [Column("token")]
+        public string Token { get; set; }
+
+        [Required]
+        [Column("expires_at")]
+        public DateTime ExpiresAt { get; set; }
+
+        [Column("revoked_at")]
+        public DateTime? RevokedAt { get; set; }
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

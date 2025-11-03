@@ -31,17 +31,22 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpGet]
         public async Task<IActionResult> GetGames()
         {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            //var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (!int.TryParse(userIdStr, out int userId))
-            {
-                return Unauthorized(new
-                {
-                    error = "Unauthorized",
-                    message = "User not authenticated or invalid user ID"
-                });
-            }
+            var userId = HttpContext.Items["UserId"] as int?;
+            if (userId == null)
+                return Unauthorized();
+
+            // var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            Console.WriteLine($"UserId from claim: {userId}");
+
+            // if (!int.TryParse(userIdStr, out int userId))
+            // {
+            //     return Unauthorized(new
+            //     {
+            //         error = "Unauthorized",
+            //         message = "User not authenticated or invalid user ID"
+            //     });
+            // }
 
             var gamesAccess = await _globalDbContext.GameAccesses
                 .Where(g => g.UserId == userId)
@@ -66,7 +71,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         public async Task<IActionResult> GetSpecificGame(int id)
         {
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            //var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (!int.TryParse(userIdStr, out int userId))
             {
@@ -105,6 +109,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             return Ok(game);
         }
+
         [HttpPost("joinGame")]
         public async Task<IActionResult> JoinGame([FromBody] string gameCode)
         {
@@ -177,7 +182,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
 
-
         [HttpPost("select")]
         public async Task<IActionResult> SelectGame([FromBody] int gameId)
         {
@@ -212,7 +216,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
 
             var gameDbContext = _gameDbContextFactory.Create($"game_{game.Id}");
-
+            Console.WriteLine($"Created gameDbContext for schema: game_{game.Id}");
+            Console.WriteLine(userId);
             var userInGame = await gameDbContext.Players.Where(u => u.UserId == userId).FirstOrDefaultAsync();
             if (userInGame == null)
             {
@@ -222,6 +227,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                     message = "User is not game member"
                 });
             }
+
+            // TODO ensure gm has nation assigned / can select game
             var accesToNation = await gameDbContext.Assignments
                 .Include(a => a.Nation)
                 .Where(a => a.UserId == userId && a.IsActive)
@@ -237,10 +244,10 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             _sessionDataService.SetNation($"{accesToNation.Nation.Id}");
             _sessionDataService.SetSchema($"game_{game.Id}");
+            _sessionDataService.SetRole($"{access.Role}");
 
-            return Ok(new { selectedGameId = game.Id });
+            return Ok(new { selectedGameId = game.Id, roleInGame = access.Role });
         }
-
 
         [HttpGet("get-session-schema")]
         public IActionResult GetSessionSchema()

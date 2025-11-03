@@ -41,9 +41,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return BadRequest("Invalid game ID in session.");
             }
 
-            //var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            //var user = await _globalDbContext.Users.FindAsync(ClaimTypes.NameIdentifier);
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (!int.TryParse(userIdStr, out int userId))
