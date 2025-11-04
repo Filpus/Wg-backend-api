@@ -1,0 +1,199 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Wg_backend_api.Logic.Modifiers.Base.BaseCachedModifierProcessor&lt;TEntity, TConditions&gt;" Collapsed="true">
+    <Position X="6.25" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAAJAAAAAQBAAAAIAAAAAQAAAAAAAgAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Base\BaseCachedModifierProcessor.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.Base.BaseFactionProcessor" Collapsed="true">
+    <Position X="1.75" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Base\BaseFactionProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.Base.BaseModifierProcessor&lt;TEntity&gt;" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="13.5" Y="0.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>gABAAAAAAAAAJAAAAAQAEAAAAAAAAAQAAAAAAAgAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Base\BaseModifierProcessor.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.44" Collapsed="true" />
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.Base.BasePopulationProcessor" Collapsed="true">
+    <Position X="6.25" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Base\BasePopulationModifierProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.Base.ConditionBuilder&lt;TEntity&gt;" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="18" Y="0.75" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAAAAABAAABAAAAAAAAAAAgAgAAAAAAgAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Base\ConditionBuilder.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.Interfaces.IBaseModifierConditions" Collapsed="true">
+    <Position X="3.75" Y="0.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Interfaces\IBaseModifierConditions.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.ModifierConditions.FactionConditions" Collapsed="true">
+    <Position X="0.5" Y="2" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\ModifierConditions\FactionConditions.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.ModifierConditions.PopulationConditions" Collapsed="true">
+    <Position X="2.75" Y="2" Width="2" />
+    <TypeIdentifier>
+      <HashCode>ABQAAAAAAAAEAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\ModifierConditions\PopulationConditions.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.ModifierConditions.PopulationResourceConditions" Collapsed="true">
+    <Position X="5" Y="2" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>ABQAAAAAAAAEgAAAAAAAAAAAAAAAAAAAACAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\ModifierConditions\PopulationResourceCondtions.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.ModifierConditions.ResourceConditions" Collapsed="true">
+    <Position X="7.25" Y="2" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\ModifierConditions\ResourceConditions.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.Processors.FactionPowerProcessor" Collapsed="true">
+    <Position X="0.75" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAQBAAAAAAAAAAQAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Processors\FactionPowerProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.Processors.FactionContentmentProcessor" Collapsed="true">
+    <Position X="3" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAQBAAAAAAAAAAQAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Processors\FactionPowerProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.Processors.PopulationHappinessProcessor" Collapsed="true">
+    <Position X="5.25" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAQBAAAAAAAAAAQAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Processors\PopulationHappinessProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.Processors.PopulationResourceProductionProcessor" Collapsed="true">
+    <Position X="9.75" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAAAAAAAAQBAAAAAAAAAAQAAAAAAAgAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Processors\PopulationResourceProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.Processors.PopulationResourceUsageProcessor" Collapsed="true">
+    <Position X="12" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAAAAAAAAQBAAAAAAAAAAQAAAAAAAgAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Processors\PopulationResourceProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.Processors.PopulationVolunteerProcessor" Collapsed="true">
+    <Position X="7.5" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAQBAAAAAAAAAAQAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Processors\PopulationVolunteerProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.Processors.ResourceChangeProcessor" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="18" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAAJQAAAAAAAAAAIAAAAAQAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Processors\ResourceChangeProcessor.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.ConditionBuilder&lt;TEntity&gt;" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="13.75" Y="1.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAAAAABAAABAAAAAAAAAIAgAgQAAAAAgAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\AbstractClasses.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.BaseModifierProcessor&lt;TEntity&gt;" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="16" Y="0.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>ggBAAAAAAAAAJABAAAQBEAAAIAAAAAQAAAAAAAgACAA=</HashCode>
+      <FileName>Logic\Modifiers\AbstractClasses.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.ModifierConditionsMapper" Collapsed="true">
+    <Position X="16.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAQAAAAAACAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\ModifierConditionsMapper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.ModifierManager" Collapsed="true">
+    <Position X="18" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAABAAAAAAAAAAAAAAAgAAAAAACAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\ModifierManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.ModifierProcessorFactory" Collapsed="true">
+    <Position X="14.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAQ=</HashCode>
+      <FileName>Logic\Modifiers\ModifierProcessorFactory.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Wg_backend_api.Logic.Modifiers.OperationProcessor" Collapsed="true">
+    <Position X="16.25" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAQAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\OperationProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="Wg_backend_api.Logic.Modifiers.Interfaces.IConditionBuilder&lt;TEntity&gt;" Collapsed="true">
+    <Position X="14.5" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAABAAAAAAAAAAAAAAAgAAAAAAAAgAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Interfaces\IConditionBuilder.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Wg_backend_api.Logic.Modifiers.Interfaces.IModifierProcessor" Collapsed="true">
+    <Position X="18" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAAIAAAAAAAAAAAAAAAAAQAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Interfaces\IModifierProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Wg_backend_api.Logic.Modifiers.IModifierProcessor" Collapsed="true">
+    <Position X="14.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAAIAAAAAAAAAAAAAAAAAQAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Interfaces.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Wg_backend_api.Logic.Modifiers.IConditionBuilder&lt;TEntity&gt;" Collapsed="true">
+    <Position X="16.25" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAABAAAAAAAAAAAAAAAgAAAAAAAAgAAAAA=</HashCode>
+      <FileName>Logic\Modifiers\Interfaces.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

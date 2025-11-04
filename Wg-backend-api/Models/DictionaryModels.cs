@@ -165,7 +165,7 @@ namespace Wg_backend_api.Models
     [Table("ownedResources")]
     public class OwnedResources()
     {
-        [Column("id")]
+        [Column("Id")]
         public int? Id { get; set; }
 
         [Column("fk_nation")]

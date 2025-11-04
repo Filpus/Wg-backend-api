@@ -30,6 +30,11 @@ namespace Wg_backend_api.Models
         [Column("game_code")]
         public string? GameCode { get; set; }
         public ICollection<GameAccess> GameAccesses { get; set; }
+
+        [Column("turn")]
+        public int Turn { get; set; }
+        [Column("turnStartDate")]
+        public DateTime? TurnStartDate { get; set; }
     }
 
     [Table("gameaccess")]

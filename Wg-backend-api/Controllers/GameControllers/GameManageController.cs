@@ -17,60 +17,77 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private readonly ModifierProcessorFactory _processorFactory;
+        private readonly GlobalDbContext _globalDbContext;
+        private readonly string _schema;
+        private readonly int? _nationId;
 
-        private GameDbContext _context;
-        private int? _nationId;
-
-
-        public GameManageController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService, ModifierProcessorFactory modifierProcessorFactory)
+        public GameManageController(
+            IGameDbContextFactory gameDbFactory,
+            ISessionDataService sessionDataService,
+            ModifierProcessorFactory modifierProcessorFactory,
+            GlobalDbContext globalDbContext)
         {
             _gameDbContextFactory = gameDbFactory;
             _sessionDataService = sessionDataService;
             _processorFactory = modifierProcessorFactory;
-            string schema = _sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
+            _globalDbContext = globalDbContext;
+
+            _schema = _sessionDataService.GetSchema();
+            if (string.IsNullOrEmpty(_schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
-            _nationId = _sessionDataService.GetNation() != null ? int.Parse(_sessionDataService.GetNation()) : null;
+
+            _nationId = _sessionDataService.GetNation() != null ?
+                int.Parse(_sessionDataService.GetNation()) : null;
         }
-
-
-
 
         [HttpPost("EndTurn")]
         public async Task<IActionResult> EndTurn()
         {
-
             try
             {
-                ResolveResourceBalance();
-                ResolveArmyRecrutment();
-                ResolveTradeAgreements();
+                using var context = _gameDbContextFactory.Create(_schema);
 
-                
+                await ResolveResourceBalance(context);
+                await ResolveArmyRecrutment(context);
+                await ResolveTradeAgreements(context);
+
+                var gameId = int.Parse(_schema.Split('_')[1]);
+                var game = await _globalDbContext.Games.FirstOrDefaultAsync(g => g.Id == gameId);
+                if (game != null)
+                {
+                    game.Turn += 1;
+                    game.TurnStartDate = DateTime.UtcNow;
+                    await _globalDbContext.SaveChangesAsync();
+                }
+               
+
                 return Ok(new { message = "Tura zakończona pomyślnie." });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Wystąpił błąd podczas kończenia tury.", error = ex.Message });
+                return StatusCode(500, new
+                {
+                    message = "Wystąpił błąd podczas kończenia tury.",
+                    error = ex.Message
+                });
             }
         }
 
-
-
-        private async Task ResolveResourceBalance()
+        // Przekaż context jako parametr zamiast używać pola
+        private async Task ResolveResourceBalance(GameDbContext context)
         {
-            var nations = await _context.Nations.ToListAsync();
+            var nations = await context.Nations.ToListAsync();
 
             foreach (var nation in nations)
             {
-                var ownedResources = await _context.Set<OwnedResources>()
+                var ownedResources = await context.Set<OwnedResources>()
                     .Where(or => or.NationId == nation.Id)
                     .ToListAsync();
 
-                var nationBalance = await CalcResourceBalance.CalculateNationResourceBalance((int)nation.Id, _context);
+                var nationBalance = await CalcResourceBalance
+                    .CalculateNationResourceBalance((int)nation.Id, context);
 
                 foreach (var ownedResource in ownedResources)
                 {
@@ -84,12 +101,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
-        private async Task ResolveTradeAgreements()
+        private async Task ResolveTradeAgreements(GameDbContext context)
         {
-            var tradeAgreements = await _context.TradeAgreements
+            var tradeAgreements = await context.TradeAgreements
                 .Where(ta => ta.Status == TradeStatus.Accepted && ta.Duration > 0)
                 .ToListAsync();
 
@@ -102,14 +119,16 @@ namespace Wg_backend_api.Controllers.GameControllers
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
-        private async Task ResolveArmyRecrutment()
+        private async Task ResolveArmyRecrutment(GameDbContext context)
         {
-            var nations = await _context.Nations
+            var nations = await context.Nations
                 .Include(n => n.Armies)
                 .Include(n => n.UnitOrders)
+                .Include(n => n.Localisations) 
+                .AsSplitQuery() 
                 .ToListAsync();
 
             foreach (var nation in nations)
@@ -121,13 +140,21 @@ namespace Wg_backend_api.Controllers.GameControllers
                 var recruitsArmy = nation.Armies.FirstOrDefault(a => a.Name == "Rekruci");
                 if (recruitsArmy == null)
                 {
+                    var randomLocation = nation.Localisations.FirstOrDefault().Id;
+                    if (randomLocation == null)
+                        throw new InvalidOperationException($"Brak lokalizacji powiązanych z państwem o ID {nation.Id}.");
+
                     recruitsArmy = new Army
                     {
                         NationId = (int)nation.Id,
+                        LocationId = (int)nation.Localisations.FirstOrDefault().Id,
                         Name = "Rekruci",
                         Troops = new List<Troop>()
                     };
-                    _context.Armies.Add(recruitsArmy);
+                    var addedArmy = context.Armies.Add(recruitsArmy);
+                    await context.SaveChangesAsync();
+                    recruitsArmy.Id = addedArmy.Entity.Id;
+
                     nation.Armies.Add(recruitsArmy);
                 }
 
@@ -143,15 +170,14 @@ namespace Wg_backend_api.Controllers.GameControllers
                             ArmyId = (int)recruitsArmy.Id
                         };
                         recruitsArmy.Troops.Add(troop);
-                        _context.Troops.Add(troop);
+                        context.Troops.Add(troop);
                     }
-                    _context.UnitOrders.Remove(order);
+                    context.UnitOrders.Remove(order);
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
-
-        
     }
+
 }

@@ -12,14 +12,18 @@
         public string? Description { get; set; }
         public string? Image { get; set; }
         public string? GameCode { get; set; }
+        public int Turn { get; set; }
+        public DateTime? TurnStartDate { get; set; }   
 
-        public GameDTO(int? id, string name, string? description, string? image, string? gameCode)
+        public GameDTO(int? id, string name, string? description, string? image, string? gameCode, int turn, DateTime? turnStartDate)
         {
             Id = id;
             Name = name;
             Description = description;
             Image = image;
             GameCode = gameCode;
+            Turn = turn;
+            TurnStartDate = turnStartDate;
         }
     }
 

@@ -172,7 +172,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             return Ok(new
             {
                 message = "Successfully joined the game.",
-                game = new GameDTO(game.Id, game.Name, game.Description, game.Image, game.GameCode)
+                game = new GameDTO(game.Id, game.Name, game.Description, game.Image, game.GameCode, game.Turn, game.TurnStartDate)
             });
         }
 
