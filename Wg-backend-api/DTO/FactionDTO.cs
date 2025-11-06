@@ -1,12 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Wg_backend_api.Models;
-
-namespace Wg_backend_api.DTO
+﻿namespace Wg_backend_api.DTO
 {
+    using System.ComponentModel.DataAnnotations.Schema;
+    using Wg_backend_api.Models;
+
     public class FactionDTO
     {
         public int? Id { get; set; }
-        public int? NatiodId { get; set; }
+
+        public int? NationId { get; set; }
 
         public string Name { get; set; }
 
@@ -15,7 +16,9 @@ namespace Wg_backend_api.DTO
         public string Agenda { get; set; }
 
         public int Contentment { get; set; }
+
         public string Color { get; set; }
-        public string? Description { get; set; } = "";
+
+        public string? Description { get; set; } = string.Empty;
     }
 }

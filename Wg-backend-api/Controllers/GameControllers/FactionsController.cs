@@ -1,13 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Wg_backend_api.Data;
-using Wg_backend_api.DTO;
-using Wg_backend_api.Models;
-using Wg_backend_api.Services;
-
-namespace Wg_backend_api.Controllers.GameControllers
+﻿namespace Wg_backend_api.Controllers.GameControllers
 {
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.EntityFrameworkCore;
+    using Wg_backend_api.Data;
+    using Wg_backend_api.DTO;
+    using Wg_backend_api.Models;
+    using Wg_backend_api.Services;
+
     [Route("api/Factions")]
     [ApiController]
     public class FactionsController : Controller
@@ -21,17 +20,18 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public FactionsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
-            string nationIdStr = _sessionDataService.GetNation();
-            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
+
+            this._context = this._gameDbContextFactory.Create(schema);
+            string nationIdStr = this._sessionDataService.GetNation();
+            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         [HttpGet("{id?}")]
@@ -39,7 +39,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var faction = await _context.Factions
+                var faction = await this._context.Factions
                     .Where(f => f.Id == id)
                     .Select(f => new FactionDTO
                     {
@@ -50,20 +50,21 @@ namespace Wg_backend_api.Controllers.GameControllers
                         Contentment = f.Contentment,
                         Color = f.Color,
                         Description = f.Description,
-                        NatiodId = f.NationId
+                        NationId = f.NationId,
 
                     })
                     .FirstOrDefaultAsync();
 
                 if (faction == null)
                 {
-                    return NotFound();
+                    return this.NotFound();
                 }
-                return Ok(new List<FactionDTO> { faction });
+
+                return this.Ok(new List<FactionDTO> { faction });
             }
             else
             {
-                var factions = await _context.Factions
+                var factions = await this._context.Factions
                     .Select(f => new FactionDTO
                     {
                         Id = f.Id,
@@ -73,11 +74,11 @@ namespace Wg_backend_api.Controllers.GameControllers
                         Contentment = f.Contentment,
                         Color = f.Color,
                         Description = f.Description,
-                        NatiodId = f.NationId
+                        NationId = f.NationId,
                     })
                     .ToListAsync();
 
-                return Ok(factions);
+                return this.Ok(factions);
             }
         }
 
@@ -86,7 +87,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (factionsDto == null || factionsDto.Count == 0)
             {
-                return BadRequest("Brak danych do edycji.");
+                return this.BadRequest("Brak danych do edycji.");
             }
 
             foreach (var dto in factionsDto)
@@ -94,7 +95,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 var faction = await _context.Factions.FindAsync(dto.Id);
                 if (faction == null)
                 {
-                    return NotFound($"Nie znaleziono frakcji o ID {dto.Id}.");
+                    return this.NotFound($"Nie znaleziono frakcji o ID {dto.Id}.");
                 }
 
                 faction.Name = dto.Name;
@@ -103,22 +104,21 @@ namespace Wg_backend_api.Controllers.GameControllers
                 faction.Contentment = dto.Contentment;
                 faction.Color = dto.Color;
                 faction.Description = dto.Description;
-                faction.NationId = (int)dto.NatiodId;
+                faction.NationId = (int)dto.NationId;
 
-
-                _context.Entry(faction).State = EntityState.Modified;
+                this._context.Entry(faction).State = EntityState.Modified;
             }
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                return StatusCode(500, "Błąd podczas aktualizacji.");
+                return this.StatusCode(500, "Błąd podczas aktualizacji.");
             }
 
-            return NoContent();
+            return this.NoContent();
         }
 
         [HttpPost]
@@ -126,7 +126,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (factionsDto == null || factionsDto.Count == 0)
             {
-                return BadRequest("Brak danych do zapisania.");
+                return this.BadRequest("Brak danych do zapisania.");
             }
 
             var factions = factionsDto.Select(dto => new Faction
@@ -137,14 +137,13 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Contentment = dto.Contentment,
                 Color = dto.Color,
                 Description = dto.Description,
-                NationId = (int)dto.NatiodId,
-
+                NationId = (int)dto.NationId,
             }).ToList();
 
-            _context.Factions.AddRange(factions);
-            await _context.SaveChangesAsync();
+            this._context.Factions.AddRange(factions);
+            await this._context.SaveChangesAsync();
 
-            return CreatedAtAction("GetFactions", new { id = factions[0].Id }, factionsDto);
+            return this.CreatedAtAction("GetFactions", new { id = factions[0].Id }, factionsDto);
         }
 
         [HttpDelete]
@@ -152,20 +151,20 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (ids == null || ids.Count == 0)
             {
-                return BadRequest("Brak ID do usunięcia.");
+                return this.BadRequest("Brak ID do usunięcia.");
             }
 
-            var factions = await _context.Factions.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var factions = await this._context.Factions.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (factions.Count == 0)
             {
-                return NotFound("Nie znaleziono frakcji do usunięcia.");
+                return this.NotFound("Nie znaleziono frakcji do usunięcia.");
             }
 
-            _context.Factions.RemoveRange(factions);
-            await _context.SaveChangesAsync();
+            this._context.Factions.RemoveRange(factions);
+            await this._context.SaveChangesAsync();
 
-            return Ok();
+            return this.Ok();
         }
 
         [HttpGet("ByNation/{nationId?}")]
@@ -173,9 +172,10 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (nationId == null)
             {
-                nationId = _nationId;
+                nationId = this._nationId;
             }
-            var factions = await _context.Factions
+
+            var factions = await this._context.Factions
                 .Where(f => f.NationId == nationId)
                 .Select(f => new FactionDTO
                 {
@@ -186,16 +186,16 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Contentment = f.Contentment,
                     Color = f.Color,
                     Description = f.Description,
-                    NatiodId = f.NationId
+                    NationId = f.NationId,
                 })
                 .ToListAsync();
 
             if (factions == null || factions.Count == 0)
             {
-                return NotFound($"Nie znaleziono frakcji dla państwa o ID {nationId}.");
+                return this.NotFound($"Nie znaleziono frakcji dla państwa o ID {nationId}.");
             }
 
-            return Ok(factions);
+            return this.Ok(factions);
         }
     }
 }
