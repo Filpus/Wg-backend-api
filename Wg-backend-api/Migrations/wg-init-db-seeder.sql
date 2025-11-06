@@ -454,7 +454,8 @@ CREATE TABLE game_1.factions (
     power integer NOT NULL,
     agenda text NOT NULL,
     contentment integer NOT NULL,
-    color text NOT NULL
+    color text NOT NULL,
+    description text
 );
 
 
