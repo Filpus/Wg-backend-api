@@ -6,6 +6,7 @@ namespace Wg_backend_api.DTO
     public class FactionDTO
     {
         public int? Id { get; set; }
+        public int? NatiodId { get; set; }
 
         public string Name { get; set; }
 

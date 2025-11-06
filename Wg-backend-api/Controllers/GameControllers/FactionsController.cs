@@ -49,7 +49,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                         Agenda = f.Agenda,
                         Contentment = f.Contentment,
                         Color = f.Color,
-                        Description = f.Description
+                        Description = f.Description,
+                        NatiodId = f.NationId
 
                     })
                     .FirstOrDefaultAsync();
@@ -71,7 +72,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                         Agenda = f.Agenda,
                         Contentment = f.Contentment,
                         Color = f.Color,
-                        Description = f.Description
+                        Description = f.Description,
+                        NatiodId = f.NationId
                     })
                     .ToListAsync();
 
@@ -101,6 +103,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 faction.Contentment = dto.Contentment;
                 faction.Color = dto.Color;
                 faction.Description = dto.Description;
+                faction.NationId = (int)dto.NatiodId;
+
 
                 _context.Entry(faction).State = EntityState.Modified;
             }
@@ -132,7 +136,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Agenda = dto.Agenda,
                 Contentment = dto.Contentment,
                 Color = dto.Color,
-                Description = dto.Description
+                Description = dto.Description,
+                NationId = (int)dto.NatiodId,
 
             }).ToList();
 
@@ -180,7 +185,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Agenda = f.Agenda,
                     Contentment = f.Contentment,
                     Color = f.Color,
-                    Description = f.Description
+                    Description = f.Description,
+                    NatiodId = f.NationId
                 })
                 .ToListAsync();
 
