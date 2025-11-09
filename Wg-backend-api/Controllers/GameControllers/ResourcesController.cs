@@ -234,7 +234,7 @@
 
 
 
-        [HttpGet("nation/{nationId?}/owned-resources")]
+        [HttpGet("nation/owned-resources/{nationId?}")]
         public async Task<ActionResult<List<ResourceAmountDto>>> GetOwnedResources(int? nationId)
         {
 
@@ -276,7 +276,7 @@
         }
 
 
-        [HttpPut("nation/{nationId?}/owned-resources")]
+        [HttpPut("nation/owned-resources/{nationId?}")]
         public async Task<IActionResult> PutOwnedResources(int? nationId, [FromBody] List<ResourceAmountDto> resources)
         {
             // Ustal nationId domyślnie

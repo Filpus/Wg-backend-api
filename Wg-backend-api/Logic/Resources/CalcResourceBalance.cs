@@ -39,6 +39,7 @@ namespace Wg_backend_api.Logic.Resources
                     PopulationProduction = GetPopulationProduction(nation, resource.Id),
                     TradeIncome = GetTradeIncome(tradeAgreements, nationId, resource.Id),
                     TradeExpenses = GetTradeExpenses(tradeAgreements, nationId, resource.Id)
+
                 };
 
                 balance.TotalBalance =
@@ -51,6 +52,7 @@ namespace Wg_backend_api.Logic.Resources
                 balance.EventBalance = await processor.CalculateChangeAsync(nationId, balance);
                 balance.TotalBalance += balance.EventBalance;
 
+                balance.NextTurnBalance = balance.CurrentAmount + balance.TotalBalance;
                 result.ResourceBalances.Add(balance);
             }
 
@@ -87,7 +89,8 @@ namespace Wg_backend_api.Logic.Resources
                     .ThenInclude(a => a.Troops)
                         .ThenInclude(t => t.UnitType)
                             .ThenInclude(ut => ut.MaintenaceCosts)
-
+                .Include(n => n.OwnedResources)
+                    .ThenInclude(o => o.Resource)
                 .FirstOrDefaultAsync();
         }
 
@@ -102,10 +105,9 @@ namespace Wg_backend_api.Logic.Resources
 
         public static float GetCurrentResourceAmount(Nation nation, int resourceId)
         {
-            return nation.Localisations
-                .SelectMany(l => l.LocalisationResources)
-                .Where(lr => lr.ResourceId == resourceId)
-                .Sum(lr => lr.Amount);
+            return nation.OwnedResources
+                .Where(or => or.ResourceId == resourceId)
+                .Sum(or => or.Amount);
         }
 
         public static float GetArmyMaintenanceExpenses(Nation nation, int resourceId)
@@ -209,5 +211,6 @@ namespace Wg_backend_api.Logic.Resources
 
             return tradeExpenses;
         }
+
     }
 }
