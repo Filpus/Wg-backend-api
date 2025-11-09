@@ -31,7 +31,6 @@ namespace Wg_backend_api.DTO
         public string Description { get; set; }
 
         public string UnitName { get; set; }
-        public string UnitType { get; set; }
         public int Quantity { get; set; }
         public int Melee { get; set; }
         public int Range { get; set; }
@@ -146,7 +145,7 @@ namespace Wg_backend_api.DTO
     }
     public class UnitTypeAccessCreateDTO
     {
-        public int NationId { get; set; }
+        public int? NationId { get; set; }
         public int UnitTypeId { get; set; }
     }
 
