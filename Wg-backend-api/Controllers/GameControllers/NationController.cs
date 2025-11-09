@@ -5,6 +5,7 @@
     using System.Text.RegularExpressions;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.EntityFrameworkCore;
+    using Wg_backend_api.Auth;
     using Wg_backend_api.Data;
     using Wg_backend_api.DTO;
     using Wg_backend_api.Models;
@@ -12,6 +13,7 @@
 
     [Route("api/Nations")]
     [ApiController]
+    [AuthorizeGameRole("GameMaster", "Player")]
     public class NationController : Controller
     {
         private readonly IGameDbContextFactory _gameDbContextFactory;

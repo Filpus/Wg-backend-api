@@ -17,7 +17,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class GamesController : ControllerBase
+    public class GamesController : Controller
     {
         private readonly GlobalDbContext _globalDbContext;
         private readonly IGameDbContextFactory _gameDbContextFactory;
@@ -29,18 +29,18 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             this._globalDbContext = globalDb;
             this._gameDbContextFactory = gameDbFactory;
             this._sessionDataService = sessionDataService;
-            var userIdContext = this.HttpContext.Items["UserId"];
-            if (userIdContext == null)
-            {
-                throw new InvalidOperationException("UserId not found in HttpContext.Items");
-            }
+        }
 
-            this._userId = (int)userIdContext;
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public void SetUserId(int userId)
+        {
+            _userId = userId;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetGames()
         {
+            Console.WriteLine($"UserId in GamesController: {this._userId}");
             var gamesAccess = await this._globalDbContext.GameAccesses
                 .Where(g => g.UserId == this._userId)
                 .Select(g => g.GameId)

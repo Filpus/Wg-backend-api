@@ -10,6 +10,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [ServiceFilter(typeof(UserIdActionFilter))]
     public class UserController : ControllerBase
     {
         private readonly GlobalDbContext _context;
@@ -18,6 +19,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         {
             this._context = context;
         }
+
+        // TODO 
 
         // get user data
         [HttpGet("{id}")]

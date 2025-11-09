@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using System.Drawing.Printing;
 using System.Security.Claims;
@@ -11,7 +12,6 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
     [ApiController]
-    //[Route("api/games/{gameId}/[controller]")]
     [Route("api/games/[controller]")]
 
     public class PlayersController : ControllerBase
@@ -26,13 +26,12 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             _globalDbContext = globalDb;
             _gameDbContextFactory = gameDbFactory;
             _sessionDataService = sessionDataService;
-            var userIdContext = this.HttpContext.Items["UserId"];
-            if (userIdContext == null)
-            {
-                throw new InvalidOperationException("UserId not found in HttpContext.Items");
-            }
+        }
 
-            this._userId = (int)userIdContext;
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public void SetUserId(int userId)
+        {
+            _userId = userId;
         }
 
         [HttpGet]

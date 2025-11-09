@@ -10,6 +10,9 @@
 
         string? GetRole();
         void SetRole(string role);
+
+        string? GetUserId();
+        void SetUserId(string role);
     }
 
     public class SessionDataService : ISessionDataService
@@ -64,6 +67,16 @@
         public string? GetRole()
         {
             return _httpContextAccessor.HttpContext?.Session.GetString("Role");
+        }
+
+        public string? GetUserId()
+        {
+            return _httpContextAccessor.HttpContext?.Items["UserId"]?.ToString();
+        }
+
+        public void SetUserId(string role)
+        {
+            _httpContextAccessor.HttpContext.Items["UserId"] = role;
         }
     }
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
 using Wg_backend_api.Enums;
 using Wg_backend_api.Logic.Modifiers;
@@ -12,6 +13,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/GameManage")]
     [ApiController]
+    [AuthorizeGameRole("GameMaster", "Player")]
     public class GameManageController : Controller
     {
         private readonly IGameDbContextFactory _gameDbContextFactory;

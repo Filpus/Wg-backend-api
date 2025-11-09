@@ -25,7 +25,7 @@ namespace Wg_backend_api.Auth
         {
             var path = context.Request.Path;
 
-            if (!ExcludedPaths.Any(p => path.StartsWithSegments(p)))
+            if (!path.StartsWithSegments("/api/auth"))
             {
                 // TODO ensure we dont need to check id in every middleware call
                 var userIdStr = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -37,6 +37,11 @@ namespace Wg_backend_api.Auth
                     return;
                 }
 
+                sessionDataService.SetUserId(userIdStr);
+            }
+
+            if (!ExcludedPaths.Any(p => path.StartsWithSegments(p)))
+            {
                 var gameIdHeader = sessionDataService.GetSchema();
                 if (string.IsNullOrEmpty(gameIdHeader))
                 {
@@ -53,8 +58,8 @@ namespace Wg_backend_api.Auth
                     return;
                 }
 
-                var userId = int.Parse(userIdStr);
                 var gameId = int.Parse(gameIdHeader.Replace("game_", string.Empty));
+                context.Items["RoleInGame"] = gameRole;
                 // TODO ensure we dont need to check acces in every middleware call
                 // var hasAccess = await db.GameAccesses.FirstOrDefaultAsync(a => a.UserId == userId && a.GameId == gameId);
 
@@ -64,23 +69,6 @@ namespace Wg_backend_api.Auth
                 //     await context.Response.WriteAsync("No access to this game");
                 //     return;
                 // }
-
-                context.Items["RoleInGame"] = gameRole;
-                context.Items["UserId"] = userIdStr;
-            }
-            else if (path.StartsWithSegments("/api/games"))
-            {
-                // TODO ensure we dont need to check id in every middleware call
-                var userIdStr = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                if (string.IsNullOrEmpty(userIdStr))
-                {
-                    context.Response.StatusCode = 401;
-                    await context.Response.WriteAsync("Unauthorized");
-                    return;
-                }
-
-                context.Items["UserId"] = userIdStr;
             }
 
             await _next(context);

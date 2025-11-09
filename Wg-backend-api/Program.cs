@@ -45,6 +45,8 @@ namespace Wg_backend_api.Data
             // Add Scoped GameDbContextFactory
             builder.Services.AddScoped<IGameDbContextFactory, GameDbContextFactory>();
 
+            // builder.Services.AddScoped<UserIdActionFilter>();
+
             // Session setup
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(options =>
@@ -122,8 +124,10 @@ namespace Wg_backend_api.Data
             builder.Services.AddHostedService<RefreshTokenCleanupService>();
 
             // Add Controllers (API endpoints)
-            builder.Services.AddControllers();
-
+            builder.Services.AddControllers(config =>
+            {
+                config.Filters.Add<UserIdActionFilter>();
+            });
             // Add Swagger configuration
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
