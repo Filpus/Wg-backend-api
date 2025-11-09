@@ -26,6 +26,7 @@
         public float PopulationProduction { get; set; }
         public float EventBalance { get; set; }
         public float TotalBalance { get; set; }
+        public float NextTurnBalance { get; set; }
     }
 
     public class NationResourceBalanceDto

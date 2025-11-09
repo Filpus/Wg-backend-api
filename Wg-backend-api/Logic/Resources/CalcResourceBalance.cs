@@ -39,6 +39,7 @@ namespace Wg_backend_api.Logic.Resources
                     PopulationProduction = GetPopulationProduction(nation, resource.Id),
                     TradeIncome = GetTradeIncome(tradeAgreements, nationId, resource.Id),
                     TradeExpenses = GetTradeExpenses(tradeAgreements, nationId, resource.Id)
+
                 };
 
                 balance.TotalBalance =
@@ -51,6 +52,7 @@ namespace Wg_backend_api.Logic.Resources
                 balance.EventBalance = await processor.CalculateChangeAsync(nationId, balance);
                 balance.TotalBalance += balance.EventBalance;
 
+                balance.NextTurnBalance = balance.CurrentAmount + balance.TotalBalance;
                 result.ResourceBalances.Add(balance);
             }
 
