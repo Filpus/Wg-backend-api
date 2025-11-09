@@ -3,7 +3,7 @@
     public enum UserRole
     {
         GameMaster,
-        SubGameMaster,
+        // SubGameMaster,
         Player
     }
 }

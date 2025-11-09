@@ -1266,7 +1266,7 @@ ALTER TABLE ONLY game_1."ownedResources" ALTER COLUMN "Id" SET DEFAULT nextval('
 
 COPY "Global".gameaccess (id, "fk_Users", "fk_Games", "accessType", "isArchived") FROM stdin;
 1	1	1	1	f
-2	2	1	2	f
+2	2	1	0	f
 \.
 
 
@@ -1598,11 +1598,8 @@ COPY game_1."ownedResources" ("Id", fk_nation, fk_resource, amount) FROM stdin;
 --
 
 COPY game_1.players (id, "fk_User", "playerType", "name") FROM stdin;
-1	1	1	admin
-2	2	2	Test
-3	3	1	admin
-4	4	1	admin
-5	5	1	admin
+1	1	1	Test
+2	2	0	admin
 \.
 
 
