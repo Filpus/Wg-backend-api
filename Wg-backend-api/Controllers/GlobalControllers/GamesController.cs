@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Validations;
 using System;
 using System.Linq;
 using System.Security.Claims;
+using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
@@ -13,6 +14,7 @@ using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class GamesController : ControllerBase
@@ -20,65 +22,49 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         private readonly GlobalDbContext _globalDbContext;
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
+        private int _userId;
 
         public GamesController(GlobalDbContext globalDb, IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _globalDbContext = globalDb;
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._globalDbContext = globalDb;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
+            var userIdContext = this.HttpContext.Items["UserId"];
+            if (userIdContext == null)
+            {
+                throw new InvalidOperationException("UserId not found in HttpContext.Items");
+            }
+
+            this._userId = (int)userIdContext;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetGames()
         {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            //var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(userIdStr, out int userId))
-            {
-                return Unauthorized(new
-                {
-                    error = "Unauthorized",
-                    message = "User not authenticated or invalid user ID"
-                });
-            }
-
-            var gamesAccess = await _globalDbContext.GameAccesses
-                .Where(g => g.UserId == userId)
+            var gamesAccess = await this._globalDbContext.GameAccesses
+                .Where(g => g.UserId == this._userId)
                 .Select(g => g.GameId)
                 .ToListAsync();
 
             if (gamesAccess.Count == 0)
             {
-                return Ok(new List<GameDTO>());
+                return this.Ok(new List<GameDTO>());
             }
 
-            var games = await _globalDbContext.Games
+            var games = await this._globalDbContext.Games
                 .Where(g => gamesAccess.Contains((int)g.Id))
                 .ToListAsync();
 
             var gamesDTOs = games.Select(game => new GameDTO(game.Id, game.Name, game.Description, game.Image, game.GameCode)).ToList();
 
-            return Ok(gamesDTOs);
+            return this.Ok(gamesDTOs);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSpecificGame(int id)
         {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            //var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(userIdStr, out int userId))
-            {
-                return Unauthorized(new
-                {
-                    error = "Unauthorized",
-                    message = "User not authenticated or invalid user ID"
-                });
-            }
-
-            var hasAccess = await _globalDbContext.GameAccesses
-                .AnyAsync(g => g.UserId == userId && g.GameId == id);
+            var hasAccess = await this._globalDbContext.GameAccesses
+                .AnyAsync(g => g.UserId == this._userId && g.GameId == id);
 
             if (!hasAccess)
             {
@@ -105,19 +91,11 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             return Ok(game);
         }
+
         [HttpPost("joinGame")]
         public async Task<IActionResult> JoinGame([FromBody] string gameCode)
         {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(userIdStr, out int userId))
-            {
-                return Unauthorized(new
-                {
-                    error = "Unauthorized",
-                    message = "User not authenticated or invalid user ID"
-                });
-            }
-            var game = await _globalDbContext.Games
+            var game = await this._globalDbContext.Games
                 .Where(g => g.GameCode == gameCode)
                 .FirstOrDefaultAsync();
             if (game == null)
@@ -125,46 +103,48 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return NotFound(new
                 {
                     error = "Not Found",
-                    message = "Game with the provided code does not exist."
+                    message = "Game with the provided code does not exist.",
                 });
             }
-            var existingAccess = await _globalDbContext.GameAccesses
-                .Where(a => a.GameId == game.Id && a.UserId == userId)
+
+            var existingAccess = await this._globalDbContext.GameAccesses
+                .Where(a => a.GameId == game.Id && a.UserId == this._userId)
                 .FirstOrDefaultAsync();
             if (existingAccess != null)
             {
                 return Conflict(new
                 {
                     error = "Conflict",
-                    message = "User already has access to this game."
+                    message = "User already has access to this game.",
                 });
             }
+
             var gameAccess = new GameAccess
             {
                 GameId = game.Id,
-                UserId = userId,
+                UserId = this._userId,
                 Role = UserRole.Player,
-                IsArchived = false
+                IsArchived = false,
             };
-            _globalDbContext.GameAccesses.Add(gameAccess);
-            await _globalDbContext.SaveChangesAsync();
+            this._globalDbContext.GameAccesses.Add(gameAccess);
+            await this._globalDbContext.SaveChangesAsync();
 
-            var user = await _globalDbContext.Users.FindAsync(userId);
+            var user = await this._globalDbContext.Users.FindAsync(this._userId);
             if (user == null)
             {
                 return NotFound(new
                 {
                     error = "Not Found",
-                    message = "User not found."
+                    message = "User not found.",
                 });
             }
 
-            var gameDbContext = _gameDbContextFactory.Create($"game_{game.Id}");
+            var gameDbContext = this._gameDbContextFactory.Create($"game_{game.Id}");
             var player = new Player
             {
-                UserId = userId,
+                UserId = this._userId,
                 Role = UserRole.Player,
-                Name = user.Name
+                Name = user.Name,
             };
             gameDbContext.Players.Add(player);
             await gameDbContext.SaveChangesAsync();
@@ -172,73 +152,63 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             return Ok(new
             {
                 message = "Successfully joined the game.",
-                game = new GameDTO(game.Id, game.Name, game.Description, game.Image, game.GameCode)
+                game = new GameDTO(game.Id, game.Name, game.Description, game.Image, game.GameCode),
             });
         }
-
-
 
         [HttpPost("select")]
         public async Task<IActionResult> SelectGame([FromBody] int gameId)
         {
-            var game = await _globalDbContext.Games.FindAsync(gameId);
+            var game = await this._globalDbContext.Games.FindAsync(gameId);
 
             if (game == null)
             {
                 return NotFound("Game not found");
             }
 
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (!int.TryParse(userIdStr, out int userId))
-            {
-                return Unauthorized(new
-                {
-                    error = "Unauthorized",
-                    message = "User not authenticated or invalid user ID"
-                });
-            }
-
-            var access = await _globalDbContext.GameAccesses
-                .Where(a => a.GameId == gameId && a.UserId == userId).FirstOrDefaultAsync();
+            var access = await this._globalDbContext.GameAccesses
+                .Where(a => a.GameId == gameId && a.UserId == this._userId).FirstOrDefaultAsync();
 
             if (access == null)
             {
                 return Unauthorized(new
                 {
                     error = "Unauthorized",
-                    message = "User is not game member"
+                    message = "User is not game member",
                 });
             }
 
-            var gameDbContext = _gameDbContextFactory.Create($"game_{game.Id}");
+            var gameDbContext = this._gameDbContextFactory.Create($"game_{game.Id}");
 
-            var userInGame = await gameDbContext.Players.Where(u => u.UserId == userId).FirstOrDefaultAsync();
+            var userInGame = await gameDbContext.Players.Where(u => u.UserId == this._userId).FirstOrDefaultAsync();
             if (userInGame == null)
             {
                 return Unauthorized(new
                 {
                     error = "Unauthorized",
-                    message = "User is not game member"
+                    message = "User is not game member",
                 });
             }
+
+            // TODO ensure gm has nation assigned / can select game
             var accesToNation = await gameDbContext.Assignments
                 .Include(a => a.Nation)
-                .Where(a => a.UserId == userId && a.IsActive)
+                .Where(a => a.UserId == this._userId && a.IsActive)
                 .FirstOrDefaultAsync();
             if (accesToNation == null)
             {
                 return Unauthorized(new
                 {
                     error = "Unauthorized",
-                    message = "User is not game member"
+                    message = "User is not game member",
                 });
             }
 
-            _sessionDataService.SetNation($"{accesToNation.Nation.Id}");
-            _sessionDataService.SetSchema($"game_{game.Id}");
+            this._sessionDataService.SetNation($"{accesToNation.Nation.Id}");
+            this._sessionDataService.SetSchema($"game_{game.Id}");
+            this._sessionDataService.SetRole($"{access.Role}");
 
-            return Ok(new { selectedGameId = game.Id });
+            return Ok(new { selectedGameId = game.Id, roleInGame = access.Role });
         }
 
         [HttpPost("select-nation")]
@@ -270,7 +240,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpGet("get-session-schema")]
         public IActionResult GetSessionSchema()
         {
-            var schemaValue = _sessionDataService.GetSchema();
+            var schemaValue = this._sessionDataService.GetSchema();
 
             if (schemaValue != null)
             {
@@ -285,7 +255,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpGet("get-session-nation")]
         public IActionResult GetSessionNation()
         {
-            var schemaValue = _sessionDataService.GetNation();
+            var schemaValue = this._sessionDataService.GetNation();
 
             if (schemaValue != null)
             {
@@ -300,34 +270,34 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpPost]
         public async Task<IActionResult> CreateGame([FromForm] CreateGameDTO creteGame)
         {
+            var userGames = await this._globalDbContext.Games
+                .Where(g => g.OwnerId == this._userId)
+                .ToListAsync();
 
-            var userClaimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var userClaimName = User.FindFirst(ClaimTypes.Name)?.Value;
+            var userName = await this._globalDbContext.Users
+                .Where(u => u.Id == this._userId)
+                .Select(u => u.Name)
+                .FirstOrDefaultAsync();
 
-            // TODO remove after enable middleware
-            if (userClaimId == null || userClaimName == null)
+            if (userName == null)
             {
-                return Unauthorized(new
+                return NotFound(new
                 {
-                    error = "Unauthorized",
-                    message = "User not authenticated or invalid user ID"
+                    error = "Not Found",
+                    message = "User not found.",
                 });
             }
 
-            var userGames = await _globalDbContext.Games
-                .Where(g => g.OwnerId == int.Parse(userClaimId))
-                .ToListAsync();
-
-            if (userGames.Count >= 2 && userClaimName != "admin") // TODO: allow multiple games in the future
+            if (userGames.Count >= 1 && userName != "admin") // TODO: allow multiple games in the future
             {
                 return Conflict(new
                 {
                     error = "Conflict",
-                    message = "User reached the maximum limit of owned games."
+                    message = "User reached the maximum limit of owned games.",
                 });
             }
 
-            var gameWithSameName = await _globalDbContext.Games
+            var gameWithSameName = await this._globalDbContext.Games
                 .Where(g => g.Name == creteGame.Name)
                 .FirstOrDefaultAsync();
 
@@ -336,11 +306,11 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return Conflict(new
                 {
                     error = "Conflict",
-                    message = "Game with the same name already exists."
+                    message = "Game with the same name already exists.",
                 });
             }
 
-            var gameImagePath = "";
+            var gameImagePath = string.Empty;
 
             if (creteGame.ImageFile != null)
             {
@@ -355,17 +325,23 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                     var fileExtension = Path.GetExtension(creteGame.ImageFile.FileName).ToLower();
 
                     if (!allowedExtensions.Contains(fileExtension))
+                    {
                         return BadRequest($"Nieobsługiwany format pliku. Dopuszczalne rozszerzenia: {string.Join(", ", allowedExtensions)}");
+                    }
 
                     const int maxFileSize = 20 * 1024 * 1024; // 5 MB
                     if (creteGame.ImageFile.Length > maxFileSize)
+                    {
                         return BadRequest($"Maksymalny dopuszczalny rozmiar pliku to {maxFileSize / 1024 / 1024} MB");
+                    }
 
                     var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
                     var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Images");
 
                     if (!Directory.Exists(uploadsFolder))
+                    {
                         Directory.CreateDirectory(uploadsFolder);
+                    }
 
                     var filePath = Path.Combine(uploadsFolder, uniqueFileName);
                     using (var stream = new FileStream(filePath, FileMode.Create))
@@ -388,73 +364,64 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 Name = creteGame.Name,
                 Description = creteGame.Description,
-                Image = gameImagePath != "" ? gameImagePath : null,
-                OwnerId = int.Parse(userClaimId)
+                Image = gameImagePath != string.Empty ? gameImagePath : null,
+                OwnerId = this._userId,
             };
 
             _globalDbContext.Games.Add(newGame);
             await _globalDbContext.SaveChangesAsync();
 
             var created_game = GameService.GenerateNewGame(
-                "Host=localhost;Username=postgres;Password=postgres;Database=wg", //TO DO Niezapomnieć że trzeba to będzie poprawnie ustawić
-                 Path.Combine(Directory.GetCurrentDirectory(), "Migrations", "game-schema-init.sql"),
-                 $"game_{newGame.Id}"
+                "Host=localhost;Username=postgres;Password=postgres;Database=wg", //TODO Niezapomnieć że trzeba to będzie poprawnie ustawić
+                Path.Combine(Directory.GetCurrentDirectory(), "Migrations", "game-schema-init.sql"),
+                $"game_{newGame.Id}"
             );
 
             if (!created_game)
             {
-                _globalDbContext.Games.Remove(newGame);
-                await _globalDbContext.SaveChangesAsync();
+                this._globalDbContext.Games.Remove(newGame);
+                await this._globalDbContext.SaveChangesAsync();
 
                 return StatusCode(500, new
                 {
                     error = "Internal Server Error",
-                    message = "Failed to create game database."
+                    message = "Failed to create game database.",
                 });
             }
 
             var gameAcces = new GameAccess
             {
-                UserId = int.Parse(userClaimId),
+                UserId = this._userId,
                 GameId = newGame.Id,
                 Role = UserRole.GameMaster,
-                IsArchived = false
+                IsArchived = false,
             };
 
-            _globalDbContext.GameAccesses.Add(gameAcces);
-            await _globalDbContext.SaveChangesAsync();
+            this._globalDbContext.GameAccesses.Add(gameAcces);
+            await this._globalDbContext.SaveChangesAsync();
 
             return Ok(new
             {
                 message = "Game created successfully",
-                game = new GameDTO(newGame.Id, newGame.Name, newGame.Description, newGame.Image, newGame.GameCode)
+                game = new GameDTO(newGame.Id, newGame.Name, newGame.Description, newGame.Image, newGame.GameCode),
             });
         }
+
         [HttpDelete("removePlayer/{gameId}/{userId}")]
         public async Task<IActionResult> RemovePlayer(int gameId, int userId)
         {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(userIdStr, out int requestingUserId))
-            {
-                return Unauthorized(new
-                {
-                    error = "Unauthorized",
-                    message = "User not authenticated or invalid user ID"
-                });
-            }
-
-            var game = await _globalDbContext.Games.FindAsync(gameId);
+            var game = await this._globalDbContext.Games.FindAsync(gameId);
             if (game == null)
             {
                 return NotFound(new
                 {
                     error = "Not Found",
-                    message = "Game not found"
+                    message = "Game not found",
                 });
             }
 
-            var access = await _globalDbContext.GameAccesses
-                .Where(a => a.GameId == gameId && a.UserId == requestingUserId)
+            var access = await this._globalDbContext.GameAccesses
+                .Where(a => a.GameId == gameId && a.UserId == this._userId)
                 .FirstOrDefaultAsync();
 
             if (access == null || access.Role != UserRole.GameMaster)
@@ -462,11 +429,11 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return Unauthorized(new
                 {
                     error = "Unauthorized",
-                    message = "Only the Game Master can remove players from the game"
+                    message = "Only the Game Master can remove players from the game",
                 });
             }
 
-            var playerAccess = await _globalDbContext.GameAccesses
+            var playerAccess = await this._globalDbContext.GameAccesses
                 .Where(a => a.GameId == gameId && a.UserId == userId)
                 .FirstOrDefaultAsync();
 
@@ -475,14 +442,14 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return NotFound(new
                 {
                     error = "Not Found",
-                    message = "Player does not have access to this game"
+                    message = "Player does not have access to this game",
                 });
             }
 
-            _globalDbContext.GameAccesses.Remove(playerAccess);
-            await _globalDbContext.SaveChangesAsync();
+            this._globalDbContext.GameAccesses.Remove(playerAccess);
+            await this._globalDbContext.SaveChangesAsync();
 
-            var gameDbContext = _gameDbContextFactory.Create($"game_{gameId}");
+            var gameDbContext = this._gameDbContextFactory.Create($"game_{gameId}");
             var player = await gameDbContext.Players
                 .Where(p => p.UserId == userId)
                 .FirstOrDefaultAsync();
@@ -495,7 +462,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             return Ok(new
             {
-                message = "Player successfully removed from the game"
+                message = "Player successfully removed from the game",
             });
         }
     }

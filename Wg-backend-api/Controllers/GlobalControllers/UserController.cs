@@ -1,15 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
-using BCrypt.Net;
-
-
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
@@ -21,58 +16,57 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
         public UserController(GlobalDbContext context)
         {
-            _context = context;
+            this._context = context;
         }
 
         // get user data
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int? id)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
+            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
             {
-                return Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
+                return this.Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
             }
 
-            var user = await _context.Users.FindAsync(id);
+            var user = await this._context.Users.FindAsync(id);
 
             if (user == null)
             {
-                return NotFound(new { message = "User not found." });
+                return this.NotFound(new { message = "User not found." });
             }
 
-            return Ok(user);
+            return this.Ok(user);
         }
 
-        // Edit user data 
+        // Edit user data
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(int? id, User user)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
             {
-                return Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
+                return this.Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
             }
 
             if (id != user.Id || id == null || user == null)
             {
-                return BadRequest(new { message = "Bad request: ID mismatch or invalid user data." });
+                return this.BadRequest(new { message = "Bad request: ID mismatch or invalid user data." });
             }
             user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-            _context.Entry(user).State = EntityState.Modified;
+            this._context.Entry(user).State = EntityState.Modified;
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserExists(id))
+                if (!this.UserExists(id))
                 {
-                    return NotFound(new { message = "User not found." });
+                    return this.NotFound(new { message = "User not found." });
                 }
                 else
                 {
@@ -80,35 +74,35 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 }
             }
 
-            return NoContent();
+            return this.NoContent();
         }
 
         [HttpPatch]
         public async Task<IActionResult> PatchUser([FromBody] UserPathDTO userPathDTO)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userId, out int parsedUserId))
             {
-                return Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
+                return this.Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
             }
 
-            var user = await _context.Users.FindAsync(parsedUserId);
+            var user = await this._context.Users.FindAsync(parsedUserId);
             if (user == null)
             {
-                return NotFound(new { message = "User not found." });
+                return this.NotFound(new { message = "User not found." });
             }
             if (user.IsArchived)
             {
-                return BadRequest(new { message = "Cannot modify an archived user." });
+                return this.BadRequest(new { message = "Cannot modify an archived user." });
             }
 
-            var users = await _context.Users
+            var users = await this._context.Users
                 .Where(u => u.Name == userPathDTO.Name || u.Email == userPathDTO.Email)
                 .ToListAsync();
 
             if (users.Any(u => u.Id != parsedUserId))
             {
-                return BadRequest(new { message = "User with the same name or email already exists." });
+                return this.BadRequest(new { message = "User with the same name or email already exists." });
             }
 
             if (!string.IsNullOrEmpty(userPathDTO.Name))
@@ -123,22 +117,10 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 user.Password = BCrypt.Net.BCrypt.HashPassword(userPathDTO.Password);
             }
-            _context.Entry(user).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            this._context.Entry(user).State = EntityState.Modified;
+            await this._context.SaveChangesAsync();
 
-            // Change username in claim
-            var identity = (ClaimsIdentity)User.Identity;
-
-            var existingClaim = identity.FindFirst(ClaimTypes.Name);
-            if (existingClaim != null)
-            {
-                identity.RemoveClaim(existingClaim);
-            }
-            identity.AddClaim(new Claim(ClaimTypes.Name, user.Name));
-            await HttpContext.SignInAsync("MyCookieAuth", new ClaimsPrincipal(identity));
-
-
-            return NoContent();
+            return this.NoContent();
         }
 
         // Register a new user
@@ -147,71 +129,70 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         {
             user.Id = null;
             user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            this._context.Users.Add(user);
+            await this._context.SaveChangesAsync();
 
-            return Ok();
-            //return CreatedAtAction("GetUser", new { id = 1 }, user);
+            return this.Ok();
         }
 
         // DELETE: api/Users/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int? id)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
             {
-                return Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
+                return this.Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
             }
 
-            var user = await _context.Users.FindAsync(id);
+            var user = await this._context.Users.FindAsync(id);
             if (user == null)
             {
-                return NotFound(new { message = "User not found." });
+                return this.NotFound(new { message = "User not found." });
             }
             user.IsArchived = true;
 
-            await _context.SaveChangesAsync();
+            await this._context.SaveChangesAsync();
 
-            return NoContent();
+            return this.NoContent();
         }
 
         private bool UserExists(int? id)
         {
-            return _context.Users.Any(e => e.Id == id);
+            return this._context.Users.Any(e => e.Id == id);
         }
 
         [HttpPost("{id}/profile-picture")]
         public async Task<IActionResult> UploadProfilePicture(int? id, IFormFile file)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
             {
-                return Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
+                return this.Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
             }
 
             try
             {
                 if (file == null)
-                    return BadRequest("Brak danych do zapisania");
+                    return this.BadRequest("Brak danych do zapisania");
 
                 if (string.IsNullOrWhiteSpace(file.Name))
-                    return BadRequest("Nazwa mapy jest wymagana");
+                    return this.BadRequest("Nazwa mapy jest wymagana");
 
                 if (file == null || file.Length == 0)
-                    return BadRequest("Nie wybrano pliku obrazu");
+                    return this.BadRequest("Nie wybrano pliku obrazu");
 
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
                 var fileExtension = Path.GetExtension(file.FileName).ToLower();
 
                 if (!allowedExtensions.Contains(fileExtension))
-                    return BadRequest($"Nieobsługiwany format pliku. Dopuszczalne rozszerzenia: {string.Join(", ", allowedExtensions)}");
+                    return this.BadRequest($"Nieobsługiwany format pliku. Dopuszczalne rozszerzenia: {string.Join(", ", allowedExtensions)}");
 
                 const int maxFileSize = 20 * 1024 * 1024;
                 if (file.Length > maxFileSize)
-                    return BadRequest($"Maksymalny dopuszczalny rozmiar pliku to {maxFileSize / 1024 / 1024} MB");
+                    return this.BadRequest($"Maksymalny dopuszczalny rozmiar pliku to {maxFileSize / 1024 / 1024} MB");
 
                 var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Images");
@@ -225,12 +206,11 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                     await file.CopyToAsync(stream);
                 }
 
-
                 var imageUrl = $"/images/{uniqueFileName}";
-                var user = await _context.Users.FindAsync(id);
+                var user = await this._context.Users.FindAsync(id);
                 if (user == null)
                 {
-                    return NotFound(new { message = "User not found." });
+                    return this.NotFound(new { message = "User not found." });
                 }
 
                 if (!string.IsNullOrEmpty(user.Image))
@@ -242,20 +222,16 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                     }
                 }
                 user.Image = imageUrl;
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
 
-                return Ok(new { message = "Profile picture updated.", path = user.Image });
+                return this.Ok(new { message = "Profile picture updated.", path = user.Image });
             }
             catch (Exception ex)
             {
-                return StatusCode(
+                return this.StatusCode(
                     StatusCodes.Status500InternalServerError,
-                    $"Wystąpił błąd podczas przetwarzania pliku: {ex.Message}"
-                );
+                    $"Wystąpił błąd podczas przetwarzania pliku: {ex.Message}");
             }
         }
-
     }
 }
-
-

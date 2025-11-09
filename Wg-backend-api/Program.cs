@@ -1,12 +1,9 @@
-
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
-using System.Configuration;
 using System.Security.Claims;
 using System.Text;
 using Wg_backend_api.Auth;
@@ -22,7 +19,7 @@ namespace Wg_backend_api.Data
         static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            var connectionString = "";
+            var connectionString = string.Empty;
             if (builder.Environment.IsDevelopment())
             {
                 connectionString = builder.Configuration.GetConnectionString("DevConection");
@@ -34,7 +31,7 @@ namespace Wg_backend_api.Data
 
             }
 
-            // Add DbContexts  
+            // Add DbContexts
             builder.Services.AddDbContext<GlobalDbContext>(options =>
                 options.UseNpgsql(connectionString));
 
@@ -45,10 +42,8 @@ namespace Wg_backend_api.Data
                 //.LogTo(Console.WriteLine, LogLevel.Debug) ;
             });
 
-
-            // Add Scoped GameDbContextFactory  
+            // Add Scoped GameDbContextFactory
             builder.Services.AddScoped<IGameDbContextFactory, GameDbContextFactory>();
-
 
             // Session setup
             builder.Services.AddDistributedMemoryCache();
@@ -61,20 +56,36 @@ namespace Wg_backend_api.Data
                 options.Cookie.IsEssential = true;
             });
 
-            // Authentication and Authorization setup  
-            builder.Services.AddAuthentication(options =>
+            // Authentication and Authorization setup
+
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
             {
-                options.DefaultScheme = "MyCookieAuth";
-                options.DefaultChallengeScheme = "Google";
-            })
-            .AddCookie("MyCookieAuth", options =>
-            {
-                options.LoginPath = "/api/auth/login";
-                options.Cookie.Name = "MyAppAuth";
-                options.Cookie.HttpOnly = true;
-                options.Cookie.SameSite = SameSiteMode.None;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-            })
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+                    ValidateLifetime = true,
+                };
+            });
+
+            // builder.Services.AddAuthentication(options =>
+            // {
+            //     options.DefaultScheme = "MyCookieAuth";
+            //     options.DefaultChallengeScheme = "Google";
+            // })
+            // .AddCookie("MyCookieAuth", options =>
+            // {
+            //     options.LoginPath = "/api/auth/login";
+            //     options.Cookie.Name = "MyAppAuth";
+            //     options.Cookie.HttpOnly = true;
+            //     options.Cookie.SameSite = SameSiteMode.None;
+            //     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            // })
             //.AddGoogle("Google", options =>
             //{
             //    options.ClientId = "";
@@ -86,8 +97,7 @@ namespace Wg_backend_api.Data
 
             //    options.SaveTokens = true;
             //    options.CallbackPath = "/signin-google";
-            //})
-            ;
+            //});
 
             builder.Services.AddAuthorization(options =>
             {
@@ -97,7 +107,7 @@ namespace Wg_backend_api.Data
                     .Build();
             });
 
-            // CORS setup to allow access from Angular frontend  
+            // CORS setup to allow access from Angular frontend
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngular", builder =>
@@ -109,10 +119,12 @@ namespace Wg_backend_api.Data
                 });
             });
 
-            // Add Controllers (API endpoints)  
+            builder.Services.AddHostedService<RefreshTokenCleanupService>();
+
+            // Add Controllers (API endpoints)
             builder.Services.AddControllers();
 
-            // Add Swagger configuration  
+            // Add Swagger configuration
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddHttpContextAccessor();
@@ -130,10 +142,9 @@ namespace Wg_backend_api.Data
 
             builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
-
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline  
+            // Configure the HTTP request pipeline
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -159,9 +170,7 @@ namespace Wg_backend_api.Data
                 }
             });
 
-
-
-            //app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
 
             //app.UseStaticFiles(); // Teraz z obs�ug� CORS
 
@@ -174,13 +183,12 @@ namespace Wg_backend_api.Data
 
             if (!args.Contains("--no-login"))
             {
-                app.UseMiddleware<ValidateUserIdMiddleware>();
-                app.UseMiddleware<GameAccessMiddleware>();
+                // app.UseMiddleware<ValidateUserIdMiddleware>();
             }
-
+            app.UseMiddleware<GameAccessMiddleware>();
             app.UseAuthorization();
-            app.MapControllers(); // Map controller routes  
 
+            app.MapControllers(); // Map controller routes
 
             if (args.Contains("--global"))
             {
@@ -210,9 +218,7 @@ namespace Wg_backend_api.Data
                 }
             }
 
-
             app.Run();
         }
     }
 }
-

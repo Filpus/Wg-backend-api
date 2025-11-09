@@ -7,6 +7,9 @@
 
         string? GetNation();
         void SetNation(string nation);
+
+        string? GetRole();
+        void SetRole(string role);
     }
 
     public class SessionDataService : ISessionDataService
@@ -17,6 +20,7 @@
         {
             _httpContextAccessor = httpContextAccessor;
         }
+
         public void SetSchema(string schema)
         {
             if (_httpContextAccessor.HttpContext?.Session == null)
@@ -26,6 +30,7 @@
 
             _httpContextAccessor.HttpContext.Session.SetString("Schema", schema);
         }
+
         public string GetSchema()
         {
             return _httpContextAccessor.HttpContext?.Session.GetString("Schema");
@@ -40,9 +45,25 @@
 
             _httpContextAccessor.HttpContext.Session.SetString("Nation", nation);
         }
+
         public string? GetNation()
         {
             return _httpContextAccessor.HttpContext?.Session.GetString("Nation");
+        }
+
+        public void SetRole(string role)
+        {
+            if (_httpContextAccessor.HttpContext?.Session == null)
+            {
+                throw new InvalidOperationException("Sesja nie jest dostępna");
+            }
+
+            _httpContextAccessor.HttpContext.Session.SetString("Role", role);
+        }
+
+        public string? GetRole()
+        {
+            return _httpContextAccessor.HttpContext?.Session.GetString("Role");
         }
     }
 

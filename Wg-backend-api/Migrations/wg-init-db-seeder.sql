@@ -3100,3 +3100,11 @@ ALTER TABLE ONLY game_1.populationusedresource
 -- PostgreSQL database dump complete
 --
 
+CREATE TABLE "Global".refresh_tokens (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id integer REFERENCES "Global".users(id) ON DELETE CASCADE,
+    token text NOT NULL,
+    expires_at timestamptz NOT NULL,
+    revoked_at timestamptz,
+    created_at timestamptz DEFAULT now()
+);
