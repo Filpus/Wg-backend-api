@@ -242,7 +242,7 @@
                 return this.BadRequest("Brak danych do zapisania.");
             }
 
-            if (nations.Religion == null || nations.Culture == null || nations.Color == null || nations.Name == null)
+            if (nations.ReligionId == null || nations.CultureId == null || nations.Color == null || nations.Name == null)
             {
                 return this.BadRequest("Religion, Culture, Color are required.");
             }
@@ -271,8 +271,8 @@
             var newNation = new Nation
             {
                 Name = nations.Name,
-                ReligionId = (int)nations.Religion,
-                CultureId = (int)nations.Culture,
+                ReligionId = (int)nations.ReligionId,
+                CultureId = (int)nations.CultureId,
                 Color = nations.Color,
                 Flag = flagPath,
             };
@@ -344,23 +344,23 @@
                 nation.Name = nationDto.Name;
             }
 
-            if (nationDto.Religion != null)
+            if (nationDto.ReligionId != null)
             {
-                var religion = await this._context.Religions.FindAsync(nationDto.Religion);
+                var religion = await this._context.Religions.FindAsync(nationDto.ReligionId);
                 if (religion == null)
                 {
-                    return this.NotFound($"Didn't find Religion with ID {nationDto.Religion}.");
+                    return this.NotFound($"Didn't find Religion with ID {nationDto.ReligionId}.");
                 }
 
                 nation.Religion = religion;
             }
 
-            if (nationDto.Culture != null)
+            if (nationDto.CultureId != null)
             {
-                var culture = await this._context.Cultures.FindAsync(nationDto.Culture);
+                var culture = await this._context.Cultures.FindAsync(nationDto.CultureId);
                 if (culture == null)
                 {
-                    return this.NotFound($"Didn't find culture with ID {nationDto.Culture}.");
+                    return this.NotFound($"Didn't find culture with ID {nationDto.CultureId}.");
                 }
 
                 nation.Culture = culture;

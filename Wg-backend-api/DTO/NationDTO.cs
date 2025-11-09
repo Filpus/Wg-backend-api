@@ -58,9 +58,9 @@
 
         public string? Name { get; set; }
 
-        public int? Religion { get; set; }
+        public int? ReligionId { get; set; }
 
-        public int? Culture { get; set; }
+        public int? CultureId { get; set; }
 
         public IFormFile? Flag { get; set; }
 
