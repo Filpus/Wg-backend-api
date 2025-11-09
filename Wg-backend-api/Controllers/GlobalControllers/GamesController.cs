@@ -241,6 +241,31 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             return Ok(new { selectedGameId = game.Id });
         }
 
+        [HttpPost("select-nation")]
+        public async Task<IActionResult> SelectNation([FromBody] int nationId)
+        {
+            var schema = _sessionDataService.GetSchema();
+            if (string.IsNullOrEmpty(schema))
+            {
+                return BadRequest(new
+                {
+                    error = "Bad Request",
+                    message = "No game selected in session"
+                });
+            }
+            var gameDbContext = _gameDbContextFactory.Create(schema);
+            var nation = await gameDbContext.Nations.FindAsync(nationId);
+            if (nation == null)
+            {
+                return NotFound(new
+                {
+                    error = "Not Found",
+                    message = "Nation not found in the selected game"
+                });
+            }
+            _sessionDataService.SetNation($"{nation.Id}");
+            return Ok(new { selectedNationId = nation.Id });
+        }   
 
         [HttpGet("get-session-schema")]
         public IActionResult GetSessionSchema()
