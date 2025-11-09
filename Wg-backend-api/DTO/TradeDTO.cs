@@ -33,6 +33,7 @@ namespace Wg_backend_api.DTO
         public int receivingNationId { get; set; }
         public int Duration { get; set; }
         public string Description { get; set; } = "";
+        public TradeStatus TradeStatus { get; set; } = TradeStatus.Pending;
         public List<ResourceAmountDto> offeredResources { get; set; } = new List<ResourceAmountDto>();
         public List<ResourceAmountDto> requestedResources { get; set; } = new List<ResourceAmountDto>();
     }
