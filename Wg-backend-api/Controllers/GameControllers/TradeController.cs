@@ -144,7 +144,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 ReceivingNationId = offerTradeAgreementDTO.receivingNationId,
                 OfferedResources = new List<OfferedResource>(),
                 WantedResources = new List<WantedResource>(),
-                Status = TradeStatus.Pending,
+                Status = offerTradeAgreementDTO.TradeStatus,
                 Duration = offerTradeAgreementDTO.Duration,
                 Description = offerTradeAgreementDTO.Description ?? ""
             };
