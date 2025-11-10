@@ -15,6 +15,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+        private int? _nationId;
 
         public AccessToUnitsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -27,26 +28,39 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
             _context = _gameDbContextFactory.Create(schema);
+            string nationIdStr = _sessionDataService.GetNation();
+            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
 
         }
 
         [HttpDelete]
         public async Task<ActionResult> DeleteAccessToUnits([FromBody] List<int?> ids)
         {
-            if (ids == null || ids.Count == 0)
+
+            if (_nationId == null)
             {
-                return BadRequest("Brak ID do usunięcia.");
+                return BadRequest("Brak ID państwa w sesji.");
             }
 
-            var accessToUnits = await _context.AccessToUnits.Where(r => ids.Contains(r.Id)).ToListAsync();
-
-            if (accessToUnits.Count == 0)
+            foreach (int unitTypeId in ids)
             {
-                return NotFound("Nie znaleziono dostępu do jednostek do usunięcia.");
-            }
+                if (unitTypeId <= 0)
+                {
+                    return BadRequest("Nieprawidłowe ID typu jednostki.");
+                }
 
-            _context.AccessToUnits.RemoveRange(accessToUnits);
-            await _context.SaveChangesAsync();
+                var accessToUnits = await _context.AccessToUnits
+                    .Where(a => a.NationId == _nationId && a.UnitTypeId == unitTypeId)
+                    .ToListAsync();
+
+                if (accessToUnits.Count == 0)
+                {
+                    return NotFound("Nie znaleziono dostępu do jednostek do usunięcia.");
+                }
+
+                _context.AccessToUnits.RemoveRange(accessToUnits);
+                await _context.SaveChangesAsync();
+            }
 
             return Ok();
         }
@@ -103,11 +117,11 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak danych do utworzenia.");
             }
 
+
             var accessToUnits = dtos
-                .Where(dto => dto.NationId > 0 && dto.UnitTypeId > 0)
                 .Select(dto => new AccessToUnit
                 {
-                    NationId = dto.NationId,
+                    NationId = dto.NationId > 0 ? (int)dto.NationId : _nationId ?? throw new InvalidOperationException("Brak ID państwa w sesji."),
                     UnitTypeId = dto.UnitTypeId,
                 })
                 .ToList();
@@ -120,34 +134,79 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok();
         }
 
-        [HttpPut]
-        public async Task<ActionResult> EditAccessList([FromBody] List<AccessToUnit> dtos)
+        
+        [HttpGet("LandMissingAccess/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<UnitTypeDTO>>> GetLandMissingAccess(int? nationId)
         {
-            if (dtos == null || dtos.Count == 0)
+            if (nationId == null)
             {
-                return BadRequest("Brak danych do aktualizacji.");
+                nationId = _nationId;
             }
 
-            var ids = dtos.Select(dto => dto.Id).Where(id => id.HasValue).Select(id => id.Value).ToList();
-            var existingRecords = await _context.AccessToUnits.Where(a => ids.Contains(a.Id.Value)).ToListAsync();
+            var allUnitTypes = await _context.UnitTypes.ToListAsync();
 
-            if (existingRecords.Count != dtos.Count)
-            {
-                return NotFound("Niektóre rekordy do aktualizacji nie zostały znalezione.");
-            }
+            var nationAccess = await _context.AccessToUnits
+                .Where(a => a.NationId == nationId)
+                .Select(a => a.UnitTypeId)
+                .ToListAsync();
 
-            foreach (var dto in dtos)
-            {
-                var existing = existingRecords.FirstOrDefault(e => e.Id == dto.Id);
-                if (existing != null)
+            // Oblicz różnicę zbiorów
+            var missingAccess = allUnitTypes
+                .Where(ut => !nationAccess.Contains((int)ut.Id))
+                .Where(ut => !ut.IsNaval)
+                .Select(ut => new UnitTypeDTO
                 {
-                    _context.Entry(existing).CurrentValues.SetValues(dto);
-                }
-            }
+                    UnitId = (int)ut.Id,
+                    UnitName = ut.Name,
+                    Quantity = 0,
+                    Melee = ut.Melee,
+                    Range = ut.Range,
+                    Defense = ut.Defense,
+                    Speed = ut.Speed,
+                    Morale = ut.Morale,
+                    IsNaval = ut.IsNaval
+                })
+                .ToList();
 
-            await _context.SaveChangesAsync();
-            return Ok("Rekordy zostały zaktualizowane.");
+            return Ok(missingAccess);
         }
 
+        [HttpGet("NavalMissingAccess/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<UnitTypeDTO>>> GetNavalMissingAccess(int? nationId)
+        {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
+
+            var allUnitTypes = await _context.UnitTypes.ToListAsync();
+
+            var nationAccess = await _context.AccessToUnits
+                .Where(a => a.NationId == nationId)
+                .Select(a => a.UnitTypeId)
+                .ToListAsync();
+
+            // Oblicz różnicę zbiorów
+            var missingAccess = allUnitTypes
+                .Where(ut => !nationAccess.Contains((int)ut.Id))
+                .Where(ut => !ut.IsNaval)
+                .Select(ut => new UnitTypeDTO
+                {
+                    UnitId = (int)ut.Id,
+                    UnitName = ut.Name,
+                    Quantity = 0,
+                    Melee = ut.Melee,
+                    Range = ut.Range,
+                    Defense = ut.Defense,
+                    Speed = ut.Speed,
+                    Morale = ut.Morale,
+                    IsNaval = ut.IsNaval
+                })
+                .ToList();
+
+            return Ok(missingAccess);
+
+
+        }
     }
 }
