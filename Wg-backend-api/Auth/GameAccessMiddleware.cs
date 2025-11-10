@@ -37,7 +37,7 @@ namespace Wg_backend_api.Auth
                     return;
                 }
 
-                sessionDataService.SetUserId(userIdStr);
+                sessionDataService.SetUserIdItems(userIdStr);
             }
 
             if (!ExcludedPaths.Any(p => path.StartsWithSegments(p)))

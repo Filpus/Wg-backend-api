@@ -1,34 +1,40 @@
 ﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
+using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [ServiceFilter(typeof(UserIdActionFilter))]
     public class UserController : ControllerBase
     {
         private readonly GlobalDbContext _context;
+        private int _userId;
 
         public UserController(GlobalDbContext context)
         {
             this._context = context;
         }
 
-        // TODO 
+        [ApiExplorerSettings(IgnoreApi = true)]
+        public void SetUserId(int userId)
+        {
+            _userId = userId;
+        }
 
         // get user data
+        [Authorize]
         [HttpGet("{id}")]
+        [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<ActionResult<User>> GetUser(int? id)
         {
-            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
+            if (this._userId != id)
             {
                 return this.Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
             }
@@ -44,12 +50,12 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         // Edit user data
+        [Authorize]
         [HttpPut("{id}")]
+        [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<IActionResult> PutUser(int? id, User user)
         {
-            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
+            if (this._userId != id)
             {
                 return this.Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
             }
@@ -80,16 +86,12 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             return this.NoContent();
         }
 
+        [Authorize]
         [HttpPatch]
+        [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<IActionResult> PatchUser([FromBody] UserPathDTO userPathDTO)
         {
-            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userId, out int parsedUserId))
-            {
-                return this.Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
-            }
-
-            var user = await this._context.Users.FindAsync(parsedUserId);
+            var user = await this._context.Users.FindAsync(this._userId);
             if (user == null)
             {
                 return this.NotFound(new { message = "User not found." });
@@ -103,7 +105,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 .Where(u => u.Name == userPathDTO.Name || u.Email == userPathDTO.Email)
                 .ToListAsync();
 
-            if (users.Any(u => u.Id != parsedUserId))
+            if (users.Any(u => u.Id != this._userId))
             {
                 return this.BadRequest(new { message = "User with the same name or email already exists." });
             }
@@ -127,6 +129,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         // Register a new user
+        [AllowAnonymous]
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
@@ -139,12 +142,12 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         // DELETE: api/Users/5
+        [Authorize]
         [HttpDelete("{id}")]
+        [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<IActionResult> DeleteUser(int? id)
         {
-            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
+            if (this._userId != id)
             {
                 return this.Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
             }
@@ -166,12 +169,12 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             return this._context.Users.Any(e => e.Id == id);
         }
 
+        [Authorize]
         [HttpPost("{id}/profile-picture")]
+        [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<IActionResult> UploadProfilePicture(int? id, IFormFile file)
         {
-            var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!int.TryParse(userId, out int parsedUserId) || parsedUserId != id)
+            if (this._userId != id)
             {
                 return this.Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
             }

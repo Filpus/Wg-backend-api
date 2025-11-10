@@ -53,7 +53,7 @@
             }
 
             var playerId = user.Id;
-            var accessToken = this.GenerateJwtToken((int)playerId);
+            var accessToken = this.GenerateJwtToken((int)playerId, user.Name);
             var refreshToken = this.GenerateRefreshToken();
 
             this._context.RefreshTokens.Add(new RefreshToken
@@ -89,7 +89,7 @@
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == result.UserId);
             if (user == null) return Unauthorized(new { error = "User not found" });
 
-            var newAccessToken = GenerateJwtToken(user.Id.Value);
+            var newAccessToken = GenerateJwtToken(user.Id.Value, user.Name);
             var newRefreshToken = GenerateRefreshToken();
 
             result.RevokedAt = DateTime.UtcNow;
@@ -105,45 +105,6 @@
             SetAuthCookies(newAccessToken, newRefreshToken);
 
             return Ok(new { message = "Token refreshed" });
-
-            // var result = await this._context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == req.RefreshToken);
-
-            // if (result == null || result.ExpiresAt <= DateTime.UtcNow || result.RevokedAt != null)
-            // {
-            //     return this.Unauthorized(new
-            //     {
-            //         error = "Unauthorized",
-            //         message = "Invalid or expired refresh token",
-            //     });
-            // }
-
-            // var user = await this._context.Users.FirstOrDefaultAsync(u => u.Id == result.UserId);
-            // if (user == null)
-            // {
-            //     return this.Unauthorized(new
-            //     {
-            //         error = "Unauthorized",
-            //         message = "User not found",
-            //     });
-            // }
-
-            // var accessToken = this.GenerateJwtToken(user.Id.Value);
-            // var newRefreshToken = this.GenerateRefreshToken();
-
-            // result.RevokedAt = DateTime.UtcNow;
-            // this._context.RefreshTokens.Add(new RefreshToken
-            // {
-            //     Token = newRefreshToken,
-            //     UserId = user.Id.Value,
-            //     ExpiresAt = DateTime.UtcNow.AddDays(this._config.GetValue<int>("Jwt:RefreshTokenLifetimeDays")),
-            // });
-
-            // await this._context.SaveChangesAsync();
-            // return this.Ok(new AuthResponse
-            // {
-            //     AccessToken = accessToken,
-            //     RefreshToken = newRefreshToken,
-            // });
         }
 
         [Authorize]
@@ -154,16 +115,6 @@
 
             this.HttpContext.Session.Clear();
             return Ok(new { message = "Logged out" });
-            // var result = await this._context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == req.RefreshToken);
-            // if (result != null && result.RevokedAt == null)
-            // {
-            //     result.RevokedAt = DateTime.UtcNow;
-            //     await this._context.SaveChangesAsync();
-            // }
-
-            // this.HttpContext.Session.Clear();
-
-            // return this.Ok();
         }
 
         [AllowAnonymous]
@@ -172,10 +123,25 @@
         {
             if (this.User.Identity != null && this.User.Identity.IsAuthenticated)
             {
+                var nation = _sessionDataService.GetNation();
+                var game = _sessionDataService.GetSchema();
+                var playerRole = _sessionDataService.GetRole();
+                if (nation != null && game != null)
+                {
+                    return this.Ok(new
+                    {
+                        isAuthenticated = true,
+                        username = User.FindFirst(ClaimTypes.Name)?.Value,
+                        nation = nation,
+                        schema = game,
+                        role = playerRole,
+                    });
+                }
+
                 return this.Ok(new
                 {
                     isAuthenticated = true,
-                    username = this.User.Identity.Name,
+                    username = User.FindFirst(ClaimTypes.Name)?.Value,
                 });
             }
 
@@ -184,52 +150,6 @@
                 isAuthenticated = false,
             });
         }
-
-        // TODO add enpoint me that returns user access
-        // TODO ensure we want this endpoint
-        // [AllowAnonymous]
-        // [HttpGet("me")]
-        // public async Task<IActionResult> StatusMe()
-        // {
-        //     var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        //     if (userId == null)
-        //         return Unauthorized();
-
-        //     var game = _sessionDataService.GetSchema();
-
-        //     if (game == null)
-        //     {
-        //         return Ok(new
-        //         {
-        //             isAuthenticated = true,
-        //             username = User.Identity.Name
-        //         });
-        //     }
-        //     else
-        //     {
-        //         var nation = _sessionDataService.GetNation();
-        //         var playerRole = _context.GameAccesses.FirstOrDefault(a => a.GameId.ToString() == game && a.UserId.ToString() == userId)?.Role;
-        //         if (nation != null)
-        //         {
-        //             return Ok(new
-        //             {
-        //                 isAuthenticated = true,
-        //                 username = User.Identity.Name,
-        //                 role = playerRole
-        //             });
-        //         }
-        //         else
-        //         {
-        //             return Ok(new
-        //             {
-        //                 isAuthenticated = true,
-        //                 username = User.Identity.Name,
-        //                 role = playerRole
-        //             });
-        //         }
-        //     }
-        // }
 
         // [AllowAnonymous]
         // [HttpGet("google-login")]
@@ -324,7 +244,7 @@
             return true;
         }
 
-        private string GenerateJwtToken(int playerId)
+        private string GenerateJwtToken(int playerId, string userName)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this._config["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -333,6 +253,7 @@
             {
                 new Claim(JwtRegisteredClaimNames.Sub, playerId.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, playerId.ToString()),
+                new Claim(ClaimTypes.Name, userName),
             };
 
             var token = new JwtSecurityToken(

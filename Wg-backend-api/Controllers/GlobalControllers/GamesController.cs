@@ -34,7 +34,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpGet]
         public async Task<IActionResult> GetGames()
         {
-            Console.WriteLine($"UserId in GamesController: {this._userId}");
             var gamesAccess = await this._globalDbContext.GameAccesses
                 .Where(g => g.UserId == this._userId)
                 .Select(g => g.GameId)
