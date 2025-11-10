@@ -65,70 +65,105 @@
 
             await this._context.SaveChangesAsync();
 
-            return this.Ok(new AuthResponse
-            {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
-            });
+            this.SetAuthCookies(accessToken, refreshToken);
+
+            return Ok(new { message = "Login successful" });
         }
 
         [AllowAnonymous]
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest req)
         {
-            var result = await this._context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == req.RefreshToken);
+            var oldRefreshToken = Request.Cookies["refresh_token"];
+            if (string.IsNullOrEmpty(oldRefreshToken))
+            {
+                return Unauthorized(new { error = "No refresh token provided" });
+            }
 
+            var result = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == oldRefreshToken);
             if (result == null || result.ExpiresAt <= DateTime.UtcNow || result.RevokedAt != null)
             {
-                return this.Unauthorized(new
-                {
-                    error = "Unauthorized",
-                    message = "Invalid or expired refresh token",
-                });
+                return Unauthorized(new { error = "Invalid or expired refresh token" });
             }
 
-            var user = await this._context.Users.FirstOrDefaultAsync(u => u.Id == result.UserId);
-            if (user == null)
-            {
-                return this.Unauthorized(new
-                {
-                    error = "Unauthorized",
-                    message = "User not found",
-                });
-            }
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == result.UserId);
+            if (user == null) return Unauthorized(new { error = "User not found" });
 
-            var accessToken = this.GenerateJwtToken(user.Id.Value);
-            var newRefreshToken = this.GenerateRefreshToken();
+            var newAccessToken = GenerateJwtToken(user.Id.Value);
+            var newRefreshToken = GenerateRefreshToken();
 
             result.RevokedAt = DateTime.UtcNow;
-            this._context.RefreshTokens.Add(new RefreshToken
+            _context.RefreshTokens.Add(new RefreshToken
             {
                 Token = newRefreshToken,
                 UserId = user.Id.Value,
-                ExpiresAt = DateTime.UtcNow.AddDays(this._config.GetValue<int>("Jwt:RefreshTokenLifetimeDays")),
+                ExpiresAt = DateTime.UtcNow.AddDays(_config.GetValue<int>("Jwt:RefreshTokenLifetimeDays"))
             });
 
-            await this._context.SaveChangesAsync();
-            return this.Ok(new AuthResponse
-            {
-                AccessToken = accessToken,
-                RefreshToken = newRefreshToken,
-            });
+            await _context.SaveChangesAsync();
+
+            SetAuthCookies(newAccessToken, newRefreshToken);
+
+            return Ok(new { message = "Token refreshed" });
+
+            // var result = await this._context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == req.RefreshToken);
+
+            // if (result == null || result.ExpiresAt <= DateTime.UtcNow || result.RevokedAt != null)
+            // {
+            //     return this.Unauthorized(new
+            //     {
+            //         error = "Unauthorized",
+            //         message = "Invalid or expired refresh token",
+            //     });
+            // }
+
+            // var user = await this._context.Users.FirstOrDefaultAsync(u => u.Id == result.UserId);
+            // if (user == null)
+            // {
+            //     return this.Unauthorized(new
+            //     {
+            //         error = "Unauthorized",
+            //         message = "User not found",
+            //     });
+            // }
+
+            // var accessToken = this.GenerateJwtToken(user.Id.Value);
+            // var newRefreshToken = this.GenerateRefreshToken();
+
+            // result.RevokedAt = DateTime.UtcNow;
+            // this._context.RefreshTokens.Add(new RefreshToken
+            // {
+            //     Token = newRefreshToken,
+            //     UserId = user.Id.Value,
+            //     ExpiresAt = DateTime.UtcNow.AddDays(this._config.GetValue<int>("Jwt:RefreshTokenLifetimeDays")),
+            // });
+
+            // await this._context.SaveChangesAsync();
+            // return this.Ok(new AuthResponse
+            // {
+            //     AccessToken = accessToken,
+            //     RefreshToken = newRefreshToken,
+            // });
         }
 
         [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout([FromBody] RefreshRequest req) {
-            var result = await this._context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == req.RefreshToken);
-            if (result != null && result.RevokedAt == null)
-            {
-                result.RevokedAt = DateTime.UtcNow;
-                await this._context.SaveChangesAsync();
-            }
+            Response.Cookies.Delete("access_token");
+            Response.Cookies.Delete("refresh_token");
 
             this.HttpContext.Session.Clear();
+            return Ok(new { message = "Logged out" });
+            // var result = await this._context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == req.RefreshToken);
+            // if (result != null && result.RevokedAt == null)
+            // {
+            //     result.RevokedAt = DateTime.UtcNow;
+            //     await this._context.SaveChangesAsync();
+            // }
 
-            return this.Ok();
+            // this.HttpContext.Session.Clear();
+
+            // return this.Ok();
         }
 
         [AllowAnonymous]
@@ -311,9 +346,32 @@
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        private string GenerateRefreshToken() {
+        private string GenerateRefreshToken()
+        {
             var randomBytes = RandomNumberGenerator.GetBytes(64);
             return Convert.ToBase64String(randomBytes);
+        }
+
+        private void SetAuthCookies(string accessToken, string refreshToken)
+        {
+            var accessCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None, // SameSiteMode.Strict
+                Expires = DateTime.UtcNow.AddMinutes(this._config.GetValue<int>("Jwt:TokenLifetime")),
+            };
+
+            var refreshCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None, // SameSiteMode.Strict
+                Expires = DateTime.UtcNow.AddDays(this._config.GetValue<int>("Jwt:RefreshTokenLifetimeDays")),
+            };
+
+            Response.Cookies.Append("access_token", accessToken, accessCookieOptions);
+            Response.Cookies.Append("refresh_token", refreshToken, refreshCookieOptions);
         }
     }
 }
