@@ -2,7 +2,7 @@
 {
     public class PlayerGamesDTO
     {
-        public List<GameDTO> PlayerGames { get; set; } = new();
+        public List<GameDTO> PlayerGames { get; set; } = [];
     }
 
     public class GameDTO
@@ -15,11 +15,11 @@
 
         public GameDTO(int? id, string name, string? description, string? image, string? gameCode)
         {
-            Id = id;
-            Name = name;
-            Description = description;
-            Image = image;
-            GameCode = gameCode;
+            this.Id = id;
+            this.Name = name;
+            this.Description = description;
+            this.Image = image;
+            this.GameCode = gameCode;
         }
     }
 

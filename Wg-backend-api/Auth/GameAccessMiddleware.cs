@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Wg_backend_api.Data;
 using Wg_backend_api.Services;
 
@@ -9,12 +8,12 @@ namespace Wg_backend_api.Auth
     {
         private readonly RequestDelegate _next;
         private static readonly string[] ExcludedPaths =
-        {
+        [
             "/api/auth",
             "/api/games",
             "/api/user",
             "/api/players", // TODO ensure if this is needed
-        };
+        ];
 
         public GameAccessMiddleware(RequestDelegate next)
         {
@@ -71,7 +70,7 @@ namespace Wg_backend_api.Auth
                 // }
             }
 
-            await _next(context);
+            await this._next(context);
         }
     }
 }

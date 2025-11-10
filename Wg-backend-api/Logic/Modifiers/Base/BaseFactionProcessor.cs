@@ -10,14 +10,19 @@ namespace Wg_backend_api.Logic.Modifiers.Base
 
         protected override IQueryable<Faction> GetTargetEntities(int nationId, FactionConditions conditions)
         {
-            var query = _context.Factions.Where(f => f.NationId == nationId);
+            var query = this._context.Factions.Where(f => f.NationId == nationId);
 
             if (conditions.FactionId.HasValue)
+            {
                 query = query.Where(f => f.Id == conditions.FactionId.Value);
+            }
 
             return query;
         }
 
-        protected override int GetEntityId(Faction entity) => entity.Id ?? 0;
+        protected override int GetEntityId(Faction entity)
+        {
+            return entity.Id ?? 0;
+        }
     }
 }

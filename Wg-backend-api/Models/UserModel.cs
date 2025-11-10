@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Wg_backend_api.Models
 {
@@ -40,7 +40,6 @@ namespace Wg_backend_api.Models
         public ICollection<GameAccess> GameAccesses { get; set; }
         public RefreshToken RefreshToken { get; set; }
     }
-
 
     [Table("players")]
     public class Player

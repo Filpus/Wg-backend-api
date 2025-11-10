@@ -6,8 +6,8 @@ namespace Wg_backend_api.Logic.Modifiers.Interfaces
 {
     public interface IModifierProcessor
     {
-        ModifierType SupportedType { get; }
-        Task<ModifierApplicationResult> ProcessAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
-        Task<ModifierApplicationResult> RevertAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
+        public ModifierType SupportedType { get; }
+        public Task<ModifierApplicationResult> ProcessAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
+        public Task<ModifierApplicationResult> RevertAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
     }
 }

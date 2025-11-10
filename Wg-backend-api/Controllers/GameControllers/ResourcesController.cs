@@ -1,16 +1,15 @@
-﻿namespace Wg_backend_api.Controllers.GameControllers
-{
-    // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.EntityFrameworkCore;
-    using Wg_backend_api.Auth;
-    using Wg_backend_api.Data;
-    using Wg_backend_api.DTO;
-    using Wg_backend_api.Logic.Modifiers.Processors;
-    using Wg_backend_api.Logic.Resources;
-    using Wg_backend_api.Models;
-    using Wg_backend_api.Services;
+﻿// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Wg_backend_api.Auth;
+using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
+using Wg_backend_api.Logic.Resources;
+using Wg_backend_api.Models;
+using Wg_backend_api.Services;
 
+namespace Wg_backend_api.Controllers.GameControllers
+{
     [Route("api/[controller]")]
     [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
@@ -198,7 +197,6 @@
             return this.CreatedAtAction(nameof(this.PostResources), null, response);
         }
 
-
         // DELETE: api/Resources
         [HttpDelete]
         public async Task<ActionResult> DeleteResources([FromBody] List<int?> ids)
@@ -208,7 +206,7 @@
                 return this.BadRequest("Brak ID do usunięcia.");
             }
 
-            var resources = await _context.Resources.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var resources = await this._context.Resources.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (resources.Count == 0)
             {
@@ -221,29 +219,24 @@
             return this.Ok();
         }
 
-
         [HttpGet("nation/resource-balance/{nationId?}")]
         public async Task<ActionResult<NationResourceBalanceDto>> GetNationResourceBalance(int? nationId)
         {
-            nationId ??= _nationId;
-            var result = await CalcResourceBalance.CalculateNationResourceBalance(nationId.Value, _context);
+            nationId ??= this._nationId;
+            var result = await CalcResourceBalance.CalculateNationResourceBalance(nationId.Value, this._context);
             if (result == null)
+            {
                 return NotFound();
+            }
+
             return Ok(result);
         }
-
-
-
-
 
         [HttpGet("nation/owned-resources/{nationId?}")]
         public async Task<ActionResult<List<ResourceAmountDto>>> GetOwnedResources(int? nationId)
         {
 
-            if (nationId == null)
-            {
-                nationId = this._nationId;
-            }
+            nationId ??= this._nationId;
 
             if (nationId == null)
             {
@@ -255,7 +248,6 @@
                 .Include(or => or.Resource)
                 .Where(or => or.NationId == nationId);
 
-
             var ownedList = await query.ToListAsync();
 
             if (ownedList == null || ownedList.Count == 0)
@@ -263,29 +255,25 @@
                 return this.NotFound($"Nie znaleziono zasobów przypisanych do państwa o ID: {nationId}");
             }
 
-            var ownedResources = await _context.OwnedResources
+            var ownedResources = await this._context.OwnedResources
                 .Where(or => or.NationId == nationId)
                 .GroupBy(or => new { or.ResourceId, ResourceName = or.Resource.Name })
                 .Select(g => new ResourceAmountDto
                 {
                     ResourceId = g.Key.ResourceId,
                     ResourceName = g.Key.ResourceName,
-                    Amount = g.Sum(x => x.Amount) 
+                    Amount = g.Sum(x => x.Amount)
                 })
                 .ToListAsync();
 
             return this.Ok(ownedResources);
         }
 
-
         [HttpPut("nation/owned-resources/{nationId?}")]
         public async Task<IActionResult> PutOwnedResources(int? nationId, [FromBody] List<ResourceAmountDto> resources)
         {
             // Ustal nationId domyślnie
-            if (nationId == null)
-            {
-                nationId = this._nationId;
-            }
+            nationId ??= this._nationId;
 
             if (nationId == null)
             {
@@ -296,7 +284,6 @@
             {
                 return this.BadRequest("Brak danych do zapisania.");
             }
-
 
             using var transaction = await this._context.Database.BeginTransactionAsync();
             try
@@ -319,7 +306,6 @@
                     }
                 }
 
-
                 await this._context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -331,9 +317,6 @@
                 return this.StatusCode(500, $"Błąd podczas aktualizacji zasobów: {ex.Message}");
             }
         }
-
-
-
 
     }
 }

@@ -6,10 +6,9 @@ namespace Wg_backend_api.Logic.Modifiers.ModifierConditions
     {
         public int ResourceId { get; set; }
 
-
         public override Dictionary<string, object> ToDictionary()
         {
-            var dict = new Dictionary<string, object> { ["ResourceId"] = ResourceId };
+            var dict = new Dictionary<string, object> { ["ResourceId"] = this.ResourceId };
             return dict;
         }
     }

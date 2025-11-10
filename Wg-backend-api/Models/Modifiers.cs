@@ -39,7 +39,6 @@ namespace Wg_backend_api.Models
         /// </summary>
         public object Change { get; set; }
 
-
     }
 
     /// <summary>
@@ -60,17 +59,17 @@ namespace Wg_backend_api.Models
         /// <summary>
         /// Słownik zmodyfikowanych encji (klucz -> dane o zmianie)
         /// </summary>
-        public Dictionary<string, object> AffectedEntities { get; set; } = new();
+        public Dictionary<string, object> AffectedEntities { get; set; } = [];
 
         /// <summary>
         /// Lista ostrzeżeń (nieblokujące problemy)
         /// </summary>
-        public List<string> Warnings { get; set; } = new();
+        public List<string> Warnings { get; set; } = [];
 
         /// <summary>
         /// Dodatkowe metadane o operacji
         /// </summary>
-        public Dictionary<string, object> Metadata { get; set; } = new();
+        public Dictionary<string, object> Metadata { get; set; } = [];
     }
 
     /// <summary>
@@ -83,7 +82,7 @@ namespace Wg_backend_api.Models
         public decimal Value { get; set; }
         public TConditions Conditions { get; set; }
 
-        public string ConditionsJson => JsonSerializer.Serialize(Conditions.ToDictionary());
+        public string ConditionsJson => JsonSerializer.Serialize(this.Conditions.ToDictionary());
 
     }
 
@@ -91,14 +90,13 @@ namespace Wg_backend_api.Models
     {
         public string Operation { get; set; }
         public float Value { get; set; }
-        public Dictionary<string, object> Conditions { get; set; } = new();
+        public Dictionary<string, object> Conditions { get; set; } = [];
 
         public T GetConditions<T>() where T : IBaseModifierConditions
         {
-            var json = JsonSerializer.Serialize(Conditions);
+            var json = JsonSerializer.Serialize(this.Conditions);
             return JsonSerializer.Deserialize<T>(json);
         }
     }
-
 
 }

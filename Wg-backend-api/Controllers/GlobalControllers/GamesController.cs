@@ -28,7 +28,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [ApiExplorerSettings(IgnoreApi = true)]
         public void SetUserId(int userId)
         {
-            _userId = userId;
+            this._userId = userId;
         }
 
         [HttpGet]
@@ -45,7 +45,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
 
             var games = await this._globalDbContext.Games
-                .Where(g => gamesAccess.Contains((int)g.Id))
+                .Where(g => gamesAccess.Contains(g.Id))
                 .ToListAsync();
 
             var gamesDTOs = games.Select(game => new GameDTO(game.Id, game.Name, game.Description, game.Image, game.GameCode)).ToList();
@@ -68,7 +68,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
-            var game = await _globalDbContext.Games
+            var game = await this._globalDbContext.Games
                 .Where(g => g.Id == id)
                 .Select(g => new GameDTO(g.Id, g.Name, g.Description, g.Image, g.GameCode))
                 .FirstOrDefaultAsync();
@@ -363,8 +363,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 OwnerId = this._userId,
             };
 
-            _globalDbContext.Games.Add(newGame);
-            await _globalDbContext.SaveChangesAsync();
+            this._globalDbContext.Games.Add(newGame);
+            await this._globalDbContext.SaveChangesAsync();
 
             var created_game = GameService.GenerateNewGame(
                 "Host=localhost;Username=postgres;Password=postgres;Database=wg", //TODO Niezapomnieć że trzeba to będzie poprawnie ustawić

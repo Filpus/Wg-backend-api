@@ -16,18 +16,26 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
 
         protected override IQueryable<PopulationProductionShare> GetTargetEntities(int nationId, PopulationResourceConditions conditions)
         {
-            var query = _context.PopulationProductionShares
+            var query = this._context.PopulationProductionShares
                 .Include(pps => pps.Population)
                 .Include(pps => pps.Population.Location)
                 .Where(pps => pps.Population.Location.NationId == nationId)
                 .Where(pps => pps.ResourcesId == conditions.ResourceId);
 
             if (conditions.CultureId.HasValue)
+            {
                 query = query.Where(pps => pps.Population.CultureId == conditions.CultureId.Value);
+            }
+
             if (conditions.SocialGroupId.HasValue)
+            {
                 query = query.Where(pps => pps.Population.SocialGroupId == conditions.SocialGroupId.Value);
+            }
+
             if (conditions.ReligionId.HasValue)
+            {
                 query = query.Where(pps => pps.Population.ReligionId == conditions.ReligionId.Value);
+            }
 
             return query;
         }
@@ -38,7 +46,7 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Coefficient = OperationProcessor.ApplyOperation(entity.Coefficient, value, operation);
             entity.Coefficient = Math.Max(0, entity.Coefficient);
 
-            _logger?.LogDebug($"PopulationProductionShare {entity.Id}: Coefficient {oldValue} → {entity.Coefficient} (Resource: {entity.ResourcesId})");
+            this._logger?.LogDebug($"PopulationProductionShare {entity.Id}: Coefficient {oldValue} → {entity.Coefficient} (Resource: {entity.ResourcesId})");
         }
 
         protected override void RevertFromEntity(PopulationProductionShare entity, ModifierOperation operation, float value)
@@ -47,10 +55,13 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Coefficient = OperationProcessor.ReverseOperation(entity.Coefficient, value, operation);
             entity.Coefficient = Math.Max(0, entity.Coefficient);
 
-            _logger?.LogDebug($"PopulationProductionShare {entity.Id}: Coefficient reverted {oldValue} → {entity.Coefficient} (Resource: {entity.ResourcesId})");
+            this._logger?.LogDebug($"PopulationProductionShare {entity.Id}: Coefficient reverted {oldValue} → {entity.Coefficient} (Resource: {entity.ResourcesId})");
         }
 
-        protected override int GetEntityId(PopulationProductionShare entity) => entity.Id ?? 0;
+        protected override int GetEntityId(PopulationProductionShare entity)
+        {
+            return entity.Id ?? 0;
+        }
     }
 
     public class PopulationResourceUsageProcessor : BaseCachedModifierProcessor<PopulationUsedResource, PopulationResourceConditions>
@@ -62,19 +73,26 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
 
         protected override IQueryable<PopulationUsedResource> GetTargetEntities(int nationId, PopulationResourceConditions conditions)
         {
-            var query = _context.populationUsedResources
+            var query = this._context.populationUsedResources
                 .Include(pur => pur.Population)
                 .Include(pur => pur.Population.Location)
                 .Where(pur => pur.Population.Location.NationId == nationId)
                 .Where(pur => pur.ResourcesId == conditions.ResourceId);
 
             if (conditions.CultureId.HasValue)
+            {
                 query = query.Where(pur => pur.Population.CultureId == conditions.CultureId.Value);
-            if (conditions.SocialGroupId.HasValue)
-                query = query.Where(pur => pur.Population.SocialGroupId == conditions.SocialGroupId.Value);
-            if (conditions.ReligionId.HasValue)
-                query = query.Where(pur => pur.Population.ReligionId == conditions.ReligionId.Value);
+            }
 
+            if (conditions.SocialGroupId.HasValue)
+            {
+                query = query.Where(pur => pur.Population.SocialGroupId == conditions.SocialGroupId.Value);
+            }
+
+            if (conditions.ReligionId.HasValue)
+            {
+                query = query.Where(pur => pur.Population.ReligionId == conditions.ReligionId.Value);
+            }
 
             return query;
         }
@@ -85,7 +103,7 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Amount = OperationProcessor.ApplyOperation(entity.Amount, value, operation);
             entity.Amount = Math.Max(0, entity.Amount);
 
-            _logger?.LogDebug($"PopulationUsedResource {entity.Id}: Amount {oldValue} → {entity.Amount} (Resource: {entity.ResourcesId})");
+            this._logger?.LogDebug($"PopulationUsedResource {entity.Id}: Amount {oldValue} → {entity.Amount} (Resource: {entity.ResourcesId})");
         }
 
         protected override void RevertFromEntity(PopulationUsedResource entity, ModifierOperation operation, float value)
@@ -94,9 +112,12 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Amount = OperationProcessor.ReverseOperation(entity.Amount, (float)value, operation);
             entity.Amount = Math.Max(0, entity.Amount);
 
-            _logger?.LogDebug($"PopulationUsedResource {entity.Id}: Amount reverted {oldValue} → {entity.Amount} (Resource: {entity.ResourcesId})");
+            this._logger?.LogDebug($"PopulationUsedResource {entity.Id}: Amount reverted {oldValue} → {entity.Amount} (Resource: {entity.ResourcesId})");
         }
 
-        protected override int GetEntityId(PopulationUsedResource entity) => entity.Id ?? 0;
+        protected override int GetEntityId(PopulationUsedResource entity)
+        {
+            return entity.Id ?? 0;
+        }
     }
 }

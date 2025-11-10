@@ -12,22 +12,32 @@ namespace Wg_backend_api.Logic.Modifiers.Base
         // Wspólna implementacja GetTargetEntities dla wszystkich procesorów populacji
         protected override IQueryable<Population> GetTargetEntities(int nationId, PopulationConditions conditions)
         {
-            var query = _context.Populations
+            var query = this._context.Populations
                 .Include(p => p.Location)
                 .Where(p => p.Location.NationId == nationId);
 
             if (conditions.CultureId.HasValue)
+            {
                 query = query.Where(p => p.CultureId == conditions.CultureId.Value);
-            if (conditions.SocialGroupId.HasValue)
-                query = query.Where(p => p.SocialGroupId == conditions.SocialGroupId.Value);
-            if (conditions.ReligionId.HasValue)
-                query = query.Where(p => p.ReligionId == conditions.ReligionId.Value);
+            }
 
+            if (conditions.SocialGroupId.HasValue)
+            {
+                query = query.Where(p => p.SocialGroupId == conditions.SocialGroupId.Value);
+            }
+
+            if (conditions.ReligionId.HasValue)
+            {
+                query = query.Where(p => p.ReligionId == conditions.ReligionId.Value);
+            }
 
             return query;
         }
 
-        protected override int GetEntityId(Population entity) => entity.Id ?? 0;
+        protected override int GetEntityId(Population entity)
+        {
+            return entity.Id ?? 0;
+        }
 
         // ApplyToEntity i RevertFromEntity pozostają abstrakcyjne - każdy procesor populacji modyfikuje inne pole
     }

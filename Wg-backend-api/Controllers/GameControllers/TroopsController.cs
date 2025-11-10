@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -19,15 +18,16 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public TroopsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
+
+            this._context = this._gameDbContextFactory.Create(schema);
         }
 
         // GET: api/Troops/5  
@@ -36,11 +36,12 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var troop = await _context.Troops.FindAsync(id);
+                var troop = await this._context.Troops.FindAsync(id);
                 if (troop == null)
                 {
                     return NotFound();
                 }
+
                 var troopDTO = new TroopDTO
                 {
                     Id = troop.Id,
@@ -52,7 +53,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var troops = await _context.Troops.ToListAsync();
+                var troops = await this._context.Troops.ToListAsync();
                 var troopDTOs = troops.Select(t => new TroopDTO
                 {
                     Id = t.Id,
@@ -82,12 +83,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                     ArmyId = troopDTO.ArmyId,
                     Quantity = troopDTO.Quantity
                 };
-                _context.Entry(troop).State = EntityState.Modified;
+                this._context.Entry(troop).State = EntityState.Modified;
             }
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -114,8 +115,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Quantity = t.Quantity
             }).ToList();
 
-            _context.Troops.AddRange(troops);
-            await _context.SaveChangesAsync();
+            this._context.Troops.AddRange(troops);
+            await this._context.SaveChangesAsync();
 
             var createdTroopDTOs = troops.Select(t => new TroopDTO
             {
@@ -137,15 +138,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var troops = await _context.Troops.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var troops = await this._context.Troops.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (troops.Count == 0)
             {
                 return NotFound("Nie znaleziono jednostek do usunięcia.");
             }
 
-            _context.Troops.RemoveRange(troops);
-            await _context.SaveChangesAsync();
+            this._context.Troops.RemoveRange(troops);
+            await this._context.SaveChangesAsync();
 
             return Ok();
         }

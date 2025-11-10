@@ -9,20 +9,20 @@ namespace Wg_backend_api.Logic.Modifiers
 
         public ModifierProcessorFactory(IServiceProvider serviceProvider)
         {
-            _serviceProvider = serviceProvider;
+            this._serviceProvider = serviceProvider;
         }
 
         public IModifierProcessor GetProcessor(ModifierType type)
         {
             return type switch
             {
-                ModifierType.PopulationHappiness => _serviceProvider.GetRequiredService<PopulationHappinessProcessor>(),
-                ModifierType.ResourceProduction => _serviceProvider.GetRequiredService<PopulationResourceProductionProcessor>(),
-                ModifierType.ResouerceUsage => _serviceProvider.GetRequiredService<PopulationResourceUsageProcessor>(),
-                ModifierType.ResourceChange => _serviceProvider.GetRequiredService<ResourceChangeProcessor>(),
-                ModifierType.VoluneerChange => _serviceProvider.GetRequiredService<PopulationVolunteerProcessor>(),
-                ModifierType.FactionPower => _serviceProvider.GetRequiredService<FactionPowerProcessor>(),
-                ModifierType.FactionContenment => _serviceProvider.GetRequiredService<FactionContentmentProcessor>(),
+                ModifierType.PopulationHappiness => this._serviceProvider.GetRequiredService<PopulationHappinessProcessor>(),
+                ModifierType.ResourceProduction => this._serviceProvider.GetRequiredService<PopulationResourceProductionProcessor>(),
+                ModifierType.ResouerceUsage => this._serviceProvider.GetRequiredService<PopulationResourceUsageProcessor>(),
+                ModifierType.ResourceChange => this._serviceProvider.GetRequiredService<ResourceChangeProcessor>(),
+                ModifierType.VoluneerChange => this._serviceProvider.GetRequiredService<PopulationVolunteerProcessor>(),
+                ModifierType.FactionPower => this._serviceProvider.GetRequiredService<FactionPowerProcessor>(),
+                ModifierType.FactionContenment => this._serviceProvider.GetRequiredService<FactionContentmentProcessor>(),
 
                 // Dodaj kolejne gdy je zaimplementujesz
                 _ => throw new NotSupportedException($"Nieobsługiwany typ modyfikatora: {type}")

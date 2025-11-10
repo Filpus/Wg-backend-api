@@ -1,18 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations.Internal;
-using Microsoft.EntityFrameworkCore.Migrations;
-
-using System.Reflection;
-using Npgsql;
-using Microsoft.EntityFrameworkCore.Diagnostics;
+﻿using Npgsql;
 
 namespace Wg_backend_api.Data
 {
     public class GameService
     {
-
 
         // Podaj adres do initate.sql
         public static bool GenerateNewGame(string connectionString, string sqlScriptPath, string schema)
@@ -36,6 +27,7 @@ namespace Wg_backend_api.Data
                 Console.WriteLine($"Błąd podczas stosowania migracji dla schematu {schema}: {ex.Message}");
                 return false;
             }
+
             return true;
         }
 
@@ -62,7 +54,6 @@ namespace Wg_backend_api.Data
     //    }
     //}
 
-
     //public class GlobalDbContextFactory : IDesignTimeDbContextFactory<GlobalDbContext>
     //{
     //    public GlobalDbContext CreateDbContext(string[] args)
@@ -84,7 +75,5 @@ namespace Wg_backend_api.Data
     //        return new GlobalDbContext(optionsBuilder.Options);
     //    }
     //}
-
-
 
 }

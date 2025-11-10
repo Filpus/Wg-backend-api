@@ -1,6 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Microsoft.Extensions.DependencyInjection;
 using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Data
@@ -22,8 +20,6 @@ namespace Wg_backend_api.Data
         public DbSet<Assignment> Assignment { get; set; }
         public DbSet<User> User { get; set; }
         public DbSet<Population> Population { get; set; }
-
-
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -70,7 +66,7 @@ namespace Wg_backend_api.Data
                 .HasColumnType("date");
             base.OnModelCreating(modelBuilder);
         }
-        public DbSet<Wg_backend_api.Models.Localisation> Localisation { get; set; } = default!;
+        public DbSet<Localisation> Localisation { get; set; } = default!;
 
     }
 }

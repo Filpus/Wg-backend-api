@@ -1,12 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Drawing.Printing;
-using System.Security.Claims;
 using Wg_backend_api.Data;
-using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
@@ -23,15 +17,15 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
         public PlayersController(GlobalDbContext globalDb, IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _globalDbContext = globalDb;
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._globalDbContext = globalDb;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
         public void SetUserId(int userId)
         {
-            _userId = userId;
+            this._userId = userId;
         }
 
         [HttpGet]

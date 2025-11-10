@@ -45,7 +45,6 @@ namespace Wg_backend_api.Models
         public ICollection<Modifiers> Modifiers { get; set; }
     }
 
-
     [Table("modifiers")]
     public class Modifiers
     {
@@ -64,7 +63,6 @@ namespace Wg_backend_api.Models
         [Required]
         [Column("effects")]
         public string Effects { get; set; }
-
 
     }
 }

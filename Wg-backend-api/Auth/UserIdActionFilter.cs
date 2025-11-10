@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Wg_backend_api.Services;
 using Wg_backend_api.Controllers.GlobalControllers;
+using Wg_backend_api.Services;
 
 public class UserIdActionFilter : IActionFilter
 {
@@ -9,14 +9,14 @@ public class UserIdActionFilter : IActionFilter
 
     public UserIdActionFilter(ISessionDataService sessionDataService)
     {
-        _sessionDataService = sessionDataService;
+        this._sessionDataService = sessionDataService;
     }
 
     public void OnActionExecuting(ActionExecutingContext context)
     {
-        if (context.Controller is PlayersController || context.Controller is GamesController || context.Controller is UserController)
+        if (context.Controller is PlayersController or GamesController or UserController)
         {
-            var userIdStr = _sessionDataService.GetUserIdItems();
+            var userIdStr = this._sessionDataService.GetUserIdItems();
             if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out _))
             {
                 context.Result = new UnauthorizedResult();

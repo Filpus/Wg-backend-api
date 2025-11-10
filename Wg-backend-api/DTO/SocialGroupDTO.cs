@@ -1,12 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-
-namespace Wg_backend_api.DTO
+﻿namespace Wg_backend_api.DTO
 {
     public class SocialGroupDTO
     {
         public int? Id { get; set; }
-
 
         public string Name { get; set; }
 
@@ -14,7 +10,6 @@ namespace Wg_backend_api.DTO
 
         public int Volunteers { get; set; } // Typ int do przechowywania liczby
     }
-
 
     public class SocialGroupInfoDTO
     {

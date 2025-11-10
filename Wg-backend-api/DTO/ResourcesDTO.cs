@@ -31,8 +31,8 @@
 
     public class NationResourceBalanceDto
     {
-        public List<ResourceDto> Resources { get; set; } = new();
-        public List<ResourceBalanceDto> ResourceBalances { get; set; } = new();
+        public List<ResourceDto> Resources { get; set; } = [];
+        public List<ResourceBalanceDto> ResourceBalances { get; set; } = [];
     }
 
     public class ResourceAmountDto

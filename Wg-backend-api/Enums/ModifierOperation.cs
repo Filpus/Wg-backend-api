@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace Wg_backend_api.Enums
+﻿namespace Wg_backend_api.Enums
 {
     public enum ModifierOperation
     {
@@ -9,7 +7,6 @@ namespace Wg_backend_api.Enums
         Multiply,   // currentValue * modifierValue
 
         Percentage, // currentValue * (1 + modifierValue/100)
-
 
     }
 }

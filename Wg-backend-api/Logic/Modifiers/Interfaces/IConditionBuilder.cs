@@ -2,8 +2,8 @@
 {
     public interface IConditionBuilder<TEntity>
     {
-        IConditionBuilder<TEntity> ApplyConditions(Dictionary<string, object> conditions);
-        IQueryable<TEntity> Build();
-        IConditionBuilder<TEntity> Reset();
+        public IConditionBuilder<TEntity> ApplyConditions(Dictionary<string, object> conditions);
+        public IQueryable<TEntity> Build();
+        public IConditionBuilder<TEntity> Reset();
     }
 }

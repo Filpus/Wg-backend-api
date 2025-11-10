@@ -1,8 +1,5 @@
 ﻿namespace Wg_backend_api.DTO
 {
-    using System.ComponentModel.DataAnnotations.Schema;
-    using Wg_backend_api.Models;
-
     public class FactionDTO
     {
         public int? Id { get; set; }

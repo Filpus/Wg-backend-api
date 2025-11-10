@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
+﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
 using Wg_backend_api.Enums;
 using Wg_backend_api.Models;
@@ -26,8 +26,8 @@ namespace Wg_backend_api.Logic.Modifiers
 
         protected ConditionBuilder(IQueryable<TEntity> baseQuery)
         {
-            Query = baseQuery ?? throw new ArgumentNullException(nameof(baseQuery));
-            _originalQuery = baseQuery;
+            this.Query = baseQuery ?? throw new ArgumentNullException(nameof(baseQuery));
+            this._originalQuery = baseQuery;
         }
 
         /// <summary>
@@ -40,14 +40,17 @@ namespace Wg_backend_api.Logic.Modifiers
         /// <summary>
         /// Zwraca finalne query z wszystkimi zastosowanymi filtrami
         /// </summary>
-        public virtual IQueryable<TEntity> Build() => Query;
+        public virtual IQueryable<TEntity> Build()
+        {
+            return this.Query;
+        }
 
         /// <summary>
         /// Resetuje query do stanu początkowego
         /// </summary>
         public virtual IConditionBuilder<TEntity> Reset()
         {
-            Query = _originalQuery;
+            this.Query = this._originalQuery;
             return this;
         }
 
@@ -61,15 +64,19 @@ namespace Wg_backend_api.Logic.Modifiers
         /// <returns>True jeśli warunek istnieje i da się skonwertować</returns>
         protected bool TryGetCondition<T>(Dictionary<string, object> conditions, string key, out T value)
         {
-            value = default(T);
+            value = default;
 
             if (!conditions.TryGetValue(key, out var rawValue))
+            {
                 return false;
+            }
 
             try
             {
                 if (rawValue == null)
+                {
                     return false;
+                }
 
                 // Handle JsonElement from System.Text.Json
                 if (rawValue is JsonElement jsonElement)
@@ -102,11 +109,12 @@ namespace Wg_backend_api.Logic.Modifiers
                 {
                     return JsonSerializer.Deserialize<T>(jsonElement.GetRawText());
                 }
+
                 return (T)Convert.ChangeType(value, typeof(T));
             }
             catch
             {
-                return default(T);
+                return default;
             }
         }
 
@@ -136,8 +144,8 @@ namespace Wg_backend_api.Logic.Modifiers
 
         protected BaseModifierProcessor(GameDbContext context, ILogger<BaseModifierProcessor<TEntity>> logger = null)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-            _logger = logger;
+            this._context = context ?? throw new ArgumentNullException(nameof(context));
+            this._logger = logger;
         }
 
         /// <summary>
@@ -227,7 +235,7 @@ namespace Wg_backend_api.Logic.Modifiers
 
                     if (entities.Count == 0)
                     {
-                        result.Warnings.Add($"Nie znaleziono encji spełniających warunki dla {SupportedType}");
+                        result.Warnings.Add($"Nie znaleziono encji spełniających warunki dla {this.SupportedType}");
                         continue;
                     }
 
@@ -241,7 +249,7 @@ namespace Wg_backend_api.Logic.Modifiers
                         }
                     }
 
-                    _logger?.LogDebug($"Zastosowano efekt {effect.Operation} {effect.Value} na {entities.Count} encji");
+                    this._logger?.LogDebug($"Zastosowano efekt {effect.Operation} {effect.Value} na {entities.Count} encji");
                 }
 
                 await context.SaveChangesAsync();
@@ -255,13 +263,13 @@ namespace Wg_backend_api.Logic.Modifiers
 
                 result.Message = $"Pomyślnie zmodyfikowano {changeRecords.Count} encji typu {typeof(TEntity).Name}";
 
-                _logger?.LogInformation($"Procesor {SupportedType} zmodyfikował {changeRecords.Count} encji dla narodu {nationId}");
+                this._logger?.LogInformation($"Procesor {this.SupportedType} zmodyfikował {changeRecords.Count} encji dla narodu {nationId}");
             }
             catch (Exception ex)
             {
                 result.Success = false;
-                result.Message = $"Błąd podczas przetwarzania modyfikatora {SupportedType}: {ex.Message}";
-                _logger?.LogError(ex, $"Błąd w procesorze {SupportedType} dla narodu {nationId}");
+                result.Message = $"Błąd podczas przetwarzania modyfikatora {this.SupportedType}: {ex.Message}";
+                this._logger?.LogError(ex, $"Błąd w procesorze {this.SupportedType} dla narodu {nationId}");
             }
 
             return result;
@@ -303,7 +311,7 @@ namespace Wg_backend_api.Logic.Modifiers
             catch (Exception ex)
             {
                 result.Success = false;
-                result.Message = $"Błąd podczas odwracania modyfikatora {SupportedType}: {ex.Message}";
+                result.Message = $"Błąd podczas odwracania modyfikatora {this.SupportedType}: {ex.Message}";
             }
 
             return result;
@@ -343,17 +351,18 @@ namespace Wg_backend_api.Logic.Modifiers
         protected virtual bool ValidateEffect(ModifierEffect effect)
         {
             if (string.IsNullOrEmpty(effect.Operation))
+            {
                 return false;
+            }
 
             if (!Enum.TryParse<ModifierOperation>(effect.Operation, true, out _))
+            {
                 return false;
+            }
 
             // Dodatkowe walidacje można dodać w podklasach
             return true;
         }
     }
-
-
-
 
 }

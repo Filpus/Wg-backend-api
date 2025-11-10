@@ -12,7 +12,7 @@ namespace Wg_backend_api.Logic.Modifiers
         /// <summary>
         /// Typ modyfikatora obsługiwany przez ten procesor
         /// </summary>
-        ModifierType SupportedType { get; }
+        public ModifierType SupportedType { get; }
 
         /// <summary>
         /// Przetwarza listę efektów modyfikatora dla danego narodu
@@ -21,7 +21,7 @@ namespace Wg_backend_api.Logic.Modifiers
         /// <param name="effects">Lista efektów do zastosowania</param>
         /// <param name="context">Kontekst bazy danych</param>
         /// <returns>Wynik aplikacji modyfikatora</returns>
-        Task<ModifierApplicationResult> ProcessAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
+        public Task<ModifierApplicationResult> ProcessAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
 
         /// <summary>
         /// Odwraca efekt modyfikatora (dla modyfikatorów czasowych)
@@ -30,8 +30,7 @@ namespace Wg_backend_api.Logic.Modifiers
         /// <param name="effects">Lista efektów do odwrócenia</param>
         /// <param name="context">Kontekst bazy danych</param>
         /// <returns>Wynik usunięcia modyfikatora</returns>
-        Task<ModifierApplicationResult> RevertAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
-
+        public Task<ModifierApplicationResult> RevertAsync(int nationId, List<ModifierEffect> effects, GameDbContext context);
 
     }
     /// <summary>
@@ -45,21 +44,19 @@ namespace Wg_backend_api.Logic.Modifiers
         /// </summary>
         /// <param name="conditions">Słownik warunków z JSON</param>
         /// <returns>Builder z zastosowanymi warunkami</returns>
-        IConditionBuilder<TEntity> ApplyConditions(Dictionary<string, object> conditions);
+        public IConditionBuilder<TEntity> ApplyConditions(Dictionary<string, object> conditions);
 
         /// <summary>
         /// Buduje finalne query z wszystkimi zastosowanymi warunkami
         /// </summary>
         /// <returns>IQueryable z zastosowanymi filtrami</returns>
-        IQueryable<TEntity> Build();
+        public IQueryable<TEntity> Build();
 
         /// <summary>
         /// Resetuje wszystkie warunki do stanu początkowego
         /// </summary>
         /// <returns>Builder w stanie początkowym</returns>
-        IConditionBuilder<TEntity> Reset();
+        public IConditionBuilder<TEntity> Reset();
     }
-
-
 
 }

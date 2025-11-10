@@ -18,7 +18,7 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Volunteers = (int)OperationProcessor.ApplyOperation(entity.Volunteers, value, operation);
             entity.Volunteers = Math.Max(0, entity.Volunteers);
 
-            _logger?.LogDebug($"Population {entity.Id}: Volunteers {oldValue} → {entity.Volunteers}");
+            this._logger?.LogDebug($"Population {entity.Id}: Volunteers {oldValue} → {entity.Volunteers}");
         }
 
         protected override void RevertFromEntity(Population entity, ModifierOperation operation, float value)
@@ -27,7 +27,7 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Volunteers = (int)OperationProcessor.ReverseOperation(entity.Volunteers, value, operation);
             entity.Volunteers = Math.Max(0, entity.Volunteers);
 
-            _logger?.LogDebug($"Population {entity.Id}: Volunteers reverted {oldValue} → {entity.Volunteers}");
+            this._logger?.LogDebug($"Population {entity.Id}: Volunteers reverted {oldValue} → {entity.Volunteers}");
         }
 
     }

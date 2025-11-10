@@ -17,7 +17,7 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             var oldValue = entity.Power;
             entity.Power = (int)OperationProcessor.ApplyOperation(entity.Power, value, operation);
 
-            _logger?.LogDebug($"Faction {entity.Id}: Power {oldValue} → {entity.Power}");
+            this._logger?.LogDebug($"Faction {entity.Id}: Power {oldValue} → {entity.Power}");
         }
 
         protected override void RevertFromEntity(Faction entity, ModifierOperation operation, float value)
@@ -26,7 +26,7 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Power = (int)OperationProcessor.ReverseOperation(entity.Power, (float)value, operation);
             entity.Power = Math.Max(0, Math.Min(100, entity.Power));
 
-            _logger?.LogDebug($"Faction {entity.Id}: Power reverted {oldValue} → {entity.Power}");
+            this._logger?.LogDebug($"Faction {entity.Id}: Power reverted {oldValue} → {entity.Power}");
         }
     }
 
@@ -42,7 +42,7 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             var oldValue = entity.Contentment;
             entity.Contentment = (int)OperationProcessor.ApplyOperation(entity.Contentment, (float)value, operation);
 
-            _logger?.LogDebug($"Faction {entity.Id}: Power {oldValue} → {entity.Contentment}");
+            this._logger?.LogDebug($"Faction {entity.Id}: Power {oldValue} → {entity.Contentment}");
         }
 
         protected override void RevertFromEntity(Faction entity, ModifierOperation operation, float value)
@@ -51,7 +51,7 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Contentment = (int)OperationProcessor.ReverseOperation(entity.Contentment, value, operation);
             entity.Contentment = Math.Max(0, Math.Min(100, entity.Contentment));
 
-            _logger?.LogDebug($"Faction {entity.Id}: Power reverted {oldValue} → {entity.Contentment}");
+            this._logger?.LogDebug($"Faction {entity.Id}: Power reverted {oldValue} → {entity.Contentment}");
         }
     }
 }

@@ -1,18 +1,18 @@
-﻿namespace Wg_backend_api.Controllers.GlobalControllers
-{
-    using System.IdentityModel.Tokens.Jwt;
-    using System.Security.Claims;
-    using System.Security.Cryptography;
-    using System.Text;
-    using Microsoft.AspNetCore.Authorization;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.EntityFrameworkCore;
-    using Microsoft.IdentityModel.Tokens;
-    using Wg_backend_api.Auth;
-    using Wg_backend_api.Data;
-    using Wg_backend_api.Models;
-    using Wg_backend_api.Services;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Wg_backend_api.Auth;
+using Wg_backend_api.Data;
+using Wg_backend_api.Models;
+using Wg_backend_api.Services;
 
+namespace Wg_backend_api.Controllers.GlobalControllers
+{
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
@@ -74,33 +74,36 @@
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest req)
         {
-            var oldRefreshToken = Request.Cookies["refresh_token"];
+            var oldRefreshToken = this.Request.Cookies["refresh_token"];
             if (string.IsNullOrEmpty(oldRefreshToken))
             {
                 return Unauthorized(new { error = "No refresh token provided" });
             }
 
-            var result = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == oldRefreshToken);
+            var result = await this._context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == oldRefreshToken);
             if (result == null || result.ExpiresAt <= DateTime.UtcNow || result.RevokedAt != null)
             {
                 return Unauthorized(new { error = "Invalid or expired refresh token" });
             }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == result.UserId);
-            if (user == null) return Unauthorized(new { error = "User not found" });
+            var user = await this._context.Users.FirstOrDefaultAsync(u => u.Id == result.UserId);
+            if (user == null)
+            {
+                return Unauthorized(new { error = "User not found" });
+            }
 
             var newAccessToken = GenerateJwtToken(user.Id.Value, user.Name);
             var newRefreshToken = GenerateRefreshToken();
 
             result.RevokedAt = DateTime.UtcNow;
-            _context.RefreshTokens.Add(new RefreshToken
+            this._context.RefreshTokens.Add(new RefreshToken
             {
                 Token = newRefreshToken,
                 UserId = user.Id.Value,
-                ExpiresAt = DateTime.UtcNow.AddDays(_config.GetValue<int>("Jwt:RefreshTokenLifetimeDays"))
+                ExpiresAt = DateTime.UtcNow.AddDays(this._config.GetValue<int>("Jwt:RefreshTokenLifetimeDays"))
             });
 
-            await _context.SaveChangesAsync();
+            await this._context.SaveChangesAsync();
 
             SetAuthCookies(newAccessToken, newRefreshToken);
 
@@ -109,9 +112,10 @@
 
         [AllowAnonymous]
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout([FromBody] RefreshRequest req) {
-            Response.Cookies.Delete("access_token");
-            Response.Cookies.Delete("refresh_token");
+        public async Task<IActionResult> Logout([FromBody] RefreshRequest req)
+        {
+            this.Response.Cookies.Delete("access_token");
+            this.Response.Cookies.Delete("refresh_token");
 
             this.HttpContext.Session.Clear();
             return Ok(new { message = "Logged out" });
@@ -123,16 +127,16 @@
         {
             if (this.User.Identity != null && this.User.Identity.IsAuthenticated)
             {
-                var nation = _sessionDataService.GetNation();
-                var game = _sessionDataService.GetSchema();
-                var playerRole = _sessionDataService.GetRole();
+                var nation = this._sessionDataService.GetNation();
+                var game = this._sessionDataService.GetSchema();
+                var playerRole = this._sessionDataService.GetRole();
                 if (nation != null && game != null)
                 {
                     return this.Ok(new
                     {
                         isAuthenticated = true,
-                        username = User.FindFirst(ClaimTypes.Name)?.Value,
-                        nation = nation,
+                        username = this.User.FindFirst(ClaimTypes.Name)?.Value,
+                        nation,
                         schema = game,
                         role = playerRole,
                     });
@@ -141,7 +145,7 @@
                 return this.Ok(new
                 {
                     isAuthenticated = true,
-                    username = User.FindFirst(ClaimTypes.Name)?.Value,
+                    username = this.User.FindFirst(ClaimTypes.Name)?.Value,
                 });
             }
 
@@ -291,8 +295,8 @@
                 Expires = DateTime.UtcNow.AddDays(this._config.GetValue<int>("Jwt:RefreshTokenLifetimeDays")),
             };
 
-            Response.Cookies.Append("access_token", accessToken, accessCookieOptions);
-            Response.Cookies.Append("refresh_token", refreshToken, refreshCookieOptions);
+            this.Response.Cookies.Append("access_token", accessToken, accessCookieOptions);
+            this.Response.Cookies.Append("refresh_token", refreshToken, refreshCookieOptions);
         }
     }
 }

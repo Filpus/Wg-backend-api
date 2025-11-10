@@ -6,7 +6,8 @@
         public string Password { get; set; }
     }
 
-    public class RefreshRequest {
+    public class RefreshRequest
+    {
         public string RefreshToken { get; set; } = string.Empty;
     }
 }

@@ -1,13 +1,8 @@
-﻿
-
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
-using Wg_backend_api.Models;
 using Wg_backend_api.Services;
-
 
 namespace Wg_backend_api.Controllers.GameControllers
 {
@@ -22,18 +17,17 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public ModifiersController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
-        }
 
-       
+            this._context = this._gameDbContextFactory.Create(schema);
+        }
 
         // DELETE: api/Modifiers
         [HttpDelete]
@@ -44,15 +38,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var modifiers = await _context.Modifiers.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var modifiers = await this._context.Modifiers.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (modifiers.Count == 0)
             {
                 return NotFound("Nie znaleziono modyfikatorów do usunięcia.");
             }
 
-            _context.Modifiers.RemoveRange(modifiers);
-            await _context.SaveChangesAsync();
+            this._context.Modifiers.RemoveRange(modifiers);
+            await this._context.SaveChangesAsync();
 
             return Ok();
         }

@@ -10,12 +10,13 @@ namespace Wg_backend_api.Logic.Resources
     public static class CalcResourceBalance
     {
 
-
         public static async Task<NationResourceBalanceDto> CalculateNationResourceBalance(int nationId, GameDbContext _context)
         {
             var nation = await GetNationWithIncludesAsync(nationId, _context);
             if (nation == null)
+            {
                 return null;
+            }
 
             var resources = await GetAllResourcesAsync(_context);
             var tradeAgreements = await GetAcceptedTradeAgreementsAsync(nationId, _context);
@@ -23,7 +24,7 @@ namespace Wg_backend_api.Logic.Resources
             var result = new NationResourceBalanceDto
             {
                 Resources = resources,
-                ResourceBalances = new List<ResourceBalanceDto>()
+                ResourceBalances = []
             };
 
             var processor = new ResourceChangeProcessor(_context, null);
@@ -156,6 +157,7 @@ namespace Wg_backend_api.Logic.Resources
                 {
                     continue;
                 }
+
                 totalProduction += productionShare.Coefficient * localisationResource.Amount;
             }
 

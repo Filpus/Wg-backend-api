@@ -1,13 +1,13 @@
-﻿namespace Wg_backend_api.Controllers.GameControllers
-{
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.EntityFrameworkCore;
-    using Wg_backend_api.Auth;
-    using Wg_backend_api.Data;
-    using Wg_backend_api.DTO;
-    using Wg_backend_api.Models;
-    using Wg_backend_api.Services;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Wg_backend_api.Auth;
+using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
+using Wg_backend_api.Models;
+using Wg_backend_api.Services;
 
+namespace Wg_backend_api.Controllers.GameControllers
+{
     [Route("api/UnitOrders")]
     [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
@@ -62,10 +62,7 @@
         [HttpGet("GetUnitOrdersByNationId/{nationId?}")]
         public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetNavUnitOrdersByNationId(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = this.nationId;
-            }
+            nationId ??= this.nationId;
 
             var unitOrders = await this.context.UnitOrders
                 .Where(uo => uo.NationId == nationId)
@@ -86,10 +83,7 @@
         [HttpGet("GetNavalUnitOrdersByNationId/{nationId?}")]
         public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetNavalUnitOrdersByNationId(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = this.nationId;
-            }
+            nationId ??= this.nationId;
 
             var navalUnitOrders = await this.context.UnitOrders
                 .Where(uo => uo.NationId == nationId && uo.UnitType.IsNaval) // Assuming UnitType has an IsNaval property
@@ -110,10 +104,7 @@
         [HttpGet("GetLandUnitOrdersByNationId/{nationId?}")]
         public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetLandUnitOrdersByNationId(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = this.nationId;
-            }
+            nationId ??= this.nationId;
 
             var landUnitOrders = await this.context.UnitOrders
                 .Where(uo => uo.NationId == nationId && !uo.UnitType.IsNaval) // Assuming UnitType has an IsNaval property
@@ -133,10 +124,7 @@
         [HttpPost("AddRecruitOrder/{nationId?}")]
         public async Task<IActionResult> AddRecruitOrder(int? nationId, [FromBody] RecruitOrderDTO recruitOrder)
         {
-            if (nationId == null)
-            {
-                nationId = this.nationId;
-            }
+            nationId ??= this.nationId;
 
             if (recruitOrder == null || recruitOrder.Count <= 0)
             {

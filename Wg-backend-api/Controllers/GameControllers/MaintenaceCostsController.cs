@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -20,23 +19,22 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public MaintenaceCostsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
+
+            this._context = this._gameDbContextFactory.Create(schema);
         }
-
-
 
         [HttpGet("unitType/{unitTypeId}")]
         public async Task<ActionResult<List<UnitTypeResourceInfoDTO>>> GetMaintenaceCostsForUnitType(int unitTypeId)
         {
-            var list = await _context.MaintenaceCosts
+            var list = await this._context.MaintenaceCosts
                 .Where(m => m.UnitTypeId == unitTypeId)
                 .Include(m => m.UnitType)
                 .Include(m => m.Resource)
@@ -44,7 +42,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     Id = (int)m.Id,
                     UnitTypeId = m.UnitTypeId,
-                    UnitTypeName =  m.UnitType.Name,
+                    UnitTypeName = m.UnitType.Name,
                     ResourceId = m.ResourceId,
                     ResourceName = m.Resource.Name,
                     Amount = m.Amount
@@ -65,12 +63,11 @@ namespace Wg_backend_api.Controllers.GameControllers
             foreach (var dto in dtos)
             {
 
-
                 MaintenaceCosts entity = null;
 
                 if (dto.Id.HasValue)
                 {
-                    entity = await _context.MaintenaceCosts.FindAsync(dto.Id.Value);
+                    entity = await this._context.MaintenaceCosts.FindAsync(dto.Id.Value);
                 }
 
                 if (entity == null)
@@ -81,18 +78,18 @@ namespace Wg_backend_api.Controllers.GameControllers
                         ResourceId = dto.ResourceId,
                         Amount = dto.Amount
                     };
-                    await _context.MaintenaceCosts.AddAsync(entity);
+                    await this._context.MaintenaceCosts.AddAsync(entity);
                 }
                 else
                 {
                     entity.UnitTypeId = dto.UnitTypeId;
                     entity.ResourceId = dto.ResourceId;
                     entity.Amount = dto.Amount;
-                    _context.MaintenaceCosts.Update(entity);
+                    this._context.MaintenaceCosts.Update(entity);
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await this._context.SaveChangesAsync();
             return Ok();
         }
 
@@ -104,15 +101,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var maintenaceCosts = await _context.MaintenaceCosts.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var maintenaceCosts = await this._context.MaintenaceCosts.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (maintenaceCosts.Count == 0)
             {
                 return NotFound("Nie znaleziono kosztów utrzymania do usunięcia.");
             }
 
-            _context.MaintenaceCosts.RemoveRange(maintenaceCosts);
-            await _context.SaveChangesAsync();
+            this._context.MaintenaceCosts.RemoveRange(maintenaceCosts);
+            await this._context.SaveChangesAsync();
 
             return Ok();
         }

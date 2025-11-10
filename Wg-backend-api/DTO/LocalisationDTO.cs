@@ -1,8 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-using Wg_backend_api.Models;
-
-namespace Wg_backend_api.DTO
+﻿namespace Wg_backend_api.DTO
 {
     public class LocalisationDTO
     {
@@ -55,10 +51,9 @@ namespace Wg_backend_api.DTO
     {
 
         public string Name { get; set; }
-        public List<LocalisationResourceInfoDTO> Resources { get; set; } = new();
-        public List<LocalisationResourceProductionDTO> ResourceProductions { get; set; } = new();
+        public List<LocalisationResourceInfoDTO> Resources { get; set; } = [];
+        public List<LocalisationResourceProductionDTO> ResourceProductions { get; set; } = [];
         public List<PopulationGroupDTO> PopulationGroups { get; set; }
-
 
     }
 

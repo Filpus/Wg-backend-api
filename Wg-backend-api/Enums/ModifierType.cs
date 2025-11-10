@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace Wg_backend_api.Enums
+﻿namespace Wg_backend_api.Enums
 {
     public enum ModifierType
     {

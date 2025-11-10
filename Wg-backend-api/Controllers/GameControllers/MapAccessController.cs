@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
@@ -134,7 +133,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             await this._context.SaveChangesAsync();
 
-            return this.CreatedAtAction(nameof(this.GetAllMapAccesses), new {});
+            return this.CreatedAtAction(nameof(this.GetAllMapAccesses), new { });
         }
 
         [HttpDelete]

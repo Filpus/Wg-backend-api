@@ -16,17 +16,17 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public UsedResourcesController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
-        }
 
+            this._context = this._gameDbContextFactory.Create(schema);
+        }
 
         // DELETE: api/UsedResources
         [HttpDelete]
@@ -37,15 +37,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var usedResources = await _context.UsedResources.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var usedResources = await this._context.UsedResources.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (usedResources.Count == 0)
             {
                 return NotFound("Nie znaleziono zasobów do usunięcia.");
             }
 
-            _context.UsedResources.RemoveRange(usedResources);
-            await _context.SaveChangesAsync();
+            this._context.UsedResources.RemoveRange(usedResources);
+            await this._context.SaveChangesAsync();
 
             return Ok();
         }

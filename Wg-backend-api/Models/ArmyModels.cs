@@ -45,7 +45,6 @@ namespace Wg_backend_api.Models
 
     }
 
-
     [Table("accessToUnits")]
     public class AccessToUnit
     {
