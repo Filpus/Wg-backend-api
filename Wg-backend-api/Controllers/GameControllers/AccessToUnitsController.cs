@@ -189,7 +189,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             // Oblicz różnicę zbiorów
             var missingAccess = allUnitTypes
                 .Where(ut => !nationAccess.Contains((int)ut.Id))
-                .Where(ut => !ut.IsNaval)
+                .Where(ut => ut.IsNaval)
                 .Select(ut => new UnitTypeDTO
                 {
                     UnitId = (int)ut.Id,
