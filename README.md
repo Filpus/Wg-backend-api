@@ -9,10 +9,14 @@ psql -U postgres -d wg -f .\Wg-backend-api\Migrations\wg-init-db-seeder.sql
 ```
 game-schema-init.sql file, is for creating the schema of game_1, without global schema, or any data.
 
+Reseting db with .bat file
+```bash
+./reset-db.bat
+```
+
 ### before push changes
 
 Format main project
 ```bash
-dotnet format .\Wg-backend-api\
+./format.bat
 ```
-For more info check: [Microsoft dotnet-format](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format)
