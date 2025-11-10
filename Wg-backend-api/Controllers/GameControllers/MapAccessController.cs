@@ -156,5 +156,40 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return this.Ok();
         }
+        [HttpGet("MissingAccess/{nationId?}")]
+        public async Task<ActionResult<IEnumerable<MapAccessInfoDTO>>> GetMissingMapAccess(int? nationId)
+        {
+            if (nationId == null)
+            {
+                nationId = _nationId;
+            }
+
+            if (nationId == null || nationId <= 0)
+            {
+                return BadRequest("Nieprawidłowe ID państwa.");
+            }
+
+            var allMaps = await _context.Maps.ToListAsync();
+
+            var nationAccess = await _context.MapAccesses
+                .Where(ma => ma.NationId == nationId)
+                .Select(ma => ma.MapId)
+                .ToListAsync();
+
+            var missingAccess = allMaps
+                .Where(map => !nationAccess.Contains((int)map.Id))
+                .Select(map => new MapAccessInfoDTO
+                {
+                    MapId = (int)map.Id,
+                    MapName = map.Name,
+                    NationId = nationId.Value,
+                    NationName = _context.Nations.FirstOrDefault(n => n.Id == nationId)?.Name ?? string.Empty,
+                })
+                .ToList();
+
+            return Ok(missingAccess);
+        }
+
+
     }
 }
