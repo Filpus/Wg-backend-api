@@ -107,7 +107,7 @@
             return Ok(new { message = "Token refreshed" });
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout([FromBody] RefreshRequest req) {
             Response.Cookies.Delete("access_token");
