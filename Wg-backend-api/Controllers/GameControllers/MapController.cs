@@ -6,11 +6,13 @@ using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+using Wg_backend_api.Auth;
 
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/Maps")]
     [ApiController]
+    [AuthorizeGameRole("GameMaster", "Player")]
     public class MapController : Controller
     {
 

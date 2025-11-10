@@ -22,6 +22,7 @@ namespace Wg_backend_api.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Game> Games { get; set; }
         public DbSet<GameAccess> GameAccesses { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -67,6 +68,15 @@ namespace Wg_backend_api.Data
                 .HasOne(ga => ga.Owner)
                 .WithMany(u => u.OwnedGames)
                 .HasForeignKey(g => g.OwnerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasKey(rt => rt.Id);
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasOne(rt => rt.User)
+                .WithOne(u => u.RefreshToken)
+                .HasForeignKey<RefreshToken>(rt => rt.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

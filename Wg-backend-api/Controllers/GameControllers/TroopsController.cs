@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
@@ -9,6 +10,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/Troops")]
     [ApiController]
+    [AuthorizeGameRole("GameMaster", "Player")]
     public class TroopsController : Controller
     {
         private readonly IGameDbContextFactory _gameDbContextFactory;

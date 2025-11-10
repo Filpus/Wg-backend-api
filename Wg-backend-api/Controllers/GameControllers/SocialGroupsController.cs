@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
@@ -12,6 +13,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [AuthorizeGameRole("GameMaster", "Player")]
     public class SocialGroupsController : Controller
     {
         private readonly IGameDbContextFactory _gameDbContextFactory;
@@ -30,6 +32,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             _context = _gameDbContextFactory.Create(schema);
         }
+
         // GET: api/SocialGroups
         // GET: api/SocialGroups/5
         [HttpGet("{id?}")]

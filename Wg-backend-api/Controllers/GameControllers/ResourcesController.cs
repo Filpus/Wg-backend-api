@@ -3,6 +3,7 @@
     // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.EntityFrameworkCore;
+    using Wg_backend_api.Auth;
     using Wg_backend_api.Data;
     using Wg_backend_api.DTO;
     using Wg_backend_api.Logic.Modifiers.Processors;
@@ -12,6 +13,7 @@
 
     [Route("api/[controller]")]
     [ApiController]
+    [AuthorizeGameRole("GameMaster", "Player")]
     public class ResourcesController : ControllerBase
     {
         private readonly IGameDbContextFactory _gameDbContextFactory;
