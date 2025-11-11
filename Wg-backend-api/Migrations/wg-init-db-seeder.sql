@@ -1267,6 +1267,8 @@ ALTER TABLE ONLY game_1."ownedResources" ALTER COLUMN "id" SET DEFAULT nextval('
 COPY "Global".gameaccess (id, "fk_Users", "fk_Games", "accessType", "isArchived") FROM stdin;
 1	1	1	1	f
 2	2	1	0	f
+3	3	1	1	f
+4	4	1	1	f
 \.
 
 
@@ -1290,6 +1292,8 @@ COPY "Global".games (id, name, description, image, "ownerId", game_code) FROM st
 COPY "Global".users (id, name, email, password, issso, isarchived, image) FROM stdin;
 1	Test	test	$2a$11$s/J0zefb5amFzjdjllmuZ.AXuziyjVRcYTeEhxyemaxsJJyKnzxU2	f	f	\N
 2	admin	admin	$2a$11$t8DGLO5spPxXzpyRb5j0vuuk54ycsFEo9scO7xswpGCH9WvMcwive	f	f	\N
+3	tomek	tomek	$2a$11$t8DGLO5spPxXzpyRb5j0vuuk54ycsFEo9scO7xswpGCH9WvMcwive	f	f	\N
+4	jakub	jakub	$2a$11$t8DGLO5spPxXzpyRb5j0vuuk54ycsFEo9scO7xswpGCH9WvMcwive	f	f	\N
 \.
 
 
@@ -1324,9 +1328,6 @@ COPY game_1."accessToUnits" (id, "fk_Nation", "fk_UnitTypes") FROM stdin;
 COPY game_1.accessestonations (id, fk_nations, fk_users, dateacquired, isactive) FROM stdin;
 1	1	1	2025-01-01 00:00:00+01	t
 2	2	2	2025-01-02 00:00:00+01	t
-3	3	3	2025-01-03 00:00:00+01	t
-4	4	4	2025-01-04 00:00:00+01	t
-5	5	5	2025-01-05 00:00:00+01	t
 \.
 
 
@@ -1600,6 +1601,8 @@ COPY game_1."ownedResources" ("id", fk_nation, fk_resource, amount) FROM stdin;
 COPY game_1.players (id, "fk_User", "playerType", "name") FROM stdin;
 1	1	1	Test
 2	2	0	admin
+3	3	1	tomek
+4	4	1	jakub
 \.
 
 

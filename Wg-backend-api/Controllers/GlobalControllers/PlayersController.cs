@@ -1,25 +1,41 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
+    [Authorize] // TODO fuszera drut
     [ApiController]
     [Route("api/games/[controller]")]
 
     public class PlayersController : ControllerBase
     {
         private readonly GlobalDbContext _globalDbContext;
-        private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
+        private GameDbContext _context;
         private int _userId;
+        private int _gameId;
 
         public PlayersController(GlobalDbContext globalDb, IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
             this._globalDbContext = globalDb;
-            this._gameDbContextFactory = gameDbFactory;
             this._sessionDataService = sessionDataService;
+
+            string schema = this._sessionDataService.GetSchema();
+            if (string.IsNullOrEmpty(schema))
+            {
+                throw new InvalidOperationException("Brak schematu w sesji.");
+            }
+            this._context = gameDbFactory.Create(schema);
+            this._gameId = schema != null ? int.Parse(schema.Replace("game_", string.Empty)) : -1;
+            if (this._gameId == -1)
+            {
+                throw new InvalidOperationException("Nieprawidłowy identyfikator gry w schemacie.");
+            }
+
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
@@ -31,35 +47,35 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpGet]
         public async Task<IActionResult> GetPlayers()
         {
-            var selectedGameStr = this._sessionDataService.GetSchema();
-
-            var idPart = selectedGameStr.Replace("game_", string.Empty);
-            if (!int.TryParse(idPart, out int gameId))
-            {
-                return BadRequest("Invalid game ID in session.");
-            }
-
             var access = await this._globalDbContext.GameAccesses
-                .FirstOrDefaultAsync(a => a.GameId == gameId && a.UserId == this._userId);
+                .FirstOrDefaultAsync(a => a.GameId == this._gameId && a.UserId == this._userId);
 
             if (access == null)
             {
                 return Forbid();
             }
 
-            var game = await this._globalDbContext.Games.FindAsync(gameId);
-
-            if (game == null)
-            {
-                return NotFound("Game not found");
-            }
-
-            var schema = $"game_{game.Name}";
-            using var gameDb = this._gameDbContextFactory.Create(schema);
-
-            var players = await gameDb.Players.ToListAsync();
+            var players = await this._context.Players.ToListAsync();
 
             return Ok(players);
+        }
+
+        // TODO ensure only GameMaster can access this endpoint
+        // Or user is allowed to see unassigned players / acces to game is enough?
+        [HttpGet("unassigned-players")]
+        public async Task<ActionResult<PlayerDTO>> GetUnassignedPlayers()
+        {
+            var unassignedPlayers = await this._context.Players
+                .Where(p => p.Assignment == null)
+                .Select(p => new PlayerDTO
+                {
+                    Id = (int)p.Id,
+                    Name = p.Name,
+                    Role = p.Role,
+                })
+                .ToListAsync();
+
+            return Ok(unassignedPlayers);
         }
     }
 }
