@@ -1,13 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
-using System.Drawing.Printing;
-using System.Security.Claims;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
-using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GameControllers
@@ -30,6 +25,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
+
             this._context = gameDbFactory.Create(schema);
             this._gameId = schema != null ? int.Parse(schema.Replace("game_", string.Empty)) : -1;
             if (this._gameId == -1)

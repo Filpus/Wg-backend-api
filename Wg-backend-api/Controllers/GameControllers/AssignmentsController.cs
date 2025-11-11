@@ -157,6 +157,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     return BadRequest();
                 }
             }
+
             return Ok();
         }
 
@@ -197,6 +198,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 this._context.Assignments.Remove(assignment);
                 await this._context.SaveChangesAsync();
             }
+
             return NoContent();
         }
 

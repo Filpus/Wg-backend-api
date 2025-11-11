@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
-using Wg_backend_api.DTO;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
@@ -29,6 +28,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
+
             this._context = gameDbFactory.Create(schema);
             this._gameId = schema != null ? int.Parse(schema.Replace("game_", string.Empty)) : -1;
             if (this._gameId == -1)
