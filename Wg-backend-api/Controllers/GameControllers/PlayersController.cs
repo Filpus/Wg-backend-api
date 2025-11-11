@@ -1,29 +1,30 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
+using System.Drawing.Printing;
+using System.Security.Claims;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
+using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
-namespace Wg_backend_api.Controllers.GlobalControllers
+namespace Wg_backend_api.Controllers.GameControllers
 {
     [Authorize] // TODO fuszera drut
     [ApiController]
-    [Route("api/games/[controller]")]
+    [Route("api/[controller]")]
 
     public class PlayersController : ControllerBase
     {
-        private readonly GlobalDbContext _globalDbContext;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
-        private int _userId;
         private int _gameId;
 
-        public PlayersController(GlobalDbContext globalDb, IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+        public PlayersController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            this._globalDbContext = globalDb;
             this._sessionDataService = sessionDataService;
-
             string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
@@ -37,26 +38,29 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
         }
 
-        [ApiExplorerSettings(IgnoreApi = true)]
-        public void SetUserId(int userId)
-        {
-            this._userId = userId;
-        }
-
         [HttpGet]
         public async Task<IActionResult> GetPlayers()
         {
-            var access = await this._globalDbContext.GameAccesses
-                .FirstOrDefaultAsync(a => a.GameId == this._gameId && a.UserId == this._userId);
-
-            if (access == null)
-            {
-                return Forbid();
-            }
-
             var players = await this._context.Players.ToListAsync();
-
             return Ok(players);
+        }
+
+        // TODO ensure only GameMaster can access this endpoint
+        // Or user is allowed to see unassigned players / acces to game is enough?
+        [HttpGet("unassigned-players")]
+        public async Task<ActionResult<PlayerDTO>> GetUnassignedPlayers()
+        {
+            var unassignedPlayers = await this._context.Players
+                .Where(p => p.Assignment == null)
+                .Select(p => new PlayerDTO
+                {
+                    Id = (int)p.Id,
+                    Name = p.Name,
+                    Role = p.Role,
+                })
+                .ToListAsync();
+
+            return Ok(unassignedPlayers);
         }
     }
 }
