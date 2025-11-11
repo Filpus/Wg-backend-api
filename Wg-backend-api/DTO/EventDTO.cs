@@ -22,7 +22,7 @@ namespace Wg_backend_api.DTO
         public int? EventId { get; set; }
         public string Name { get; set; }
         public string? Description { get; set; }
-        public List<ModifierDto> Modifiers { get; set; } = new();
+        public List<ModifierDto> Modifiers { get; set; } = [];
     }
     public class AssignEventDto
     {
@@ -38,6 +38,5 @@ namespace Wg_backend_api.DTO
         public int NationId { get; set; }
         public string NationName { get; set; }
     }
-
 
 }

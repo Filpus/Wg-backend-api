@@ -2,17 +2,17 @@
 {
     public interface ISessionDataService
     {
-        string GetSchema();
-        void SetSchema(string schema);
+        public string GetSchema();
+        public void SetSchema(string schema);
 
-        string? GetNation();
-        void SetNation(string nation);
+        public string? GetNation();
+        public void SetNation(string nation);
 
-        string? GetRole();
-        void SetRole(string role);
+        public string? GetRole();
+        public void SetRole(string role);
 
-        string? GetUserIdItems();
-        void SetUserIdItems(string role);
+        public string? GetUserIdItems();
+        public void SetUserIdItems(string role);
     }
 
     public class SessionDataService : ISessionDataService
@@ -21,62 +21,62 @@
 
         public SessionDataService(IHttpContextAccessor httpContextAccessor)
         {
-            _httpContextAccessor = httpContextAccessor;
+            this._httpContextAccessor = httpContextAccessor;
         }
 
         public void SetSchema(string schema)
         {
-            if (_httpContextAccessor.HttpContext?.Session == null)
+            if (this._httpContextAccessor.HttpContext?.Session == null)
             {
                 throw new InvalidOperationException("Sesja nie jest dostępna");
             }
 
-            _httpContextAccessor.HttpContext.Session.SetString("Schema", schema);
+            this._httpContextAccessor.HttpContext.Session.SetString("Schema", schema);
         }
 
         public string GetSchema()
         {
-            return _httpContextAccessor.HttpContext?.Session.GetString("Schema");
+            return this._httpContextAccessor.HttpContext?.Session.GetString("Schema");
         }
 
         public void SetNation(string nation)
         {
-            if (_httpContextAccessor.HttpContext?.Session == null)
+            if (this._httpContextAccessor.HttpContext?.Session == null)
             {
                 throw new InvalidOperationException("Sesja nie jest dostępna");
             }
 
-            _httpContextAccessor.HttpContext.Session.SetString("Nation", nation);
+            this._httpContextAccessor.HttpContext.Session.SetString("Nation", nation);
         }
 
         public string? GetNation()
         {
-            return _httpContextAccessor.HttpContext?.Session.GetString("Nation");
+            return this._httpContextAccessor.HttpContext?.Session.GetString("Nation");
         }
 
         public void SetRole(string role)
         {
-            if (_httpContextAccessor.HttpContext?.Session == null)
+            if (this._httpContextAccessor.HttpContext?.Session == null)
             {
                 throw new InvalidOperationException("Sesja nie jest dostępna");
             }
 
-            _httpContextAccessor.HttpContext.Session.SetString("Role", role);
+            this._httpContextAccessor.HttpContext.Session.SetString("Role", role);
         }
 
         public string? GetRole()
         {
-            return _httpContextAccessor.HttpContext?.Session.GetString("Role");
+            return this._httpContextAccessor.HttpContext?.Session.GetString("Role");
         }
 
         public string? GetUserIdItems()
         {
-            return _httpContextAccessor.HttpContext?.Items["UserId"]?.ToString();
+            return this._httpContextAccessor.HttpContext?.Items["UserId"]?.ToString();
         }
 
         public void SetUserIdItems(string role)
         {
-            _httpContextAccessor.HttpContext.Items["UserId"] = role;
+            this._httpContextAccessor.HttpContext.Items["UserId"] = role;
         }
     }
 

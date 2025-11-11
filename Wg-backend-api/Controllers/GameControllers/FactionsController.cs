@@ -1,13 +1,13 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Wg_backend_api.Auth;
+using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
+using Wg_backend_api.Models;
+using Wg_backend_api.Services;
+
 namespace Wg_backend_api.Controllers.GameControllers
 {
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.EntityFrameworkCore;
-    using Wg_backend_api.Auth;
-    using Wg_backend_api.Data;
-    using Wg_backend_api.DTO;
-    using Wg_backend_api.Models;
-    using Wg_backend_api.Services;
-
     [Route("api/Factions")]
     [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
@@ -18,7 +18,6 @@ namespace Wg_backend_api.Controllers.GameControllers
         private GameDbContext _context;
 
         private int? _nationId;
-
 
         public FactionsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
@@ -94,7 +93,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var dto in factionsDto)
             {
-                var faction = await _context.Factions.FindAsync(dto.Id);
+                var faction = await this._context.Factions.FindAsync(dto.Id);
                 if (faction == null)
                 {
                     return this.NotFound($"Nie znaleziono frakcji o ID {dto.Id}.");
@@ -139,7 +138,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Contentment = dto.Contentment,
                 Color = dto.Color,
                 Description = dto.Description,
-                NationId = dto.NationId > 0 ? (int)dto.NationId : _nationId ?? throw new InvalidOperationException("Brak ID państwa w sesji."),
+                NationId = dto.NationId > 0 ? (int)dto.NationId : this._nationId ?? throw new InvalidOperationException("Brak ID państwa w sesji."),
             }).ToList();
 
             this._context.Factions.AddRange(factions);
@@ -172,10 +171,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("ByNation/{nationId?}")]
         public async Task<ActionResult<IEnumerable<FactionDTO>>> GetFactionsByNation(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = this._nationId;
-            }
+            nationId ??= this._nationId;
 
             var factions = await this._context.Factions
                 .Where(f => f.NationId == nationId)

@@ -10,8 +10,8 @@ namespace Wg_backend_api.Logic.Modifiers
 
         public ModifierManager(GameDbContext context, ModifierProcessorFactory factory)
         {
-            _context = context;
-            _factory = factory;
+            this._context = context;
+            this._factory = factory;
         }
 
         public async Task<List<ModifierApplicationResult>> ApplyEventToNationAsync(int eventId, int nationId)

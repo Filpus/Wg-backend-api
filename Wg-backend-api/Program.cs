@@ -1,11 +1,11 @@
+using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
-using System.Text;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data.Seeders;
 using Wg_backend_api.Logic.Modifiers;
@@ -35,12 +35,7 @@ namespace Wg_backend_api.Data
             builder.Services.AddDbContext<GlobalDbContext>(options =>
                 options.UseNpgsql(connectionString));
 
-            builder.Services.AddDbContext<GameDbContext>((serviceProvider, options) =>
-            {
-                options.UseNpgsql(connectionString);
-                //.EnableSensitiveDataLogging() //Enable for debug
-                //.LogTo(Console.WriteLine, LogLevel.Debug) ;
-            });
+            builder.Services.AddDbContext<GameDbContext>((serviceProvider, options) => options.UseNpgsql(connectionString));
 
             // Add Scoped GameDbContextFactory
             builder.Services.AddScoped<IGameDbContextFactory, GameDbContextFactory>();
@@ -114,33 +109,21 @@ namespace Wg_backend_api.Data
             //    options.CallbackPath = "/signin-google";
             //});
 
-            builder.Services.AddAuthorization(options =>
-            {
-                options.DefaultPolicy = new AuthorizationPolicyBuilder()
+            builder.Services.AddAuthorization(options => options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
                     .RequireClaim(ClaimTypes.NameIdentifier)
-                    .Build();
-            });
+                    .Build());
 
             // CORS setup to allow access from Angular frontend
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowAngular", builder =>
-                {
-                    builder.WithOrigins("https://localhost:4200", "http://localhost:4200", "https://localhost", "https://wargameshub.pl")
-                           .AllowCredentials()
-                           .AllowAnyHeader()
-                           .AllowAnyMethod();
-                });
-            });
+            builder.Services.AddCors(options => options.AddPolicy("AllowAngular", builder => builder.WithOrigins("https://localhost:4200", "http://localhost:4200", "https://localhost", "https://wargameshub.pl")
+                        .AllowCredentials()
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()));
 
             builder.Services.AddHostedService<RefreshTokenCleanupService>();
 
             // Add Controllers (API endpoints)
-            builder.Services.AddControllers(config =>
-            {
-                config.Filters.Add<UserIdActionFilter>();
-            });
+            builder.Services.AddControllers(config => config.Filters.Add<UserIdActionFilter>());
             // Add Swagger configuration
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -167,6 +150,7 @@ namespace Wg_backend_api.Data
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
             var corsService = app.Services.GetRequiredService<ICorsService>();
             var corsPolicyProvider = app.Services.GetRequiredService<ICorsPolicyProvider>();
 
@@ -202,6 +186,7 @@ namespace Wg_backend_api.Data
             {
                 // app.UseMiddleware<ValidateUserIdMiddleware>();
             }
+
             app.UseMiddleware<GameAccessMiddleware>();
             app.UseAuthorization();
 
@@ -213,14 +198,17 @@ namespace Wg_backend_api.Data
                 {
                     throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
                 }
+
                 GameService.GenerateGlobalSchema(connectionString, Directory.GetCurrentDirectory() + "\\Migrations\\globalInitalize");
             }
+
             if (args.Contains("--tmp-game"))
             {
                 if (string.IsNullOrEmpty(connectionString))
                 {
                     throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
                 }
+
                 GameService.GenerateNewGame(connectionString, Directory.GetCurrentDirectory() + "\\Migrations\\initate.sql", "game_1");
             }
 

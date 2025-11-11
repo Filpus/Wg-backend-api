@@ -1,16 +1,14 @@
-﻿namespace Wg_backend_api.Controllers.GameControllers
-{
-    using System;
-    using System.Linq;
-    using System.Text.RegularExpressions;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.EntityFrameworkCore;
-    using Wg_backend_api.Auth;
-    using Wg_backend_api.Data;
-    using Wg_backend_api.DTO;
-    using Wg_backend_api.Models;
-    using Wg_backend_api.Services;
+﻿using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Wg_backend_api.Auth;
+using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
+using Wg_backend_api.Models;
+using Wg_backend_api.Services;
 
+namespace Wg_backend_api.Controllers.GameControllers
+{
     [Route("api/Nations")]
     [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
@@ -491,7 +489,7 @@
             var hexPattern = @"^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$";
             if (Regex.IsMatch(color, hexPattern))
             {
-               return true;
+                return true;
             }
 
             return false;

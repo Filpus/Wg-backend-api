@@ -41,6 +41,5 @@ namespace Wg_backend_api.Models
         [Column("description")]
         public string? Description { get; set; }
 
-
     }
 }

@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
-using Wg_backend_api.Auth;
 
 namespace Wg_backend_api.Controllers.GameControllers
 {
@@ -160,8 +160,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     Id = newMap.Id,
                     Name = newMap.Name,
-                    MapLocation = $"{Request.Scheme}://{Request.Host}{result.Result.FilePath}",
-                    MapIconLocation = $"{Request.Scheme}://{Request.Host}{result.Result.ThumbnailPath}",
+                    MapLocation = $"{this.Request.Scheme}://{this.Request.Host}{result.Result.FilePath}",
+                    MapIconLocation = $"{this.Request.Scheme}://{this.Request.Host}{result.Result.ThumbnailPath}",
                 };
 
                 return this.CreatedAtAction(nameof(this.GetMaps), new { id = createdMap.Id }, createdMap);
@@ -220,14 +220,11 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("nation/maps/{nationId?}")]
         public async Task<ActionResult<IEnumerable<MapDTO>>> GetNationMaps(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = _nationId;
-            }
+            nationId ??= this._nationId;
 
-            var nationMaps = await _context.MapAccesses
+            var nationMaps = await this._context.MapAccesses
                 .Where(ma => ma.NationId == nationId)
-                .Join(_context.Maps,
+                .Join(this._context.Maps,
                     ma => ma.MapId,
                     map => map.Id,
                     (ma, map) => new MapDTO
@@ -312,21 +309,5 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return new FileUploadResult { Success = true, FilePath = pathFile, ThumbnailPath = isThumbnail ? $"/images/{thumbnailFileName}" : null };
         }
-
-        private bool IsNationDependency(int id)
-        {
-            var hasDependencies = this._context.AccessToUnits.Any(e => e.NationId == id) ||
-                                this._context.Actions.Any(e => e.NationId == id) ||
-                                this._context.OwnedResources.Any(e => e.NationId == id) ||
-                                this._context.Armies.Any(e => e.NationId == id) ||
-                                this._context.Factions.Any(e => e.NationId == id) ||
-                                this._context.Localisations.Any(e => e.NationId == id) ||
-                                this._context.RelatedEvents.Any(e => e.NationId == id) ||
-                                this._context.TradeAgreements.Any(e => e.OfferingNationId == id || e.ReceivingNationId == id) ||
-                                this._context.UnitOrders.Any(e => e.NationId == id);
-
-            return hasDependencies;
-        }
-
     }
 }

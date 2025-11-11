@@ -1,6 +1,5 @@
 ﻿using Bogus;
 using Wg_backend_api.Models;
-using BCrypt.Net;
 
 namespace Wg_backend_api.Data.Seeders
 {
@@ -9,41 +8,41 @@ namespace Wg_backend_api.Data.Seeders
         private readonly GlobalDbContext _globalContext;
         public GlobalSeeder(GlobalDbContext globalContext)
         {
-            _globalContext = globalContext;
+            this._globalContext = globalContext;
         }
 
         public void Seed()
         {
-            _globalContext.Database.EnsureCreated();
-            if (_globalContext.GameAccesses.Any() || _globalContext.Games.Any() || _globalContext.Users.Any())
+            this._globalContext.Database.EnsureCreated();
+            if (this._globalContext.GameAccesses.Any() || this._globalContext.Games.Any() || this._globalContext.Users.Any())
             {
                 return;
             }
 
-
-            _globalContext.Users.Add(new User { Name = "admin", Email = "admin@admin.pl", Password = BCrypt.Net.BCrypt.HashPassword("admin"), IsArchived = false });
-            _globalContext.Users.AddRange(GetUserGenerator().Generate(50));
-            _globalContext.SaveChanges();
-            var usersId = _globalContext.Users.Select(u => u.Id).ToList();
+            this._globalContext.Users.Add(new User { Name = "admin", Email = "admin@admin.pl", Password = BCrypt.Net.BCrypt.HashPassword("admin"), IsArchived = false });
+            this._globalContext.Users.AddRange(GetUserGenerator().Generate(50));
+            this._globalContext.SaveChanges();
+            var usersId = this._globalContext.Users.Select(u => u.Id).ToList();
             if (usersId == null || usersId.Count == 0)
             {
                 throw new Exception("No users found in the database.");
             }
+
             var nonNullUserIds = usersId.Where(id => id.HasValue)
                             .Select(id => id.Value)
                             .ToList();
 
-            _globalContext.Games.AddRange(GetGameGeneratorWithImages(nonNullUserIds).Generate(20));
-            _globalContext.SaveChanges();
+            this._globalContext.Games.AddRange(GetGameGeneratorWithImages(nonNullUserIds).Generate(20));
+            this._globalContext.SaveChanges();
 
-            var gamesId = _globalContext.Games.Select(g => g.Id).ToList();
+            var gamesId = this._globalContext.Games.Select(g => g.Id).ToList();
             if (gamesId == null || gamesId.Count == 0)
             {
                 throw new Exception("No games found in the database.");
             }
-            _globalContext.GameAccesses.AddRange(GetGameAccessGenerator(nonNullUserIds, gamesId, 50));
-            _globalContext.SaveChanges();
 
+            this._globalContext.GameAccesses.AddRange(GetGameAccessGenerator(nonNullUserIds, gamesId, 50));
+            this._globalContext.SaveChanges();
 
         }
 

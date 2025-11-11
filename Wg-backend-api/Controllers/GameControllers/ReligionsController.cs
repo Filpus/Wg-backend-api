@@ -1,17 +1,13 @@
-﻿namespace Wg_backend_api.Controllers.GameControllers
-{
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Resources;
-    using System.Threading.Tasks;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.EntityFrameworkCore;
-    using Wg_backend_api.Auth;
-    using Wg_backend_api.Data;
-    using Wg_backend_api.DTO;
-    using Wg_backend_api.Models;
-    using Wg_backend_api.Services;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Wg_backend_api.Auth;
+using Wg_backend_api.Data;
+using Wg_backend_api.DTO;
+using Wg_backend_api.Models;
+using Wg_backend_api.Services;
 
+namespace Wg_backend_api.Controllers.GameControllers
+{
     [Route("api/Religions")]
     [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
@@ -82,7 +78,6 @@
                 var religion = new Religion { Id = religionDTO.Id, Name = religionDTO.Name };
                 this._context.Entry(religion).State = EntityState.Modified;
             }
-
 
             try
             {

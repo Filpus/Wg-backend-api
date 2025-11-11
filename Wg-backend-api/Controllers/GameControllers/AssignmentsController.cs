@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -23,29 +18,29 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public AssignmentsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
+
+            this._context = this._gameDbContextFactory.Create(schema);
         }
         // GET: api/Assignments
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Assignment>>> GetAssignment()
         {
-            return await _context.Assignments.ToListAsync();
+            return await this._context.Assignments.ToListAsync();
         }
 
         // GET: api/Assignments/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Assignment>> GetAssignment(int? id)
         {
-            var assignment = await _context.Assignments.FindAsync(id);
-
+            var assignment = await this._context.Assignments.FindAsync(id);
 
             if (assignment == null)
             {
@@ -62,11 +57,11 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             foreach (var assignment in assignments)
             {
-                _context.Entry(assignment).State = EntityState.Modified;
+                this._context.Entry(assignment).State = EntityState.Modified;
 
                 try
                 {
-                    await _context.SaveChangesAsync();
+                    await this._context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -80,6 +75,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     }
                 }
             }
+
             return NoContent();
         }
 
@@ -95,17 +91,17 @@ namespace Wg_backend_api.Controllers.GameControllers
                 if (assignment.UserId >= 0 && assignment.NationId >= 0)
                 {
 
-                    _context.Assignments.Add(assignment);
-                    await _context.SaveChangesAsync();
+                    this._context.Assignments.Add(assignment);
+                    await this._context.SaveChangesAsync();
                 }
                 else
                 {
                     return BadRequest();
                 }
             }
+
             return Ok();
         }
-
 
         // DELETE: api/Assignments/5
         [HttpDelete]
@@ -114,21 +110,22 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var id in ids)
             {
-                var assignment = await _context.Assignments.FindAsync(id);
+                var assignment = await this._context.Assignments.FindAsync(id);
                 if (assignment == null)
                 {
                     return NotFound();
                 }
 
-                _context.Assignments.Remove(assignment);
-                await _context.SaveChangesAsync();
+                this._context.Assignments.Remove(assignment);
+                await this._context.SaveChangesAsync();
             }
+
             return NoContent();
         }
 
         private bool AssignmentExists(int? id)
         {
-            return _context.Assignments.Any(e => e.Id == id);
+            return this._context.Assignments.Any(e => e.Id == id);
         }
     }
 }

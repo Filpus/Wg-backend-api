@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
+﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Enums;
@@ -15,8 +15,8 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
 
         public ResourceChangeProcessor(GameDbContext context, ILogger<ResourceChangeProcessor> logger)
         {
-            _context = context;
-            _logger = logger;
+            this._context = context;
+            this._logger = logger;
         }
 
         public ModifierType SupportedType => ModifierType.ResourceChange;
@@ -39,17 +39,18 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             });
         }
 
-
         public async Task<float> CalculateChangeAsync(int nationId, ResourceBalanceDto balance)
         {
-            var modifiers = await _context.RelatedEvents
+            var modifiers = await this._context.RelatedEvents
                 .Where(re => re.NationId == nationId)
                 .SelectMany(re => re.Event.Modifiers)
                 .Where(m => m.modiferType == ModifierType.ResourceChange)
                 .ToListAsync();
 
             if (!modifiers.Any())
+            {
                 return 0f;
+            }
 
             float totalChange = 0f;
             int resourceId = balance.ResourceId;
@@ -57,7 +58,10 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             foreach (var mod in modifiers)
             {
                 var rawEffects = JsonSerializer.Deserialize<List<ModifierEffect>>(mod.Effects);
-                if (rawEffects == null) continue;
+                if (rawEffects == null)
+                {
+                    continue;
+                }
 
                 foreach (var raw in rawEffects)
                 {
@@ -66,15 +70,16 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
                         JsonSerializer.Serialize(raw.Conditions)
                     );
                     if (conditions == null || conditions.ResourceId != resourceId)
+                    {
                         continue;
+                    }
 
                     var operation = Enum.Parse<ModifierOperation>(raw.Operation, true);
-                    float current = await _context.LocalisationResources
+                    float current = await this._context.LocalisationResources
                         .Include(lr => lr.Location)
                         .Where(lr => lr.Location.NationId == nationId
                                      && lr.ResourceId == resourceId)
                         .SumAsync(lr => lr.Amount);
-
 
                     if (operation == ModifierOperation.Add)
                     {

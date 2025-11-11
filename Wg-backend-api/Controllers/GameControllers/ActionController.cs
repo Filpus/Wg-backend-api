@@ -19,18 +19,18 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public ActionController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
 
-            _context = _gameDbContextFactory.Create(schema);
-            string nationIdStr = _sessionDataService.GetNation();
-            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
+            this._context = this._gameDbContextFactory.Create(schema);
+            string nationIdStr = this._sessionDataService.GetNation();
+            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         [HttpGet("{id?}")]
@@ -38,7 +38,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var action = await _context.Actions.FindAsync(id);
+                var action = await this._context.Actions.FindAsync(id);
                 if (action == null)
                 {
                     return NotFound();
@@ -48,7 +48,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var actions = await _context.Actions.ToListAsync();
+                var actions = await this._context.Actions.ToListAsync();
                 return Ok(actions.Select(MapToDTO));
             }
         }
@@ -63,19 +63,19 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var actionDTO in actionDTOs)
             {
-                var action = await _context.Actions.FindAsync(actionDTO.Id);
+                var action = await this._context.Actions.FindAsync(actionDTO.Id);
                 if (action == null)
                 {
                     return NotFound($"Nie znaleziono akcji o ID {actionDTO.Id}.");
                 }
 
                 UpdateModelFromDTO(action, actionDTO);
-                _context.Entry(action).State = EntityState.Modified;
+                this._context.Entry(action).State = EntityState.Modified;
             }
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -94,8 +94,8 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             var actions = actionDTOs.Select(dto => MapFromDTO(new ActionDTO(dto) { NationId = this._nationId ?? dto.NationId })).ToList();
-            _context.Actions.AddRange(actions);
-            await _context.SaveChangesAsync();
+            this._context.Actions.AddRange(actions);
+            await this._context.SaveChangesAsync();
 
             return CreatedAtAction("GetActions", new { id = actions[0].Id }, actions.Select(MapToDTO));
         }
@@ -108,15 +108,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var actions = await _context.Actions.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var actions = await this._context.Actions.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (actions.Count == 0)
             {
                 return NotFound("Nie znaleziono akcji do usunięcia.");
             }
 
-            _context.Actions.RemoveRange(actions);
-            await _context.SaveChangesAsync();
+            this._context.Actions.RemoveRange(actions);
+            await this._context.SaveChangesAsync();
 
             return Ok();
         }
@@ -124,11 +124,11 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("settledAndUnsetled")]
         public async Task<ActionResult> GetSettledAndUnsettledActions()
         {
-            var settledActions = await _context.Actions
+            var settledActions = await this._context.Actions
                 .Where(a => a.IsSettled)
                 .ToListAsync();
 
-            var unsettledActions = await _context.Actions
+            var unsettledActions = await this._context.Actions
                 .Where(a => !a.IsSettled)
                 .ToListAsync();
 
@@ -144,9 +144,10 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (!nationId.HasValue)
             {
-                nationId = _nationId;
+                nationId = this._nationId;
             }
-            var settledActions = await _context.Actions
+
+            var settledActions = await this._context.Actions
                 .Where(a => a.IsSettled && a.NationId == nationId)
                 .ToListAsync();
 
@@ -158,9 +159,10 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (!nationId.HasValue)
             {
-                nationId = _nationId;
+                nationId = this._nationId;
             }
-            var unsettledActions = await _context.Actions
+
+            var unsettledActions = await this._context.Actions
                 .Where(a => !a.IsSettled && a.NationId == nationId)
                 .ToListAsync();
 

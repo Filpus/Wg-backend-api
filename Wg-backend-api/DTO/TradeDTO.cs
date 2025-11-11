@@ -11,10 +11,9 @@ namespace Wg_backend_api.DTO
         public int Duration { get; set; }
         public string Description { get; set; } = "";
 
-        public List<ResourceAmountDto> offeredResources { get; set; } = new List<ResourceAmountDto>();
-        public List<ResourceAmountDto> requestedResources { get; set; } = new List<ResourceAmountDto>();
+        public List<ResourceAmountDto> offeredResources { get; set; } = [];
+        public List<ResourceAmountDto> requestedResources { get; set; } = [];
     }
-
 
     public class TradeAgreementInfoDTO
     {
@@ -24,8 +23,8 @@ namespace Wg_backend_api.DTO
         public string Status { get; set; }
         public int Duration { get; set; }
         public string Description { get; set; } = "";
-        public List<ResourceAmountDto> OfferedResources { get; set; } = new List<ResourceAmountDto>();
-        public List<ResourceAmountDto> RequestedResources { get; set; } = new List<ResourceAmountDto>();
+        public List<ResourceAmountDto> OfferedResources { get; set; } = [];
+        public List<ResourceAmountDto> RequestedResources { get; set; } = [];
     }
 
     public class OfferTradeAgreementDTO
@@ -34,8 +33,8 @@ namespace Wg_backend_api.DTO
         public int Duration { get; set; }
         public string Description { get; set; } = "";
         public TradeStatus TradeStatus { get; set; } = TradeStatus.Pending;
-        public List<ResourceAmountDto> offeredResources { get; set; } = new List<ResourceAmountDto>();
-        public List<ResourceAmountDto> requestedResources { get; set; } = new List<ResourceAmountDto>();
+        public List<ResourceAmountDto> offeredResources { get; set; } = [];
+        public List<ResourceAmountDto> requestedResources { get; set; } = [];
     }
 
 }

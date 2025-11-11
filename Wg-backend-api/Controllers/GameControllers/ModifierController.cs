@@ -5,17 +5,17 @@ namespace Wg_backend_api.Controllers.GameControllers
 {
     public class ModifierController : Controller
     {
-        private  ModifierManager _modifierManager;
+        private ModifierManager _modifierManager;
 
         public void ModifiersController(ModifierManager modifierManager)
         {
-            _modifierManager = modifierManager;
+            this._modifierManager = modifierManager;
         }
 
         [HttpPost("apply-event")]
         public async Task<ActionResult> ApplyEvent([FromBody] ApplyEventRequest request)
         {
-            var results = await _modifierManager.ApplyEventToNationAsync(request.EventId, request.NationId);
+            var results = await this._modifierManager.ApplyEventToNationAsync(request.EventId, request.NationId);
             return Ok(results);
         }
     }

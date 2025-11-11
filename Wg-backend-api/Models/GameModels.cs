@@ -9,7 +9,7 @@ namespace Wg_backend_api.Models
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Key] // Oznaczenie klucza głównego
-        public int Id { get; set; } 
+        public int Id { get; set; }
 
         [Required]
         [Column("name")]

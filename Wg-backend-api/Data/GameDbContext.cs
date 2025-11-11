@@ -1,7 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Migrations;
-using System.Data;
 using Wg_backend_api.Models;
 using Action = Wg_backend_api.Models.Action;
 
@@ -60,7 +57,6 @@ namespace Wg_backend_api.Data
         public DbSet<PopulationUsedResource> populationUsedResources { get; set; }
         public DbSet<PopulationProductionShare> PopulationProductionShares { get; set; }
         public DbSet<OwnedResources> OwnedResources { get; set; }
-
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

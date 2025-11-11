@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -20,17 +19,18 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public UnitTypeController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
-            string nationIdStr = _sessionDataService.GetNation();
-            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
+
+            this._context = this._gameDbContextFactory.Create(schema);
+            string nationIdStr = this._sessionDataService.GetNation();
+            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         // GET: api/UnitTypes  
@@ -40,11 +40,12 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var unitType = await _context.UnitTypes.FindAsync(id);
+                var unitType = await this._context.UnitTypes.FindAsync(id);
                 if (unitType == null)
                 {
                     return NotFound();
                 }
+
                 var unitTypeDTO = new UnitTypeDTO
                 {
                     UnitId = unitType.Id.Value,
@@ -62,7 +63,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var unitTypes = await _context.UnitTypes.ToListAsync();
+                var unitTypes = await this._context.UnitTypes.ToListAsync();
                 var unitTypeDTOs = unitTypes.Select(ut => new UnitTypeDTO
                 {
                     UnitId = ut.Id.Value,
@@ -91,7 +92,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var unitTypeDTO in unitTypeDTOs)
             {
-                var unitType = await _context.UnitTypes.FindAsync(unitTypeDTO.UnitId);
+                var unitType = await this._context.UnitTypes.FindAsync(unitTypeDTO.UnitId);
                 if (unitType == null)
                 {
                     return NotFound($"Nie znaleziono jednostki o ID {unitTypeDTO.UnitId}.");
@@ -107,12 +108,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 unitType.Morale = unitTypeDTO.Morale;
                 unitType.IsNaval = unitTypeDTO.IsNaval;
 
-                _context.Entry(unitType).State = EntityState.Modified;
+                this._context.Entry(unitType).State = EntityState.Modified;
             }
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -144,8 +145,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 IsNaval = dto.IsNaval
             }).ToList();
 
-            _context.UnitTypes.AddRange(unitTypes);
-            await _context.SaveChangesAsync();
+            this._context.UnitTypes.AddRange(unitTypes);
+            await this._context.SaveChangesAsync();
 
             var createdDTOs = unitTypes.Select(ut => new UnitTypeDTO
             {
@@ -173,31 +174,28 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var unitTypes = await _context.UnitTypes.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var unitTypes = await this._context.UnitTypes.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (unitTypes.Count == 0)
             {
                 return NotFound("Nie znaleziono jednostek do usunięcia.");
             }
 
-            _context.UnitTypes.RemoveRange(unitTypes);
-            await _context.SaveChangesAsync();
+            this._context.UnitTypes.RemoveRange(unitTypes);
+            await this._context.SaveChangesAsync();
 
             return Ok();
         }
         [HttpGet("GetLandUnitTypeInfo/{nationId?}")]
         public async Task<ActionResult<IEnumerable<UnitTypeInfoDTO>>> GetLandUnitTypeInfo(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = _nationId;
-            }
-            var accessibleUnitTypeIds = await _context.AccessToUnits
+            nationId ??= this._nationId;
+            var accessibleUnitTypeIds = await this._context.AccessToUnits
                 .Where(atu => atu.NationId == nationId)
                 .Select(atu => atu.UnitTypeId)
                 .ToListAsync();
 
-            var unitTypes = await _context.UnitTypes
+            var unitTypes = await this._context.UnitTypes
                 .Where(ut => !ut.IsNaval && accessibleUnitTypeIds.Contains(ut.Id.Value))
                 .Include(ut => ut.ProductionCosts)
                     .ThenInclude(pc => pc.Resource)
@@ -228,18 +226,14 @@ namespace Wg_backend_api.Controllers.GameControllers
         public async Task<ActionResult<IEnumerable<UnitTypeInfoDTO>>> GetNavalUnitTypeInfo(int? nationId)
         {
 
-            if (nationId == null)
-            {
-                nationId = _nationId;
-            }
+            nationId ??= this._nationId;
 
-
-            var accessibleUnitTypeIds = await _context.AccessToUnits
+            var accessibleUnitTypeIds = await this._context.AccessToUnits
                 .Where(atu => atu.NationId == nationId)
                 .Select(atu => atu.UnitTypeId)
                 .ToListAsync();
 
-            var unitTypes = await _context.UnitTypes
+            var unitTypes = await this._context.UnitTypes
                 .Where(ut => ut.IsNaval && accessibleUnitTypeIds.Contains(ut.Id.Value))
                 .Include(ut => ut.ProductionCosts)
                     .ThenInclude(pc => pc.Resource)
@@ -268,22 +262,22 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
         private List<ResourceAmountDto> GetConsumedResources(UnitType unitType)
         {
-            return unitType.MaintenaceCosts.Select(mc => new ResourceAmountDto
+            return [.. unitType.MaintenaceCosts.Select(mc => new ResourceAmountDto
             {
                 ResourceId = mc.ResourceId,
                 ResourceName = mc.Resource.Name,
                 Amount = mc.Amount
-            }).ToList();
+            })];
         }
 
         private List<ResourceAmountDto> GetProductionCost(UnitType unitType)
         {
-            return unitType.ProductionCosts.Select(pc => new ResourceAmountDto
+            return [.. unitType.ProductionCosts.Select(pc => new ResourceAmountDto
             {
                 ResourceId = pc.ResourceId,
                 ResourceName = pc.Resource.Name,
                 Amount = pc.Amount
-            }).ToList();
+            })];
         }
     }
 }

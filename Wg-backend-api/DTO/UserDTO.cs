@@ -1,7 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Wg_backend_api.Models;
-
-namespace Wg_backend_api.DTO
+﻿namespace Wg_backend_api.DTO
 {
     public class UserDTO
     {

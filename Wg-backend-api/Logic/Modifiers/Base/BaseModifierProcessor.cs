@@ -12,11 +12,10 @@ namespace Wg_backend_api.Logic.Modifiers.Base
 
         protected BaseModifierProcessor(GameDbContext context)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            this._context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public abstract ModifierType SupportedType { get; }
-
 
         protected abstract IQueryable<TEntity> GetBaseQuery(int nationId);
         protected abstract ConditionBuilder<TEntity> CreateConditionBuilder(IQueryable<TEntity> baseQuery);

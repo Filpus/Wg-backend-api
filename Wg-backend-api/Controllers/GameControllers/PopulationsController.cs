@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -25,24 +20,25 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public PopulationsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
-            string nationIdStr = _sessionDataService.GetNation();
-            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
+
+            this._context = this._gameDbContextFactory.Create(schema);
+            string nationIdStr = this._sessionDataService.GetNation();
+            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         // GET: api/Populations
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PopulationDTO>>> GetPopulation()
         {
-            return await _context.Populations
+            return await this._context.Populations
                 .Select(p => new PopulationDTO
                 {
                     Id = p.Id,
@@ -59,7 +55,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<PopulationDTO>> GetPopulation(int? id)
         {
-            var population = await _context.Populations
+            var population = await this._context.Populations
                 .Where(p => p.Id == id)
                 .Select(p => new PopulationDTO
                 {
@@ -91,7 +87,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var popDto in populations)
             {
-                var population = await _context.Populations.FindAsync(popDto.Id);
+                var population = await this._context.Populations.FindAsync(popDto.Id);
                 if (population == null)
                 {
                     return NotFound();
@@ -103,12 +99,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 population.LocationId = popDto.LocationId;
                 population.Happiness = popDto.Happiness;
 
-                _context.Entry(population).State = EntityState.Modified;
+                this._context.Entry(population).State = EntityState.Modified;
             }
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -132,32 +128,30 @@ namespace Wg_backend_api.Controllers.GameControllers
             foreach (var populationDto in populationDtos)
             {
 
-                    var socialGroup = await _context.SocialGroups.FirstOrDefaultAsync(sg => sg.Id == populationDto.SocialGroupId);
-                    if (socialGroup == null)
-                    {
-                        return BadRequest($"Nie znaleziono grupy społecznej o ID {populationDto.SocialGroupId}");
-                    }
-
-                    var population = new Population
-                    {
-                        ReligionId = populationDto.ReligionId,
-                        CultureId = populationDto.CultureId,
-                        SocialGroupId = populationDto.SocialGroupId,
-                        LocationId = populationDto.LocationId,
-                        Happiness = socialGroup.BaseHappiness,
-                        Volunteers = socialGroup.Volunteers,
-                    };
-
-                    _context.Populations.Add(population);
-                    await _context.SaveChangesAsync();
-
-                    populationDto.Id = population.Id;
-                    populationDto.Happiness = population.Happiness;
-                    populationDto.Volonteers = population.Volunteers;
-                    createdDtos.Add(populationDto);
+                var socialGroup = await this._context.SocialGroups.FirstOrDefaultAsync(sg => sg.Id == populationDto.SocialGroupId);
+                if (socialGroup == null)
+                {
+                    return BadRequest($"Nie znaleziono grupy społecznej o ID {populationDto.SocialGroupId}");
                 }
 
+                var population = new Population
+                {
+                    ReligionId = populationDto.ReligionId,
+                    CultureId = populationDto.CultureId,
+                    SocialGroupId = populationDto.SocialGroupId,
+                    LocationId = populationDto.LocationId,
+                    Happiness = socialGroup.BaseHappiness,
+                    Volunteers = socialGroup.Volunteers,
+                };
 
+                this._context.Populations.Add(population);
+                await this._context.SaveChangesAsync();
+
+                populationDto.Id = population.Id;
+                populationDto.Happiness = population.Happiness;
+                populationDto.Volonteers = population.Volunteers;
+                createdDtos.Add(populationDto);
+            }
 
             return CreatedAtAction("GetPopulation", createdDtos);
         }
@@ -168,40 +162,32 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             foreach (var id in ids)
             {
-                var population = await _context.Populations.FindAsync(id);
+                var population = await this._context.Populations.FindAsync(id);
                 if (population == null)
                 {
                     return NotFound();
                 }
 
-                _context.Populations.Remove(population);
+                this._context.Populations.Remove(population);
             }
 
-            await _context.SaveChangesAsync();
+            await this._context.SaveChangesAsync();
 
             return Ok();
-        }
-
-        private bool PopulationExists(int? id)
-        {
-            return _context.Populations.Any(e => e.Id == id);
         }
 
         [HttpGet("nation/population-groups/{nationId?}")]
         public async Task<ActionResult<IEnumerable<PopulationGroupDTO>>> GetPopulationGroupsByNation(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = _nationId;
-            }
-            var populationGroups = await _context.Populations
-                .Where(p => _context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
+            nationId ??= this._nationId;
+            var populationGroups = await this._context.Populations
+                .Where(p => this._context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
                 .GroupBy(p => new { p.ReligionId, p.CultureId, p.SocialGroupId })
                 .Select(g => new PopulationGroupDTO
                 {
-                    Religion = _context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
-                    Culture = _context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
-                    SocialGroup = _context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
+                    Religion = this._context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
+                    Culture = this._context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
+                    SocialGroup = this._context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
                     Amount = g.Count(),
                     Happiness = g.Average(p => p.Happiness)
                 })
@@ -213,16 +199,13 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("nation/population-culture-groups/{nationId?}")]
         public async Task<ActionResult<IEnumerable<PopulationCultureGroupDTO>>> GetPopulationCultureGroupsByNation(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = _nationId;
-            }
-            var populationGroups = await _context.Populations
-                .Where(p => _context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
+            nationId ??= this._nationId;
+            var populationGroups = await this._context.Populations
+                .Where(p => this._context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
                 .GroupBy(p => new { p.CultureId })
                 .Select(g => new PopulationCultureGroupDTO
                 {
-                    Culture = _context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
+                    Culture = this._context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
                     Amount = g.Count(),
                     Happiness = g.Average(p => p.Happiness)
                 })
@@ -233,16 +216,13 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("nation/population-social-groups/{nationId?}")]
         public async Task<ActionResult<IEnumerable<PopulationSocialGroupDTO>>> GetPopulationSocialGroupsByNation(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = _nationId;
-            }
-            var populationGroups = await _context.Populations
-                .Where(p => _context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
+            nationId ??= this._nationId;
+            var populationGroups = await this._context.Populations
+                .Where(p => this._context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
                 .GroupBy(p => new { p.SocialGroupId })
                 .Select(g => new PopulationSocialGroupDTO
                 {
-                    SocialGroup = _context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
+                    SocialGroup = this._context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
                     Amount = g.Count(),
                     Happiness = g.Average(p => p.Happiness)
                 })
@@ -252,16 +232,13 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("nation/population-religion-groups/{nationId?}")]
         public async Task<ActionResult<IEnumerable<PopulationReligiousGroupDTO>>> GetPopulationReligiousGroupsByNation(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = _nationId;
-            }
-            var populationGroups = await _context.Populations
-                .Where(p => _context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
+            nationId ??= this._nationId;
+            var populationGroups = await this._context.Populations
+                .Where(p => this._context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
                 .GroupBy(p => new { p.ReligionId })
                 .Select(g => new PopulationReligiousGroupDTO
                 {
-                    Religion = _context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
+                    Religion = this._context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
                     Amount = g.Count(),
                     Happiness = g.Average(p => p.Happiness)
                 })
@@ -269,20 +246,18 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(populationGroups);
         }
 
-
-
         [HttpGet("location/population-groups/{locationId}")]
         public async Task<ActionResult<IEnumerable<PopulationGroupDTO>>> GetPopulationGroupsByLocation(int locationId)
         {
 
-            var populationGroups = await _context.Populations
+            var populationGroups = await this._context.Populations
                 .Where(p => p.LocationId == locationId)
                 .GroupBy(p => new { p.ReligionId, p.CultureId, p.SocialGroupId })
                 .Select(g => new PopulationGroupDTO
                 {
-                    Religion = _context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
-                    Culture = _context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
-                    SocialGroup = _context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
+                    Religion = this._context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
+                    Culture = this._context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
+                    SocialGroup = this._context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
                     Amount = g.Count(),
                     Happiness = g.Average(p => p.Happiness)
                 })
@@ -294,12 +269,12 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("location/population-culture-groups/{locationId}")]
         public async Task<ActionResult<IEnumerable<PopulationCultureGroupDTO>>> GetPopulationCultureGroupsByLocation(int locationId)
         {
-            var populationGroups = await _context.Populations
+            var populationGroups = await this._context.Populations
                 .Where(p => p.LocationId == locationId)
                 .GroupBy(p => new { p.CultureId })
                 .Select(g => new PopulationCultureGroupDTO
                 {
-                    Culture = _context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
+                    Culture = this._context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
                     Amount = g.Count(),
                     Happiness = g.Average(p => p.Happiness)
                 })
@@ -309,12 +284,12 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("location/population-social-groups/{locationId}")]
         public async Task<ActionResult<IEnumerable<PopulationSocialGroupDTO>>> GetPopulationSocialGroupsByLocation(int locationId)
         {
-            var populationGroups = await _context.Populations
+            var populationGroups = await this._context.Populations
                 .Where(p => p.LocationId == locationId)
                 .GroupBy(p => new { p.SocialGroupId })
                 .Select(g => new PopulationSocialGroupDTO
                 {
-                    SocialGroup = _context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
+                    SocialGroup = this._context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
                     Amount = g.Count(),
                     Happiness = g.Average(p => p.Happiness)
                 })
@@ -324,12 +299,12 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("location/population-religion-groups/{locationId}")]
         public async Task<ActionResult<IEnumerable<PopulationReligiousGroupDTO>>> GetPopulationReligiousGroupsByLocation(int locationId)
         {
-            var populationGroups = await _context.Populations
+            var populationGroups = await this._context.Populations
                 .Where(p => p.LocationId == locationId)
                 .GroupBy(p => new { p.ReligionId })
                 .Select(g => new PopulationReligiousGroupDTO
                 {
-                    Religion = _context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
+                    Religion = this._context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
                     Amount = g.Count(),
                     Happiness = g.Average(p => p.Happiness)
                 })
@@ -340,15 +315,12 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("nation/total-population-info/{nationId?}")]
         public async Task<ActionResult<TotalPopulationInfoDTO>> GetTotalPopulationInfo(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = _nationId;
-            }
-            var totalPopulation = await _context.Populations
-                .Where(p => _context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
+            nationId ??= this._nationId;
+            var totalPopulation = await this._context.Populations
+                .Where(p => this._context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
                 .CountAsync();
-            var averageHappiness = await _context.Populations
-                .Where(p => _context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
+            var averageHappiness = await this._context.Populations
+                .Where(p => this._context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
                 .AverageAsync(p => p.Happiness);
             return Ok(new TotalPopulationInfoDTO
             {

@@ -1,13 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Wg_backend_api.Data;
+﻿using Wg_backend_api.Data;
 using Wg_backend_api.Enums;
 using Wg_backend_api.Logic.Modifiers.Base;
 using Wg_backend_api.Models;
 
 namespace Wg_backend_api.Logic.Modifiers.Processors
-{ 
-public class PopulationHappinessProcessor : BasePopulationProcessor
 {
+    public class PopulationHappinessProcessor : BasePopulationProcessor
+    {
         public override ModifierType SupportedType => ModifierType.PopulationHappiness;
 
         public PopulationHappinessProcessor(GameDbContext context, ILogger<PopulationHappinessProcessor> logger)
@@ -19,7 +18,7 @@ public class PopulationHappinessProcessor : BasePopulationProcessor
             entity.Happiness = OperationProcessor.ApplyOperation(entity.Happiness, value, operation);
             entity.Happiness = Math.Max(0, Math.Min(100, entity.Happiness)); // Clamp 0-100
 
-            _logger?.LogDebug($"Population {entity.Id}: Happiness {oldValue} → {entity.Happiness}");
+            this._logger?.LogDebug($"Population {entity.Id}: Happiness {oldValue} → {entity.Happiness}");
         }
 
         protected override void RevertFromEntity(Population entity, ModifierOperation operation, float value)
@@ -28,7 +27,7 @@ public class PopulationHappinessProcessor : BasePopulationProcessor
             entity.Happiness = OperationProcessor.ReverseOperation(entity.Happiness, value, operation);
             entity.Happiness = Math.Max(0, Math.Min(100, entity.Happiness));
 
-            _logger?.LogDebug($"Population {entity.Id}: Happiness reverted {oldValue} → {entity.Happiness}");
+            this._logger?.LogDebug($"Population {entity.Id}: Happiness reverted {oldValue} → {entity.Happiness}");
         }
     }
 

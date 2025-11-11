@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
-using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GameControllers
@@ -21,21 +19,20 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public ArmiesController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
-            string nationIdStr = _sessionDataService.GetNation();
-            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
+
+            this._context = this._gameDbContextFactory.Create(schema);
+            string nationIdStr = this._sessionDataService.GetNation();
+            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
 
         }
-
-
 
         [HttpDelete]
         public async Task<ActionResult> DeleteArmies([FromBody] List<int?> ids)
@@ -45,29 +42,25 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var armies = await _context.Armies.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var armies = await this._context.Armies.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (armies.Count == 0)
             {
                 return NotFound("Nie znaleziono armii do usunięcia.");
             }
 
-            _context.Armies.RemoveRange(armies);
-            await _context.SaveChangesAsync();
+            this._context.Armies.RemoveRange(armies);
+            await this._context.SaveChangesAsync();
 
             return Ok();
         }
 
-
         [HttpGet("GetNavalArmiesByNationId/{nationId?}")]
         public async Task<ActionResult<IEnumerable<ArmiesInfoDTO>>> GetNavalArmiesByNationId(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = _nationId;
-            }
+            nationId ??= this._nationId;
 
-            var navalArmies = await _context.Armies
+            var navalArmies = await this._context.Armies
                 .Where(a => a.NationId == nationId && a.IsNaval)
                 .Include(a => a.Troops)
                     .ThenInclude(t => t.UnitType)
@@ -97,12 +90,9 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("GetLandArmiesByNationId/{nationId?}")]
         public async Task<ActionResult<IEnumerable<ArmiesInfoDTO>>> GetLandArmiesByNationId(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = _nationId;
-            }
+            nationId ??= this._nationId;
 
-            var armies = await _context.Armies
+            var armies = await this._context.Armies
                 .Where(a => a.NationId == nationId && !a.IsNaval)
                 .Include(a => a.Troops)
                     .ThenInclude(t => t.UnitType)
@@ -132,10 +122,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("GetManpowerInfoByNationId/{nationId?}")]
         public async Task<ActionResult<ManpowerInfoDTO>> GetManpowerInfoByNationId(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = _nationId;
-            }
+            nationId ??= this._nationId;
 
             if (nationId == null)
             {
@@ -143,27 +130,27 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             // Total manpower: Sum of volunteers from all populations by their social groups
-            var totalManpower = await _context.Populations
+            var totalManpower = await this._context.Populations
                 .Where(p => p.Location.NationId == nationId)
                 .SumAsync(p => p.SocialGroup.Volunteers);
 
             // Manpower in land armies: Sum of all troop quantities in land armies
-            var manpowerInLandArmies = await _context.Armies
+            var manpowerInLandArmies = await this._context.Armies
                 .Where(a => a.NationId == nationId && !a.IsNaval)
                 .SumAsync(a => a.Troops.Sum(t => t.Quantity));
 
             // Manpower in naval armies: Sum of all troop quantities in naval armies
-            var manpowerInNavalArmies = await _context.Armies
+            var manpowerInNavalArmies = await this._context.Armies
                 .Where(a => a.NationId == nationId && a.IsNaval)
                 .SumAsync(a => a.Troops.Sum(t => t.Quantity));
 
             // Recruiting land manpower: Sum of all units in recruitment for land armies
-            var recruitingLandManpower = await _context.UnitOrders
+            var recruitingLandManpower = await this._context.UnitOrders
                .Where(uo => uo.NationId == nationId && !uo.UnitType.IsNaval)
                .SumAsync(uo => uo.Quantity * uo.UnitType.VolunteersNeeded);
 
             // Recruiting naval manpower: Sum of all units in recruitment for naval armies  
-            var recruitingNavalManpower = await _context.UnitOrders
+            var recruitingNavalManpower = await this._context.UnitOrders
                .Where(uo => uo.NationId == nationId && uo.UnitType.IsNaval)
                .SumAsync(uo => uo.Quantity * uo.UnitType.VolunteersNeeded);
 
@@ -179,9 +166,6 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok(manpowerInfo);
         }
-
-
-
 
     }
 }

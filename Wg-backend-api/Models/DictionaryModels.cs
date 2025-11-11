@@ -171,7 +171,7 @@ namespace Wg_backend_api.Models
         [Column("fk_nation")]
         public int NationId { get; set; }
 
-        [ForeignKey ("NationId")]
+        [ForeignKey("NationId")]
         public Nation Nation { get; set; }
 
         [Column("fk_resource")]

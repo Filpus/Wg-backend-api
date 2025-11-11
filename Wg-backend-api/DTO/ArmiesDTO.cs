@@ -1,8 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Drawing;
-using Wg_backend_api.Models;
-
-namespace Wg_backend_api.DTO
+﻿namespace Wg_backend_api.DTO
 {
     public class ArmiesDTO
     {
@@ -63,7 +59,6 @@ namespace Wg_backend_api.DTO
         public int Quantity { get; set; }
     }
 
-
     public class TroopInfoDTO
     {
         public int? Id { get; set; }
@@ -120,16 +115,14 @@ namespace Wg_backend_api.DTO
         public int ManpowerInLandArmies { get; set; }
         public int ManpowerInNavalArmies { get; set; }
 
-
     }
-
 
     public class UnitTypeResourceDTO
     {
 
-       public int? Id { get; set; }
+        public int? Id { get; set; }
 
-       public int UnitTypeId { get; set; }
+        public int UnitTypeId { get; set; }
         public int ResourceId { get; set; }
         public float Amount { get; set; }
     }

@@ -4,13 +4,16 @@ namespace Wg_backend_api.Logic.Modifiers.ModifierConditions
 {
     public class FactionConditions : IBaseModifierConditions
     {
-        public int? FactionId { get; set; } 
+        public int? FactionId { get; set; }
 
- 
         public override Dictionary<string, object> ToDictionary()
         {
             var dict = new Dictionary<string, object>();
-            if (FactionId.HasValue) dict["FactionId"] = FactionId.Value;
+            if (this.FactionId.HasValue)
+            {
+                dict["FactionId"] = this.FactionId.Value;
+            }
+
             return dict;
         }
     }

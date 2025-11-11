@@ -1,12 +1,9 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Models;
-using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GlobalControllers
 {
@@ -25,7 +22,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [ApiExplorerSettings(IgnoreApi = true)]
         public void SetUserId(int userId)
         {
-            _userId = userId;
+            this._userId = userId;
         }
 
         // get user data
@@ -64,6 +61,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 return this.BadRequest(new { message = "Bad request: ID mismatch or invalid user data." });
             }
+
             user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
             this._context.Entry(user).State = EntityState.Modified;
 
@@ -96,6 +94,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 return this.NotFound(new { message = "User not found." });
             }
+
             if (user.IsArchived)
             {
                 return this.BadRequest(new { message = "Cannot modify an archived user." });
@@ -114,14 +113,17 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 user.Name = userPathDTO.Name;
             }
+
             if (!string.IsNullOrEmpty(userPathDTO.Email))
             {
                 user.Email = userPathDTO.Email;
             }
+
             if (!string.IsNullOrEmpty(userPathDTO.Password))
             {
                 user.Password = BCrypt.Net.BCrypt.HashPassword(userPathDTO.Password);
             }
+
             this._context.Entry(user).State = EntityState.Modified;
             await this._context.SaveChangesAsync();
 
@@ -157,6 +159,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 return this.NotFound(new { message = "User not found." });
             }
+
             user.IsArchived = true;
 
             await this._context.SaveChangesAsync();
@@ -182,29 +185,41 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             try
             {
                 if (file == null)
+                {
                     return this.BadRequest("Brak danych do zapisania");
+                }
 
                 if (string.IsNullOrWhiteSpace(file.Name))
+                {
                     return this.BadRequest("Nazwa mapy jest wymagana");
+                }
 
                 if (file == null || file.Length == 0)
+                {
                     return this.BadRequest("Nie wybrano pliku obrazu");
+                }
 
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
                 var fileExtension = Path.GetExtension(file.FileName).ToLower();
 
                 if (!allowedExtensions.Contains(fileExtension))
+                {
                     return this.BadRequest($"Nieobsługiwany format pliku. Dopuszczalne rozszerzenia: {string.Join(", ", allowedExtensions)}");
+                }
 
                 const int maxFileSize = 20 * 1024 * 1024;
                 if (file.Length > maxFileSize)
+                {
                     return this.BadRequest($"Maksymalny dopuszczalny rozmiar pliku to {maxFileSize / 1024 / 1024} MB");
+                }
 
                 var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Images");
 
                 if (!Directory.Exists(uploadsFolder))
+                {
                     Directory.CreateDirectory(uploadsFolder);
+                }
 
                 var filePath = Path.Combine(uploadsFolder, uniqueFileName);
                 using (var stream = new FileStream(filePath, FileMode.Create))
@@ -227,6 +242,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                         System.IO.File.Delete(oldFilePath);
                     }
                 }
+
                 user.Image = imageUrl;
                 await this._context.SaveChangesAsync();
 

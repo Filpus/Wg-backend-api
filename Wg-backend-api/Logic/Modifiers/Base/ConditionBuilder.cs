@@ -10,31 +10,38 @@ namespace Wg_backend_api.Logic.Modifiers.Base
 
         protected ConditionBuilder(IQueryable<TEntity> baseQuery)
         {
-            Query = baseQuery ?? throw new ArgumentNullException(nameof(baseQuery));
-            _originalQuery = baseQuery;
+            this.Query = baseQuery ?? throw new ArgumentNullException(nameof(baseQuery));
+            this._originalQuery = baseQuery;
         }
 
         public abstract IConditionBuilder<TEntity> ApplyConditions(Dictionary<string, object> conditions);
 
-        public virtual IQueryable<TEntity> Build() => Query;
+        public virtual IQueryable<TEntity> Build()
+        {
+            return this.Query;
+        }
 
         public virtual IConditionBuilder<TEntity> Reset()
         {
-            Query = _originalQuery;
+            this.Query = this._originalQuery;
             return this;
         }
 
         protected bool TryGetCondition<T>(Dictionary<string, object> conditions, string key, out T value)
         {
-            value = default(T);
+            value = default;
 
             if (!conditions.TryGetValue(key, out var rawValue))
+            {
                 return false;
+            }
 
             try
             {
                 if (rawValue == null)
+                {
                     return false;
+                }
 
                 if (rawValue is JsonElement jsonElement)
                 {

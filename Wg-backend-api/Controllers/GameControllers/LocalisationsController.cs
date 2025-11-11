@@ -20,23 +20,24 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public LocalisationsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
-            _context = _gameDbContextFactory.Create(schema);
-            string nationIdStr = _sessionDataService.GetNation();
-            _nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
+
+            this._context = this._gameDbContextFactory.Create(schema);
+            string nationIdStr = this._sessionDataService.GetNation();
+            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
         // GET: api/Localisations  
         [HttpGet]
         public async Task<ActionResult<IEnumerable<LocalisationDTO>>> GetLocalisation()
         {
-            return await _context.Localisations
+            return await this._context.Localisations
                 .Select(l => new LocalisationDTO
                 {
                     Id = l.Id,
@@ -53,7 +54,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("{id}")]
         public async Task<ActionResult<LocalisationDTO>> GetLocalisation(int? id)
         {
-            var localisation = await _context.Localisations
+            var localisation = await this._context.Localisations
                 .Where(l => l.Id == id)
                 .Select(l => new LocalisationDTO
                 {
@@ -79,7 +80,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             foreach (var localisationDto in localisationDtos)
             {
-                var localisation = await _context.Localisations.FindAsync(localisationDto.Id);
+                var localisation = await this._context.Localisations.FindAsync(localisationDto.Id);
                 if (localisation == null)
                 {
                     return NotFound($"Localisation with ID {localisationDto.Id} not found.");
@@ -88,12 +89,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 localisation.Name = localisationDto.Name;
                 localisation.NationId = localisationDto.NationId;
 
-                _context.Entry(localisation).State = EntityState.Modified;
+                this._context.Entry(localisation).State = EntityState.Modified;
             }
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -104,6 +105,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                         return NotFound($"Localisation with ID {localisationDto.Id} not found.");
                     }
                 }
+
                 throw;
             }
 
@@ -128,8 +130,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 localisations.Add(localisation);
             }
 
-            _context.Localisations.AddRange(localisations);
-            await _context.SaveChangesAsync();
+            this._context.Localisations.AddRange(localisations);
+            await this._context.SaveChangesAsync();
 
             for (int i = 0; i < localisations.Count; i++)
             {
@@ -142,7 +144,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpDelete]
         public async Task<IActionResult> DeleteLocalisations([FromBody] List<int?> ids)
         {
-            var localisations = await _context.Localisations
+            var localisations = await this._context.Localisations
                 .Where(l => ids.Contains(l.Id))
                 .ToListAsync();
 
@@ -151,25 +153,22 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return NotFound("No localisations found for the provided IDs.");
             }
 
-            _context.Localisations.RemoveRange(localisations);
-            await _context.SaveChangesAsync();
+            this._context.Localisations.RemoveRange(localisations);
+            await this._context.SaveChangesAsync();
 
             return NoContent();
         }
 
         private bool LocalisationExists(int? id)
         {
-            return _context.Localisations.Any(e => e.Id == id);
+            return this._context.Localisations.Any(e => e.Id == id);
         }
 
         [HttpGet("Nation/GeneralInfo/{nationId?}")]
         public async Task<ActionResult<IEnumerable<LocalisationGeneralInfoDTO>>> GetLocalisationsGeneralInfoByNation(int? nationId)
         {
-            if (nationId == null)
-            {
-                nationId = _nationId ?? throw new InvalidOperationException("Brak ID narodu w sesji.");
-            }
-            var localisations = await _context.Localisations
+            nationId ??= this._nationId ?? throw new InvalidOperationException("Brak ID narodu w sesji.");
+            var localisations = await this._context.Localisations
                 .Where(l => l.NationId == nationId)
                 .Select(l => new LocalisationGeneralInfoDTO
                 {
@@ -177,20 +176,18 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Name = l.Name,
                     Size = l.Size,
                     Fortification = l.Fortification,
-                    PopulationSize = _context.Populations.Where(p => p.Location.Id == l.Id).Count(),
-                    PopulationHappiness = _context.Populations.Where(p => p.Location.Id == l.Id).Average(p => p.Happiness)
+                    PopulationSize = this._context.Populations.Where(p => p.Location.Id == l.Id).Count(),
+                    PopulationHappiness = this._context.Populations.Where(p => p.Location.Id == l.Id).Average(p => p.Happiness)
                 })
                 .ToListAsync();
 
             return Ok(localisations);
         }
 
-
-
         [HttpGet("Details/{id}")]
         public async Task<ActionResult<LocalisationDetailsDTO>> GetLocalisationDetails(int id)
         {
-            var localisation = await _context.Localisations
+            var localisation = await this._context.Localisations
                 .Where(l => l.Id == id)
                 .Select(l => new LocalisationDetailsDTO
                 {
@@ -209,17 +206,15 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(localisation);
         }
 
-
-
         private List<LocalisationResourceProductionDTO> GetLocalisationResourceProductions(int localisationId)
         {
-            var localisationResources = _context.LocalisationResources
+            var localisationResources = this._context.LocalisationResources
                    .Include(lr => lr.Resource)
                    .Where(lr => lr.LocationId == localisationId)
                    .ToList();
 
             // Pobierz populacje i podziel na grupy społeczne  
-            var populationGroups = _context.Populations
+            var populationGroups = this._context.Populations
                 .Where(p => p.LocationId == localisationId)
                 .GroupBy(p => p.SocialGroupId)
                 .Select(g => new
@@ -230,9 +225,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .ToList();
 
             // Pobierz wszystkie udziały produkcyjne dla tej lokalizacji  
-            var productionShares = _context.ProductionShares.ToList();
-
-
+            var productionShares = this._context.ProductionShares.ToList();
 
             var result = new List<LocalisationResourceProductionDTO>();
 
@@ -262,14 +255,14 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
         private List<PopulationGroupDTO> GetPopulationGroups(int localisationId)
         {
-            var populationGroups = _context.Populations
+            var populationGroups = this._context.Populations
                 .Where(p => p.LocationId == localisationId)
                 .GroupBy(p => new { p.ReligionId, p.CultureId, p.SocialGroupId })
                 .Select(g => new PopulationGroupDTO
                 {
-                    Religion = _context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
-                    Culture = _context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
-                    SocialGroup = _context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
+                    Religion = this._context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
+                    Culture = this._context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
+                    SocialGroup = this._context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
                     Amount = g.Count(),
                     Happiness = g.Average(p => p.Happiness)
                 })
@@ -278,48 +271,15 @@ namespace Wg_backend_api.Controllers.GameControllers
             return populationGroups.Result;
         }
 
-        private float CalculateProductionAmount(int resourceId, int localisationId)
-        {
-            var populationGroups = _context.Populations
-                .Where(p => p.LocationId == localisationId)
-                .GroupBy(p => p.SocialGroupId)
-                .Select(g => new
-                {
-                    SocialGroupId = g.Key,
-                    PopulationCount = g.Count()
-                })
-                .ToList();
-
-            float totalProduction = 0;
-
-            foreach (var group in populationGroups)
-            {
-                var productionShare = _context.ProductionShares
-                    .Where(ps => ps.SocialGroupId == group.SocialGroupId && ps.ResourceId == resourceId)
-                    .Select(ps => ps.Coefficient)
-                    .FirstOrDefault();
-
-                var resourceAmount = _context.LocalisationResources
-                    .Where(lr => lr.LocationId == localisationId && lr.ResourceId == resourceId)
-                    .Select(lr => lr.Amount)
-                    .FirstOrDefault();
-
-                totalProduction += group.PopulationCount * productionShare * resourceAmount;
-            }
-
-            return totalProduction;
-        }
-
         private List<LocalisationResourceInfoDTO> GetLocalisationResources(int localisationId)
         {
-            return _context.LocalisationResources
+            return [.. this._context.LocalisationResources
                 .Where(lr => lr.LocationId == localisationId)
                 .Select(lr => new LocalisationResourceInfoDTO
                 {
                     ResourceName = lr.Resource.Name,
                     Amount = lr.Amount
-                })
-                .ToList();
+                })];
         }
         // POST: api/Localisations/Resources
         [HttpPost("Resources")]
@@ -337,8 +297,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Amount = dto.Amount
             }).ToList();
 
-            _context.LocalisationResources.AddRange(localisationResources);
-            await _context.SaveChangesAsync();
+            this._context.LocalisationResources.AddRange(localisationResources);
+            await this._context.SaveChangesAsync();
 
             for (int i = 0; i < localisationResources.Count; i++)
             {
@@ -359,7 +319,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var dto in localisationResourceDtos)
             {
-                var localisationResource = await _context.LocalisationResources.FindAsync(dto.Id);
+                var localisationResource = await this._context.LocalisationResources.FindAsync(dto.Id);
                 if (localisationResource == null)
                 {
                     return NotFound($"LocalisationResource with ID {dto.Id} not found.");
@@ -369,22 +329,23 @@ namespace Wg_backend_api.Controllers.GameControllers
                 localisationResource.ResourceId = dto.ResourceId;
                 localisationResource.Amount = dto.Amount;
 
-                _context.Entry(localisationResource).State = EntityState.Modified;
+                this._context.Entry(localisationResource).State = EntityState.Modified;
             }
 
             try
             {
-                await _context.SaveChangesAsync();
+                await this._context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
                 foreach (var dto in localisationResourceDtos)
                 {
-                    if (!_context.LocalisationResources.Any(lr => lr.Id == dto.Id))
+                    if (!this._context.LocalisationResources.Any(lr => lr.Id == dto.Id))
                     {
                         return NotFound($"LocalisationResource with ID {dto.Id} not found.");
                     }
                 }
+
                 throw;
             }
 
@@ -400,7 +361,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Invalid data.");
             }
 
-            var localisationResources = await _context.LocalisationResources
+            var localisationResources = await this._context.LocalisationResources
                 .Where(lr => ids.Contains(lr.Id.Value))
                 .ToListAsync();
 
@@ -409,8 +370,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return NotFound("No LocalisationResources found for the provided IDs.");
             }
 
-            _context.LocalisationResources.RemoveRange(localisationResources);
-            await _context.SaveChangesAsync();
+            this._context.LocalisationResources.RemoveRange(localisationResources);
+            await this._context.SaveChangesAsync();
 
             return NoContent();
         }

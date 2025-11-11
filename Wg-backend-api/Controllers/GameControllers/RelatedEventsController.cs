@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
-using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
@@ -18,16 +16,15 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         public RelatedEventsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
         {
-            _gameDbContextFactory = gameDbFactory;
-            _sessionDataService = sessionDataService;
+            this._gameDbContextFactory = gameDbFactory;
+            this._sessionDataService = sessionDataService;
 
-            string schema = _sessionDataService.GetSchema();
+            string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
             {
                 throw new InvalidOperationException("Brak schematu w sesji.");
             }
         }
-  
 
         // DELETE: api/RelatedEvents
         [HttpDelete]
@@ -38,15 +35,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var relatedEvents = await _context.RelatedEvents.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var relatedEvents = await this._context.RelatedEvents.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (relatedEvents.Count == 0)
             {
                 return NotFound("Nie znaleziono wydarzeń do usunięcia.");
             }
 
-            _context.RelatedEvents.RemoveRange(relatedEvents);
-            await _context.SaveChangesAsync();
+            this._context.RelatedEvents.RemoveRange(relatedEvents);
+            await this._context.SaveChangesAsync();
 
             return Ok();
         }

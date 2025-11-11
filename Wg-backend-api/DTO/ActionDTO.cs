@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-
-namespace Wg_backend_api.DTO
+﻿namespace Wg_backend_api.DTO
 {
     public class ActionDTO
     {

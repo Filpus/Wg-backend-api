@@ -1,6 +1,4 @@
-﻿using Wg_backend_api.Models;
-
-namespace Wg_backend_api.Data.Seeders
+﻿namespace Wg_backend_api.Data.Seeders
 {
     public class DemoGameSeeder
     {
@@ -8,7 +6,7 @@ namespace Wg_backend_api.Data.Seeders
 
         public DemoGameSeeder(GameDbContext context)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            this._context = context ?? throw new ArgumentNullException(nameof(context));
         }
     }
 }
