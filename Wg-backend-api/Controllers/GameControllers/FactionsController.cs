@@ -138,7 +138,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Contentment = dto.Contentment,
                 Color = dto.Color,
                 Description = dto.Description,
-                NationId = dto.NationId > 0 ? (int)dto.NationId : _nationId ?? throw new InvalidOperationException("Brak ID państwa w sesji."),
+                NationId = dto.NationId > 0 ? (int)dto.NationId : this._nationId ?? throw new InvalidOperationException("Brak ID państwa w sesji."),
             }).ToList();
 
             this._context.Factions.AddRange(factions);
