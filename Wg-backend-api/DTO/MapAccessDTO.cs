@@ -2,7 +2,7 @@
 {
     public class MapAccessCreateDTO
     {
-        public int NationId { get; set; }
+        public int? NationId { get; set; }
         public int MapId { get; set; }
     }
 

@@ -85,7 +85,17 @@ namespace Wg_backend_api.Controllers.GameControllers
             var newMapAccesses = new List<MapAccess>();
             foreach (var mapaccess in ids)
             {
-                int nationId = mapaccess.NationId;
+                int nationId = 0;
+                if(mapaccess.NationId == null)
+                {
+                     nationId = (int)_nationId;
+                }
+                else
+                {
+                    nationId = (int)mapaccess.NationId;
+
+                }
+
                 int mapId = mapaccess.MapId;
                 if (nationId < 0 || mapId < 0)
                 {
@@ -137,6 +147,10 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var item in ids)
             {
+                if (item.NationId == null)
+                {
+                    item.NationId = _nationId;
+                }
                 if (item.NationId < 0 || item.MapId < 0)
                 {
                     return this.BadRequest("Nieprawidłowe ID.");
