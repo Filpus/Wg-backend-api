@@ -59,15 +59,6 @@ namespace Wg_backend_api.Auth
 
                 var gameId = int.Parse(gameIdHeader.Replace("game_", string.Empty));
                 context.Items["RoleInGame"] = gameRole;
-                // TODO ensure we dont need to check acces in every middleware call
-                // var hasAccess = await db.GameAccesses.FirstOrDefaultAsync(a => a.UserId == userId && a.GameId == gameId);
-
-                // if (hasAccess == null)
-                // {
-                //     context.Response.StatusCode = 403;
-                //     await context.Response.WriteAsync("No access to this game");
-                //     return;
-                // }
             }
 
             await this._next(context);
