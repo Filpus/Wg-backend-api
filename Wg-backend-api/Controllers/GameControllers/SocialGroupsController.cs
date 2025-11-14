@@ -166,6 +166,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             var socialGroupInfoList = socialGroups?.Select(sg => new SocialGroupInfoDTO
             {
                 Name = sg.Name,
+                Id = sg.Id,
                 BaseHappiness = CalculateBaseHappiness(sg),
                 Volunteers = CalculateVolunteers(sg),
                 ConsumedResources = GetConsumedResources(sg),

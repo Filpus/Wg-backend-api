@@ -226,6 +226,184 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok(assignedEvents);
         }
+    
+    
+    [HttpGet("{nationsId?}")]
+        public async Task<ActionResult<List<EventDto>>> GetEvents( int? nationId)
+        {
+            var query = _context.Events.Include(e => e.Modifiers)
+                .Include(e => e.RelatedEvents)
+                .AsQueryable();
 
+            if (!nationId.HasValue)
+            {
+                nationId = _nationId;
+            }
+
+            var events = await query
+                .Where(e => e.RelatedEvents.Any(re => re.NationId == nationId.Value))
+                .ToListAsync();
+
+            var eventDtos = events.Select(e => new EventDto
+            {
+                EventId = e.Id,
+                Name = e.Name,
+                Description = e.Description,
+                ImageUrl = e.Picture,
+                IsActive = e.IsActive,
+                Modifiers = e.Modifiers.Select(m =>
+                {
+                    var effects = JsonSerializer.Deserialize<List<ModifierEffectDto>>(
+                        m.Effects,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    ) ?? new List<ModifierEffectDto>();
+
+                    return new ModifierDto
+                    {
+                        ModifierId = m.Id,
+                        ModifierType = m.modiferType,
+                        Effect = effects.FirstOrDefault(),
+                        EffectCount = effects.Count
+                    };
+                }).ToList()
+            }).ToList();
+
+            return Ok(eventDtos);
+        }
+    
+        [HttpGet("allevents")]
+        public async Task<ActionResult<List<EventDto>>> GetEvents()
+        {
+            var query = _context.Events.Include(e => e.Modifiers).AsQueryable();
+
+
+
+            var events = await query.ToListAsync();
+
+            var eventDtos = events.Select(e => new EventDto
+            {
+                EventId = e.Id,
+                Name = e.Name,
+                Description = e.Description,
+                ImageUrl = e.Picture,
+                IsActive = e.IsActive,
+                Modifiers = e.Modifiers.Select(m =>
+                {
+                    var effects = JsonSerializer.Deserialize<List<ModifierEffectDto>>(
+                        m.Effects,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    ) ?? new List<ModifierEffectDto>();
+
+                    return new ModifierDto
+                    {
+                        ModifierId = m.Id,
+                        ModifierType = m.modiferType,
+                        Effect = effects.FirstOrDefault(),
+                        EffectCount = effects.Count,
+                        
+                    };
+                }).ToList()
+            }).ToList();
+
+            return Ok(eventDtos);
+        }
+        [HttpGet("unassigned-nations/{eventId}")]
+        public async Task<ActionResult<List<NationBaseInfoDTO>>> GetUnassignedNations(int eventId)
+        {
+            var assignedNationIds = await _context.RelatedEvents
+                .Where(re => re.EventId == eventId)
+                .Select(re => re.NationId)
+                .ToListAsync();
+
+            var unassignedNations = await _context.Nations
+                .Where(n => !assignedNationIds.Contains(n.Id.Value))
+                .Select(n => new NationBaseInfoDTO
+                {
+                    Id = n.Id,
+                    Name = n.Name
+                  
+                })
+                .ToListAsync();
+
+            return Ok(unassignedNations);
+        }
+        [HttpGet("assigned-nations/{eventId}")]
+        public async Task<ActionResult<List<NationBaseInfoDTO>>> GetAssignedNations(int eventId)
+        {
+            var assignedNations = await _context.RelatedEvents
+                .Where(re => re.EventId == eventId)
+                .Include(re => re.Nation) // Dodanie Include dla załadowania danych o narodach
+                .Select(re => new NationBaseInfoDTO
+                {
+                    Id = re.Nation.Id,
+                    Name = re.Nation.Name
+                })
+                .ToListAsync();
+
+            return Ok(assignedNations);
+        }
+        [HttpGet("option-pack")]
+        public async Task<ActionResult<OptionPackDTO>> GetOptionPack()
+        {
+            var resources = await _context.Resources
+                .Select(r => new ResourceDto
+                {
+                    Id = (int)r.Id,
+                    Name = r.Name
+                })
+                .ToListAsync();
+
+            var religions = await _context.Religions
+                .Select(r => new ReligionDTO
+                {
+                    Id = r.Id,
+                    Name = r.Name
+                })
+                .ToListAsync();
+
+            var cultures = await _context.Cultures
+                .Select(c => new CultureDTO
+                {
+                    Id = c.Id,
+                    Name = c.Name
+                })
+                .ToListAsync();
+
+            var socialGroups = await _context.SocialGroups
+                .Select(sg => new SocialGroupInfoDTO
+                {
+                    Id = sg.Id,
+                    Name = sg.Name,
+                    BaseHappiness = sg.BaseHappiness,
+                    Volunteers = sg.Volunteers,
+                    ConsumedResources = new List<ResourceAmountDto>(), // Puste listy
+                    ProducedResources = new List<ResourceAmountDto>()  // Puste listy
+                })
+                .ToListAsync();
+
+            var factions = await _context.Factions
+                .Select(f => new FactionDTO
+                {
+                    Id = f.Id,
+                    Name = f.Name
+                })
+                .ToListAsync();
+
+            var optionPack = new OptionPackDTO
+            {
+                Resources = resources,
+                Religions = religions,
+                Cultures = cultures,
+                SocialGroups = socialGroups,
+                Factions = factions
+            };
+
+            return Ok(optionPack);
+        }
     }
+
+
+    
+
 }
+

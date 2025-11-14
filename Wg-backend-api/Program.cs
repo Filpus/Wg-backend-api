@@ -71,6 +71,7 @@ namespace Wg_backend_api.Data
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
+                    
                     {
                         var accessToken = context.Request.Cookies["access_token"];
                         if (!string.IsNullOrEmpty(accessToken))
