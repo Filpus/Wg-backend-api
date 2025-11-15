@@ -356,20 +356,29 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         // DELETE: api/Localisations/Resources
         [HttpDelete("Resources")]
-        public async Task<IActionResult> DeleteLocalisationResources([FromBody] List<int> ids)
+        public async Task<IActionResult> DeleteLocalisationResources([FromBody] List<LocalisationResourceDTO> keys)
         {
-            if (ids == null || !ids.Any())
+            if (keys == null || !keys.Any())
             {
                 return BadRequest("Invalid data.");
             }
 
-            var localisationResources = await this._context.LocalisationResources
-                .Where(lr => ids.Contains(lr.Id.Value))
+            var locationIds = keys.Select(k => k.LocationId).Distinct().ToList();
+            var resourceIds = keys.Select(k => k.ResourceId).Distinct().ToList();
+
+            // Query DB using IN clauses which EF can translate to SQL
+            var candidates = await this._context.LocalisationResources
+                .Where(lr => locationIds.Contains(lr.LocationId) && resourceIds.Contains(lr.ResourceId))
                 .ToListAsync();
+
+            // Filter exact pairs in-memory to avoid EF translation issues with composite Any(...)
+            var localisationResources = candidates
+                .Where(lr => keys.Any(k => k.LocationId == lr.LocationId && k.ResourceId == lr.ResourceId))
+                .ToList();
 
             if (localisationResources == null || !localisationResources.Any())
             {
-                return NotFound("No LocalisationResources found for the provided IDs.");
+                return NotFound("No LocalisationResources found for the provided LocationId/ResourceId pairs.");
             }
 
             this._context.LocalisationResources.RemoveRange(localisationResources);
