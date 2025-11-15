@@ -207,7 +207,6 @@ CREATE TABLE "Global".games (
     image text,
     "ownerId" integer NOT NULL,
     game_code text DEFAULT upper(substr(md5((random())::text), 1, 6))
-
 );
 
 
@@ -1880,7 +1879,7 @@ COPY game_1.wantedresources (id, fk_resource, fk_tradeagreement, amount) FROM st
 -- Name: gameaccess_id_seq; Type: SEQUENCE SET; Schema: Global; Owner: postgres
 --
 
-SELECT pg_catalog.setval('"Global".gameaccess_id_seq', 2, true);
+SELECT pg_catalog.setval('"Global".gameaccess_id_seq', 4, true);
 
 
 --
@@ -2042,7 +2041,7 @@ SELECT pg_catalog.setval('game_1."ownedResources_Id_seq"', 45, true);
 -- Name: players_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: postgres
 --
 
-SELECT pg_catalog.setval('game_1.players_id_seq', 5, true);
+SELECT pg_catalog.setval('game_1.players_id_seq', 4, true);
 
 
 --
@@ -2850,6 +2849,8 @@ ALTER TABLE ONLY "Global".games
 ALTER TABLE ONLY game_1.armies
     ADD CONSTRAINT "FK_armies_locations_fk_Locations" FOREIGN KEY ("fk_Locations") REFERENCES game_1.locations(id) ON DELETE CASCADE;
 
+ALTER TABLE ONLY game_1.players
+    ADD CONSTRAINT "FK_players_users_fk_users" FOREIGN KEY ("fk_User") REFERENCES "Global".users(id) ON DELETE CASCADE;
 
 --
 -- TOC entry 5029 (class 2606 OID 24877)
@@ -2867,6 +2868,9 @@ ALTER TABLE ONLY game_1."locationsResources"
 
 ALTER TABLE ONLY game_1."mapAccess"
     ADD CONSTRAINT "FK_mapAccess_map_fk_Maps" FOREIGN KEY ("fk_Maps") REFERENCES game_1.map(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1."mapAccess"
+    ADD CONSTRAINT "FK_mapAccess_map_fk_Nation" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
 
 
 --
@@ -2904,6 +2908,56 @@ ALTER TABLE ONLY game_1.populations
 ALTER TABLE ONLY game_1.populations
     ADD CONSTRAINT "FK_populations_locations_fk_locations" FOREIGN KEY (fk_locations) REFERENCES game_1.locations(id) ON DELETE CASCADE;
 
+ALTER TABLE ONLY game_1.accessestonations
+    ADD CONSTRAINT "FK_accessestonations_fk_nations" FOREIGN KEY (fk_nations) REFERENCES game_1.nations(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1.accessestonations
+    ADD CONSTRAINT "FK_accessestonations_fk_users" FOREIGN KEY (fk_users) REFERENCES game_1.players(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1.actions
+    ADD CONSTRAINT "FK_actions_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1.factions
+    ADD CONSTRAINT "FK_factions_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1."accessToUnits"
+    ADD CONSTRAINT "FK_accessToUnits_fk_Nations" FOREIGN KEY ("fk_Nation") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1."accessToUnits"
+    ADD CONSTRAINT "FK_accessToUnits_fk_UnitTypes" FOREIGN KEY ("fk_UnitTypes") REFERENCES game_1."unitTypes"(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1."maintenanceCosts"
+    ADD CONSTRAINT "FK_maintenanceCosts_fk_Resources" FOREIGN KEY ("fk_Resources") REFERENCES game_1.resources(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1."maintenanceCosts"
+    ADD CONSTRAINT "FK_maintenanceCosts_fk_UnitTypes" FOREIGN KEY ("fk_UnitTypes") REFERENCES game_1."unitTypes"(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1."productionShares"
+    ADD CONSTRAINT "FK_productionShares_populations_fk_SocialGroups" FOREIGN KEY ("fk_SocialGroups") REFERENCES game_1.socialgroups(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1."productionShares"
+    ADD CONSTRAINT "FK_productionShares_populations_fk_Resources" FOREIGN KEY ("fk_Resources") REFERENCES game_1.resources(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1."usedResources"
+    ADD CONSTRAINT "FK_usedResources_populations_fk_SocialGroups" FOREIGN KEY ("fk_SocialGroups") REFERENCES game_1.socialgroups(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1."usedResources"
+    ADD CONSTRAINT "FK_usedResources_populations_fk_Resources" FOREIGN KEY ("fk_Resources") REFERENCES game_1.resources(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1."locationsResources"
+    ADD CONSTRAINT "FK_locationsResources_resources_fk_Resources" FOREIGN KEY ("fk_Resources") REFERENCES game_1.resources(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1.locations
+    ADD CONSTRAINT "FK_locations_nations_fk_nations" FOREIGN KEY (fk_nations) REFERENCES game_1.nations(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1.nations
+    ADD CONSTRAINT "FK_nations_players_fk_religions" FOREIGN KEY (fk_religions) REFERENCES game_1.religions(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1.nations
+    ADD CONSTRAINT "FK_nations_players_fk_cultures" FOREIGN KEY (fk_cultures) REFERENCES game_1.cultures(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY game_1.armies
+    ADD CONSTRAINT "FK_armies_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE; 
 
 --
 -- TOC entry 5040 (class 2606 OID 24907)
