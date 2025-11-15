@@ -8,7 +8,6 @@ namespace Wg_backend_api.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
-        // Dodaj tutaj DbSet dla swoich tabel
         public DbSet<Resource> Resources { get; set; }
         public DbSet<Culture> Cultures { get; set; }
         public DbSet<Religion> Religions { get; set; }

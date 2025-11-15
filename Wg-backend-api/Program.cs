@@ -192,37 +192,6 @@ namespace Wg_backend_api.Data
 
             app.MapControllers(); // Map controller routes
 
-            if (args.Contains("--global"))
-            {
-                if (string.IsNullOrEmpty(connectionString))
-                {
-                    throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
-                }
-
-                GameService.GenerateGlobalSchema(connectionString, Directory.GetCurrentDirectory() + "\\Migrations\\globalInitalize");
-            }
-
-            if (args.Contains("--tmp-game"))
-            {
-                if (string.IsNullOrEmpty(connectionString))
-                {
-                    throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
-                }
-
-                GameService.GenerateNewGame(connectionString, Directory.GetCurrentDirectory() + "\\Migrations\\initate.sql", "game_1");
-            }
-
-            if (args.Contains("--seeder"))
-            {
-                using (var scope = app.Services.CreateScope())
-                {
-                    var services = scope.ServiceProvider;
-                    var dbContext = services.GetRequiredService<GlobalDbContext>();
-                    var seeder = new GlobalSeeder(dbContext);
-                    seeder.Seed();
-                }
-            }
-
             app.Run();
         }
     }

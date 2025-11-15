@@ -20,3 +20,5 @@ Format main project
 ```bash
 ./format.bat
 ```
+
+### Create sql backup

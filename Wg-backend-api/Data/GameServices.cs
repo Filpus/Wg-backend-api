@@ -5,12 +5,10 @@ namespace Wg_backend_api.Data
     public class GameService
     {
 
-        // Podaj adres do initate.sql
         public static bool GenerateNewGame(string connectionString, string sqlScriptPath, string schema)
         {
             string script = File.ReadAllText(sqlScriptPath);
 
-            // Zamień domyślny schemat na docelowy schemat
             script = script.Replace("game_1", schema);
 
             using var connection = new NpgsqlConnection(connectionString);
@@ -31,7 +29,6 @@ namespace Wg_backend_api.Data
             return true;
         }
 
-        //      Podaj adres pliku globalInitalize
         public static void GenerateGlobalSchema(string connectionString, string sqlScriptPath)
         {
             GenerateNewGame(connectionString, sqlScriptPath, "Global");
