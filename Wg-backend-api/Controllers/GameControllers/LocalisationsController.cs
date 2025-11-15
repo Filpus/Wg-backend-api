@@ -247,6 +247,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 result.Add(new LocalisationResourceProductionDTO
                 {
                     ResourceName = lr.Resource.Name,
+                    ResourceId = lr.Resource.Id.Value,
                     ProductionAmount = totalProduction
                 });
             }
@@ -277,6 +278,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Where(lr => lr.LocationId == localisationId)
                 .Select(lr => new LocalisationResourceInfoDTO
                 {
+                    ResourceId = lr.Resource.Id.Value,
                     ResourceName = lr.Resource.Name,
                     Amount = lr.Amount
                 })];

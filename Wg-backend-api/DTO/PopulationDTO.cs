@@ -40,8 +40,11 @@
     public class PopulationGroupDTO
     {
         public string Religion { get; set; }
+        public int? ReligionId { get; set; }
         public string Culture { get; set; }
+        public int? CultureId { get; set; }
         public string SocialGroup { get; set; }
+        public int? SocialGroupId { get; set; }
         public int Amount { get; set; }
         public float Happiness { get; set; }
     }
