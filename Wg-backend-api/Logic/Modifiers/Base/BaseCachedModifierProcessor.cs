@@ -7,16 +7,14 @@ using Wg_backend_api.Models;
 namespace Wg_backend_api.Logic.Modifiers.Base
 {
     public abstract class BaseCachedModifierProcessor<TEntity, TConditions> : IModifierProcessor
-     where TEntity : class
-     where TConditions : IBaseModifierConditions
+        where TEntity : class
+        where TConditions : IBaseModifierConditions
     {
         protected readonly GameDbContext _context;
-        protected readonly ILogger _logger;
 
-        protected BaseCachedModifierProcessor(GameDbContext context, ILogger logger)
+        protected BaseCachedModifierProcessor(GameDbContext context)
         {
             this._context = context;
-            this._logger = logger;
         }
 
         public abstract ModifierType SupportedType { get; }
@@ -35,10 +33,10 @@ namespace Wg_backend_api.Logic.Modifiers.Base
             {
                 foreach (var effect in effects)
                 {
-                    if (ModifierConditionsMapper.CreateConditions(this.SupportedType, effect.Conditions) is not TConditions conditions)
+                    if (effect.Conditions is not TConditions conditions)
                     {
                         result.Success = false;
-                        result.Message = $"Nieprawidłowe warunki dla {this.SupportedType}";
+                        result.Message = $"Nieprawidłowe warunki dla {this.SupportedType}. Oczekiwano {typeof(TConditions).Name}, otrzymano {effect.Conditions?.GetType().Name ?? "null"}";
                         return result;
                     }
 
@@ -46,19 +44,25 @@ namespace Wg_backend_api.Logic.Modifiers.Base
 
                     if (!entities.Any())
                     {
-                        result.Success = false;
-                        result.Message = $"Nie znaleziono encji do modyfikacji dla {this.SupportedType}";
-                        return result;
+                        continue;
                     }
 
-                    var operation = Enum.Parse<ModifierOperation>(effect.Operation, true);
+                    var operation = Enum.Parse<ModifierOperation>(effect.Operation.ToString(), true);
 
                     foreach (var entity in entities)
                     {
-                        ApplyToEntity(entity, operation, effect.Value);
+                        ApplyToEntity(entity, operation, (float)effect.Value);
                     }
 
-                    result.AffectedEntities.Add($"affected_{typeof(TEntity).Name}_count", entities.Count);
+                    result.AffectedEntities.Add(
+                        $"affected_{typeof(TEntity).Name}_{DateTime.UtcNow.Ticks}",
+                        new ModifierChangeRecord
+                        {
+                            EntityType = typeof(TEntity).Name,
+                            PropertyName = this.SupportedType.ToString(),
+                            Change = entities.Count
+                        }
+                    );
                 }
 
                 await context.SaveChangesAsync();
@@ -77,32 +81,52 @@ namespace Wg_backend_api.Logic.Modifiers.Base
         {
             var result = new ModifierApplicationResult { Success = true };
 
-            foreach (var effect in effects)
+            try
             {
-                if (ModifierConditionsMapper.CreateConditions(this.SupportedType, effect.Conditions) is not TConditions conditions)
+                foreach (var effect in effects)
                 {
-                    result.Warnings.Add($"Nieprawidłowe warunki dla cofania modyfikatora {this.SupportedType}");
-                    continue;
+                    if (effect.Conditions is not TConditions conditions)
+                    {
+                        result.Warnings.Add($"Nieprawidłowe warunki dla cofania modyfikatora {this.SupportedType}. Oczekiwano {typeof(TConditions).Name}");
+                        continue;
+                    }
+
+                    var entities = await GetTargetEntities(nationId, conditions).ToListAsync();
+
+                    if (!entities.Any())
+                    {
+                        result.Warnings.Add($"Brak encji do cofania dla {this.SupportedType}");
+                        continue;
+                    }
+
+                    var operation = Enum.Parse<ModifierOperation>(effect.Operation.ToString(), true);
+
+                    foreach (var entity in entities)
+                    {
+                        RevertFromEntity(entity, operation, (float)effect.Value);
+                    }
+
+                    result.AffectedEntities.Add(
+                        $"reverted_{typeof(TEntity).Name}_{DateTime.UtcNow.Ticks}",
+                        new ModifierChangeRecord
+                        {
+                            EntityType = typeof(TEntity).Name,
+                            PropertyName = this.SupportedType.ToString(),
+                            Change = -entities.Count
+                        }
+                    );
                 }
 
-                var entities = await GetTargetEntities(nationId, conditions).ToListAsync();
-                var operation = Enum.Parse<ModifierOperation>(effect.Operation, true);
-
-                foreach (var entity in entities)
-                {
-                    RevertFromEntity(entity, operation, effect.Value);
-                }
-
-                result.AffectedEntities.Add($"reverted_{typeof(TEntity).Name}_count", entities.Count);
-
-                this._logger?.LogInformation($"Cofnięto {this.SupportedType} na {entities.Count} encji typu {typeof(TEntity).Name}");
+                await context.SaveChangesAsync();
+                result.Message = $"Cofnięto efekty modyfikatora {this.SupportedType}";
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Message = $"Błąd podczas cofania {this.SupportedType}: {ex.Message}";
             }
 
-            await context.SaveChangesAsync();
-            result.Message = $"Cofnięto efekty modyfikatora {this.SupportedType}";
             return result;
         }
-
     }
-
 }

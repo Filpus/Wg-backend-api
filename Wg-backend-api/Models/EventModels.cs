@@ -54,17 +54,20 @@ namespace Wg_backend_api.Models
         [Column("id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int? Id { get; set; }
+
         [Required]
         [Column("event_id")]
         public int EventId { get; set; }
+
         [ForeignKey("EventId")]
         public Event Event { get; set; }
+
         [Required]
         [Column("modifier_type")]
-        public ModifierType modiferType { get; set; }
-        [Required]
-        [Column("effects")]
-        public string Effects { get; set; }
+        public ModifierType ModifierType { get; set; }
 
+        [Required]
+        [Column("effects", TypeName = "jsonb")]
+        public ModifierEffect Effects { get; set; }
     }
 }

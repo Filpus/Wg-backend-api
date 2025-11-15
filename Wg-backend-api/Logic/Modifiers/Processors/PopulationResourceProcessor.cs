@@ -11,8 +11,8 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
     {
         public override ModifierType SupportedType => ModifierType.ResourceProduction;
 
-        public PopulationResourceProductionProcessor(GameDbContext context, ILogger<PopulationResourceProductionProcessor> logger)
-            : base(context, logger) { }
+        public PopulationResourceProductionProcessor(GameDbContext context)
+            : base(context) { }
 
         protected override IQueryable<PopulationProductionShare> GetTargetEntities(int nationId, PopulationResourceConditions conditions)
         {
@@ -46,7 +46,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Coefficient = OperationProcessor.ApplyOperation(entity.Coefficient, value, operation);
             entity.Coefficient = Math.Max(0, entity.Coefficient);
 
-            this._logger?.LogDebug($"PopulationProductionShare {entity.Id}: Coefficient {oldValue} → {entity.Coefficient} (Resource: {entity.ResourcesId})");
         }
 
         protected override void RevertFromEntity(PopulationProductionShare entity, ModifierOperation operation, float value)
@@ -55,7 +54,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Coefficient = OperationProcessor.ReverseOperation(entity.Coefficient, value, operation);
             entity.Coefficient = Math.Max(0, entity.Coefficient);
 
-            this._logger?.LogDebug($"PopulationProductionShare {entity.Id}: Coefficient reverted {oldValue} → {entity.Coefficient} (Resource: {entity.ResourcesId})");
         }
 
         protected override int GetEntityId(PopulationProductionShare entity)
@@ -69,7 +67,7 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
         public override ModifierType SupportedType => ModifierType.ResouerceUsage;
 
         public PopulationResourceUsageProcessor(GameDbContext context, ILogger<PopulationResourceUsageProcessor> logger)
-            : base(context, logger) { }
+            : base(context) { }
 
         protected override IQueryable<PopulationUsedResource> GetTargetEntities(int nationId, PopulationResourceConditions conditions)
         {
@@ -103,7 +101,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Amount = OperationProcessor.ApplyOperation(entity.Amount, value, operation);
             entity.Amount = Math.Max(0, entity.Amount);
 
-            this._logger?.LogDebug($"PopulationUsedResource {entity.Id}: Amount {oldValue} → {entity.Amount} (Resource: {entity.ResourcesId})");
         }
 
         protected override void RevertFromEntity(PopulationUsedResource entity, ModifierOperation operation, float value)
@@ -112,7 +109,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Amount = OperationProcessor.ReverseOperation(entity.Amount, (float)value, operation);
             entity.Amount = Math.Max(0, entity.Amount);
 
-            this._logger?.LogDebug($"PopulationUsedResource {entity.Id}: Amount reverted {oldValue} → {entity.Amount} (Resource: {entity.ResourcesId})");
         }
 
         protected override int GetEntityId(PopulationUsedResource entity)

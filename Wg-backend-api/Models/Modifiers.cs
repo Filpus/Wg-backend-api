@@ -76,27 +76,14 @@ namespace Wg_backend_api.Models
     /// Reprezentuje pojedynczy efekt modyfikatora z JSON
     /// </summary>
 
-    public class ModifierEffect<TConditions> where TConditions : IBaseModifierConditions
-    {
-        public ModifierOperation Operation { get; set; }
-        public decimal Value { get; set; }
-        public TConditions Conditions { get; set; }
-
-        public string ConditionsJson => JsonSerializer.Serialize(this.Conditions.ToDictionary());
-
-    }
-
     public class ModifierEffect
     {
-        public string Operation { get; set; }
+        public ModifierOperation Operation { get; set; }
         public float Value { get; set; }
-        public Dictionary<string, object> Conditions { get; set; } = [];
+        public IBaseModifierConditions Conditions { get; set; }
 
-        public T GetConditions<T>() where T : IBaseModifierConditions
-        {
-            var json = JsonSerializer.Serialize(this.Conditions);
-            return JsonSerializer.Deserialize<T>(json);
-        }
     }
+
+   
 
 }

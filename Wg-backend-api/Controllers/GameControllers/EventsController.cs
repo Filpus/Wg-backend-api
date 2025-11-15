@@ -1,9 +1,11 @@
-﻿using System.Text.Json;
+﻿using System.Linq;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
+using Wg_backend_api.Enums;
 using Wg_backend_api.Logic.Modifiers;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
@@ -29,9 +31,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
-            {
                 throw new InvalidOperationException("Brak schematu w sesji.");
-            }
 
             this._context = this._gameDbContextFactory.Create(schema);
 
@@ -45,16 +45,19 @@ namespace Wg_backend_api.Controllers.GameControllers
             var ev = new Event { Name = dto.Name, Description = dto.Description };
             this._context.Add(ev);
             await this._context.SaveChangesAsync();
+
             foreach (var m in dto.Modifiers)
             {
                 var mod = new Modifiers
                 {
                     EventId = ev.Id.Value,
-                    modiferType = m.ModifierType,
-                    Effects = JsonSerializer.Serialize(new[]
+                    ModifierType = m.ModifierType,
+                    Effects = new ModifierEffect
                     {
-                    new { m.Effect.Operation, m.Effect.Value, Conditions = m.Effect.Conditions.ToDictionary() }
-                })
+                        Operation = m.Effect.Operation,
+                        Value = (float)m.Effect.Value,
+                        Conditions = m.Effect.Conditions
+                    }
                 };
                 this._context.Add(mod);
             }
@@ -69,63 +72,61 @@ namespace Wg_backend_api.Controllers.GameControllers
             var ev = await this._context.Events
                 .Include(e => e.Modifiers)
                 .FirstOrDefaultAsync(e => e.Id == eventId);
+
             if (ev == null)
-            {
                 return NotFound();
-            }
 
             var related = await this._context.RelatedEvents
                 .Where(re => re.EventId == eventId)
                 .ToListAsync();
 
             var modifiers = ev.Modifiers.ToList();
+
             foreach (var rel in related)
             {
                 var nationId = rel.NationId;
-                foreach (var group in modifiers.GroupBy(m => m.modiferType))
+                foreach (var group in modifiers.GroupBy(m => m.ModifierType))
                 {
                     var processor = this._processorFactory.GetProcessor(group.Key);
-                    var effects = group
-                        .Select(m => JsonSerializer.Deserialize<ModifierEffect>(m.Effects)!)
-                        .ToList();
+                    var effects = group.Select(m => m.Effects).ToList();
                     await processor.RevertAsync(nationId, effects, this._context);
                 }
             }
 
             this._context.RemoveRange(related);
-
             this._context.RemoveRange(ev.Modifiers);
             this._context.Remove(ev);
-
             await this._context.SaveChangesAsync();
+
             return Ok();
         }
 
-        // Edit Event + Modifiers
         [HttpPut("{eventId}")]
         public async Task<ActionResult> UpdateEvent(int eventId, [FromBody] EventDto dto)
         {
             var ev = await this._context.Events
                 .Include(e => e.Modifiers)
                 .FirstOrDefaultAsync(e => e.Id == eventId);
+
             if (ev == null)
-            {
                 return NotFound();
-            }
 
             ev.Name = dto.Name;
             ev.Description = dto.Description;
             this._context.Modifiers.RemoveRange(ev.Modifiers);
+
             foreach (var m in dto.Modifiers)
             {
                 this._context.Add(new Modifiers
                 {
                     EventId = eventId,
-                    modiferType = m.ModifierType,
-                    Effects = JsonSerializer.Serialize(new[]
+                    ModifierType = m.ModifierType,
+                    Effects = new ModifierEffect
                     {
-                    new { m.Effect.Operation, m.Effect.Value, Conditions = m.Effect.Conditions.ToDictionary() }
-                })
+                        Operation = m.Effect.Operation,
+                        Value = (float)m.Effect.Value,
+                        Conditions = m.Effect.Conditions
+                    }
                 });
             }
 
@@ -133,20 +134,15 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok();
         }
 
-        // Delete only Modifiers by IDs
         [HttpDelete("modifiers")]
-        public async Task<ActionResult> DeleteModifiers([FromBody] List<int?> ids)
+        public async Task<ActionResult> DeleteModifiers([FromBody] List<int> ids)
         {
             if (ids == null || !ids.Any())
-            {
                 return BadRequest("Brak ID do usunięcia.");
-            }
 
-            var mods = await this._context.Modifiers.Where(m => ids.Contains(m.Id)).ToListAsync();
+            var mods = await this._context.Modifiers.Where(m => ids.Contains(m.Id.Value)).ToListAsync();
             if (!mods.Any())
-            {
                 return NotFound();
-            }
 
             this._context.Modifiers.RemoveRange(mods);
             await this._context.SaveChangesAsync();
@@ -163,12 +159,10 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Where(m => m.EventId == dto.EventId)
                 .ToListAsync();
 
-            foreach (var group in modifiers.GroupBy(m => m.modiferType))
+            foreach (var group in modifiers.GroupBy(m => m.ModifierType))
             {
                 var processor = this._processorFactory.GetProcessor(group.Key);
-                var effects = group
-                    .Select(m => JsonSerializer.Deserialize<ModifierEffect>(m.Effects)!)
-                    .ToList();
+                var effects = group.Select(m => m.Effects).ToList();
                 await processor.ProcessAsync(dto.NationId, effects, this._context);
             }
 
@@ -178,13 +172,11 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpDelete("assign")]
         public async Task<ActionResult> UnassignEvent([FromBody] AssignEventDto dto)
         {
-
             var rel = await this._context.RelatedEvents
                 .FirstOrDefaultAsync(r => r.EventId == dto.EventId && r.NationId == dto.NationId);
+
             if (rel == null)
-            {
                 return NotFound();
-            }
 
             this._context.Remove(rel);
             await this._context.SaveChangesAsync();
@@ -193,12 +185,10 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Where(m => m.EventId == dto.EventId)
                 .ToListAsync();
 
-            foreach (var group in modifiers.GroupBy(m => m.modiferType))
+            foreach (var group in modifiers.GroupBy(m => m.ModifierType))
             {
                 var processor = this._processorFactory.GetProcessor(group.Key);
-                var effects = group
-                    .Select(m => JsonSerializer.Deserialize<ModifierEffect>(m.Effects)!)
-                    .ToList();
+                var effects = group.Select(m => m.Effects).ToList();
                 await processor.RevertAsync(dto.NationId, effects, this._context);
             }
 
@@ -208,8 +198,8 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("assigned/{nationId?}")]
         public async Task<ActionResult<List<AssignEventInfoDto>>> GetAssignedEvents(int? nationId)
         {
-
             nationId ??= this._nationId;
+
             var assignedEvents = await this._context.RelatedEvents
                 .Where(re => re.NationId == nationId)
                 .Include(re => re.Event)
@@ -226,21 +216,19 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok(assignedEvents);
         }
-    
-    
-    [HttpGet("{nationsId?}")]
-        public async Task<ActionResult<List<EventDto>>> GetEvents( int? nationId)
+
+        [HttpGet("{nationsId?}")]
+        public async Task<ActionResult<List<EventDto>>> GetEvents(int? nationId)
         {
-            var query = _context.Events.Include(e => e.Modifiers)
-                .Include(e => e.RelatedEvents)
-                .AsQueryable();
+            if (!nationId.HasValue)
+                nationId = _nationId;
 
             if (!nationId.HasValue)
-            {
-                nationId = _nationId;
-            }
+                return BadRequest("Nation ID is required");
 
-            var events = await query
+            var events = await _context.Events
+                .Include(e => e.Modifiers)
+                .Include(e => e.RelatedEvents)
                 .Where(e => e.RelatedEvents.Any(re => re.NationId == nationId.Value))
                 .ToListAsync();
 
@@ -251,34 +239,32 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Description = e.Description,
                 ImageUrl = e.Picture,
                 IsActive = e.IsActive,
-                Modifiers = e.Modifiers.Select(m =>
-                {
-                    var effects = JsonSerializer.Deserialize<List<ModifierEffectDto>>(
-                        m.Effects,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                    ) ?? new List<ModifierEffectDto>();
-
-                    return new ModifierDto
+                Modifiers = e.Modifiers.Any()
+                    ? e.Modifiers.Select(m => new ModifierDto
                     {
                         ModifierId = m.Id,
-                        ModifierType = m.modiferType,
-                        Effect = effects.FirstOrDefault(),
-                        EffectCount = effects.Count
-                    };
-                }).ToList()
+                        ModifierType = m.ModifierType,
+                        Effect = new ModifierEffectDto
+                        {
+                            Operation = m.Effects.Operation,
+                            Value = (decimal)m.Effects.Value,
+                            Conditions = m.Effects.Conditions
+                        },
+                        EffectCount = 1
+                    }).ToList()
+                    : new List<ModifierDto>()
             }).ToList();
 
             return Ok(eventDtos);
         }
-    
+
         [HttpGet("allevents")]
-        public async Task<ActionResult<List<EventDto>>> GetEvents()
+        public async Task<ActionResult<List<EventDto>>> GetAllEvents()
         {
-            var query = _context.Events.Include(e => e.Modifiers).AsQueryable();
-
-
-
-            var events = await query.ToListAsync();
+            var events = await _context.Events
+                .Include(e => e.Modifiers)
+                .Include(e => e.RelatedEvents)
+                .ToListAsync();
 
             var eventDtos = events.Select(e => new EventDto
             {
@@ -287,26 +273,25 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Description = e.Description,
                 ImageUrl = e.Picture,
                 IsActive = e.IsActive,
-                Modifiers = e.Modifiers.Select(m =>
-                {
-                    var effects = JsonSerializer.Deserialize<List<ModifierEffectDto>>(
-                        m.Effects,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                    ) ?? new List<ModifierEffectDto>();
-
-                    return new ModifierDto
+                Modifiers = e.Modifiers.Any()
+                    ? e.Modifiers.Select(m => new ModifierDto
                     {
                         ModifierId = m.Id,
-                        ModifierType = m.modiferType,
-                        Effect = effects.FirstOrDefault(),
-                        EffectCount = effects.Count,
-                        
-                    };
-                }).ToList()
+                        ModifierType = m.ModifierType,
+                        Effect = m.Effects != null ? new ModifierEffectDto
+                        {
+                            Operation = m.Effects.Operation,
+                            Value = (decimal)m.Effects.Value,
+                            Conditions = m.Effects.Conditions
+                        } : null,
+                        EffectCount = 1
+                    }).ToList()
+                    : new List<ModifierDto>()
             }).ToList();
 
             return Ok(eventDtos);
         }
+
         [HttpGet("unassigned-nations/{eventId}")]
         public async Task<ActionResult<List<NationBaseInfoDTO>>> GetUnassignedNations(int eventId)
         {
@@ -321,18 +306,18 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     Id = n.Id,
                     Name = n.Name
-                  
                 })
                 .ToListAsync();
 
             return Ok(unassignedNations);
         }
+
         [HttpGet("assigned-nations/{eventId}")]
         public async Task<ActionResult<List<NationBaseInfoDTO>>> GetAssignedNations(int eventId)
         {
             var assignedNations = await _context.RelatedEvents
                 .Where(re => re.EventId == eventId)
-                .Include(re => re.Nation) // Dodanie Include dla załadowania danych o narodach
+                .Include(re => re.Nation)
                 .Select(re => new NationBaseInfoDTO
                 {
                     Id = re.Nation.Id,
@@ -342,31 +327,20 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok(assignedNations);
         }
+
         [HttpGet("option-pack")]
         public async Task<ActionResult<OptionPackDTO>> GetOptionPack()
         {
             var resources = await _context.Resources
-                .Select(r => new ResourceDto
-                {
-                    Id = (int)r.Id,
-                    Name = r.Name
-                })
+                .Select(r => new ResourceDto { Id = (int)r.Id, Name = r.Name })
                 .ToListAsync();
 
             var religions = await _context.Religions
-                .Select(r => new ReligionDTO
-                {
-                    Id = r.Id,
-                    Name = r.Name
-                })
+                .Select(r => new ReligionDTO { Id = r.Id, Name = r.Name })
                 .ToListAsync();
 
             var cultures = await _context.Cultures
-                .Select(c => new CultureDTO
-                {
-                    Id = c.Id,
-                    Name = c.Name
-                })
+                .Select(c => new CultureDTO { Id = c.Id, Name = c.Name })
                 .ToListAsync();
 
             var socialGroups = await _context.SocialGroups
@@ -376,34 +350,23 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Name = sg.Name,
                     BaseHappiness = sg.BaseHappiness,
                     Volunteers = sg.Volunteers,
-                    ConsumedResources = new List<ResourceAmountDto>(), // Puste listy
-                    ProducedResources = new List<ResourceAmountDto>()  // Puste listy
+                    ConsumedResources = new List<ResourceAmountDto>(),
+                    ProducedResources = new List<ResourceAmountDto>()
                 })
                 .ToListAsync();
 
             var factions = await _context.Factions
-                .Select(f => new FactionDTO
-                {
-                    Id = f.Id,
-                    Name = f.Name
-                })
+                .Select(f => new FactionDTO { Id = f.Id, Name = f.Name })
                 .ToListAsync();
 
-            var optionPack = new OptionPackDTO
+            return Ok(new OptionPackDTO
             {
                 Resources = resources,
                 Religions = religions,
                 Cultures = cultures,
                 SocialGroups = socialGroups,
                 Factions = factions
-            };
-
-            return Ok(optionPack);
+            });
         }
     }
-
-
-    
-
 }
-
