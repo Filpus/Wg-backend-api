@@ -995,736 +995,6 @@ ALTER TABLE ONLY game_1."ownedResources" ALTER COLUMN id SET DEFAULT nextval('ga
 
 
 --
--- Data for Name: accessToUnits; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1."accessToUnits" (id, "fk_Nation", "fk_UnitTypes") FROM stdin;
-1	1	1
-2	1	2
-3	1	3
-4	2	1
-5	2	3
-6	2	4
-7	3	1
-8	3	5
-9	4	1
-10	4	2
-11	5	1
-12	5	3
-\.
-
-
---
--- Data for Name: accessestonations; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.accessestonations (id, fk_nations, fk_users, dateacquired, isactive) FROM stdin;
-1	1	1	2025-01-01 00:00:00+01	t
-2	2	2	2025-01-02 00:00:00+01	t
-\.
-
-
---
--- Data for Name: actions; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.actions (id, "fk_Nations", name, description, result, "isSettled") FROM stdin;
-1	1	Ekspedycja	Wysłanie ekspedycji na niezbadane tereny	\N	f
-2	2	Budowa Świątyni	Rozpoczęcie budowy wielkiej świątyni	\N	f
-3	3	Szlak Handlowy	Otwarcie nowego szlaku handlowego	Zwiększenie przychodów o 10%	t
-4	4	Reformy	Wprowadzenie reform społecznych	\N	f
-5	5	Mobilizacja	Mobilizacja sił zbrojnych	Wzrost liczebności armii o 20%	t
-\.
-
-
---
--- Data for Name: armies; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.armies (id, name, "fk_Nations", "fk_Locations", is_naval) FROM stdin;
-1	Armia Północy	1	1	f
-2	Legiony Cesarskie	2	2	f
-3	Flota Republiki	3	3	t
-4	Drużyna Księcia	4	4	f
-5	Jeźdźcy Pustyni	5	5	f
-\.
-
-
---
--- Data for Name: cultures; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.cultures (id, name) FROM stdin;
-1	Nordycka
-2	Słowiańska
-3	Germańska
-4	Romańska
-5	Grecka
-\.
-
-
---
--- Data for Name: events; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.events (id, name, description, picture) FROM stdin;
-1	Wielka Bitwa	Epiczna bitwa, która zmieniła losy świata	battle.jpg
-2	Plaga	Śmiertelna zaraza dziesiątkująca populację	plague.jpg
-3	Odkrycie	Odkrycie nowych terenów i technologii	discovery.jpg
-4	Rewolta	Rewolta społeczeństwa przeciwko władcy	revolt.jpg
-5	Sojusz	Zawarcie sojuszu między narodami	alliance.jpg
-\.
-
-
---
--- Data for Name: factions; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.factions (id, name, "fk_Nations", power, agenda, contentment, color, description) FROM stdin;
-1	Konserwatyści	1	70	Utrzymanie tradycji	60	#0000FF	\N
-2	Reformatorzy	1	30	Wprowadzenie zmian	40	#00FF00	\N
-3	Militaryści	2	60	Ekspansja militarna	50	#FF0000	\N
-4	Handlarze	2	40	Rozwój handlu	70	#FFFF00	\N
-5	Zjednoczeni	3	90	Jedność narodu	80	#800080	\N
-\.
-
-
---
--- Data for Name: locations; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.locations (id, name, size, fortifications, fk_nations) FROM stdin;
-1	Stolica Północy	5	4	1
-2	Twierdza Cesarska	6	5	2
-3	Port Republiki	4	3	3
-4	Wschodni Gród	3	2	4
-5	Oaza Południowa	4	3	5
-6	Górska Osada	2	1	1
-7	Cesarskie Tereny	3	2	2
-8	Nadmorska Wioska	2	1	3
-\.
-
-
---
--- Data for Name: locationsResources; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1."locationsResources" (id, "fk_Locations", "fk_Resources", amount) FROM stdin;
-1	1	1	1000
-2	1	3	2000
-3	2	2	1500
-4	2	5	3000
-5	3	1	800
-6	3	8	500
-7	4	3	2500
-8	4	4	3500
-9	5	7	600
-10	5	6	400
-\.
-
-
---
--- Data for Name: maintenanceCosts; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1."maintenanceCosts" (id, "fk_UnitTypes", "fk_Resources", amount) FROM stdin;
-1	1	1	0.5
-2	1	4	1
-3	2	1	0.3
-4	2	3	0.5
-5	3	1	1
-6	3	4	1.5
-7	4	1	2
-8	4	3	1
-9	5	1	3
-10	5	3	2
-\.
-
-
---
--- Data for Name: map; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.map (id, name, "mapLocation", "mapIconLocation") FROM stdin;
-1	Europa Środkowa	maps/central_europe.jpg	maps/central_europe.jpg
-2	Wyspy Brytyjskie	maps/british_isles.jpg	maps/central_europe.jpg
-3	Półwysep Iberyjski	maps/iberia.jpg	maps/central_europe.jpg
-4	Skandynawia	maps/scandinavia.jpg	maps/central_europe.jpg
-5	Bałkany	maps/balkans.jpg	maps/central_europe.jpg
-\.
-
-
---
--- Data for Name: mapAccess; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1."mapAccess" ("fk_Nations", "fk_Maps") FROM stdin;
-1	1
-1	4
-2	2
-2	5
-3	3
-4	1
-4	5
-5	3
-\.
-
-
---
--- Data for Name: modifiers; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.modifiers (id, event_id, modifier_type, effects) FROM stdin;
-\.
-
-
---
--- Data for Name: nations; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.nations (id, name, fk_religions, fk_cultures, flag, color) FROM stdin;
-1	Królestwo Północy	1	1	\N	red
-2	Cesarstwo Centralne	2	3	\N	yellow
-3	Republika Nadmorska	2	4	\N	red
-4	Księstwo Wschodnie	1	2	\N	green
-5	Kalifat Południowy	3	5	\N	blue
-\.
-
-
---
--- Data for Name: offeredresources; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.offeredresources (id, fk_resource, fk_tradeagreement, quantity) FROM stdin;
-1	2	1	100
-2	3	1	200
-3	1	3	50
-4	4	3	300
-5	3	4	150
-\.
-
-
---
--- Data for Name: ownedResources; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1."ownedResources" (id, fk_nation, fk_resource, amount) FROM stdin;
-1	1	1	4201
-2	1	2	4202
-3	1	3	4203
-4	1	4	4204
-5	1	5	4205
-6	1	6	4206
-7	1	7	4207
-8	1	8	4208
-9	1	9	4209
-10	2	1	2137
-11	2	2	2173
-12	2	3	1237
-13	2	4	2137
-14	2	5	1273
-15	2	6	2137
-16	2	7	1237
-17	2	8	2173
-18	2	9	1237
-19	3	1	4201
-20	3	2	4202
-21	3	3	4203
-22	3	4	4204
-23	3	5	4205
-24	3	6	4206
-25	3	7	4207
-26	3	8	4208
-27	3	9	4209
-28	4	1	2137
-29	4	2	2173
-30	4	3	1237
-31	4	4	2137
-32	4	5	1273
-33	4	6	2137
-34	4	7	1237
-35	4	8	2173
-36	4	9	1237
-37	5	1	2137
-38	5	2	2173
-39	5	3	1237
-40	5	4	2137
-41	5	5	1273
-42	5	6	2137
-43	5	7	1237
-44	5	8	2173
-45	5	9	1237
-\.
-
-
---
--- Data for Name: players; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.players (id, "fk_User", "playerType", name) FROM stdin;
-1	1	1	Test
-2	2	0	admin
-3	3	1	tomek
-4	4	1	jakub
-\.
-
-
---
--- Data for Name: populationproductionshares; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.populationproductionshares (id, fk_population, fk_resources, coefficient) FROM stdin;
-1	1	1	1.1
-2	1	2	2.1
-3	2	1	3.7
-4	3	3	6.9
-5	4	4	1.2
-6	5	5	1.2
-7	6	6	0.9
-8	7	7	1.3
-\.
-
-
---
--- Data for Name: populations; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.populations (id, fk_religions, fk_cultures, fk_socialgroups, fk_locations, happiness, volunteers) FROM stdin;
-1	1	1	1	1	5.5	3
-2	2	3	2	2	6	3
-3	2	4	3	3	7.2	1
-4	1	2	1	4	4.8	2
-5	3	5	5	5	5.7	2
-6	1	1	2	6	5.2	1
-7	2	3	4	7	6.8	1
-8	2	4	5	8	6.3	1
-\.
-
-
---
--- Data for Name: populationusedresource; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.populationusedresource (id, fk_population, fk_resources, amount) FROM stdin;
-1	1	1	0.1
-2	1	2	1.1
-3	1	3	2.7
-4	3	3	0.9
-5	4	4	1.2
-6	5	5	1.4
-7	6	6	0.7
-8	7	7	1.3
-\.
-
-
---
--- Data for Name: productionCost; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1."productionCost" (id, "fk_UnitTypes", "fk_Resources", amount) FROM stdin;
-1	1	1	10
-2	1	2	5
-3	2	1	8
-4	2	3	10
-5	3	1	20
-6	3	2	15
-7	4	1	30
-8	4	3	25
-9	5	1	50
-10	5	2	30
-\.
-
-
---
--- Data for Name: productionShares; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1."productionShares" (id, "fk_SocialGroups", "fk_Resources", coefficient) FROM stdin;
-1	1	3	2
-2	1	4	3
-3	2	1	1.5
-4	2	6	2
-5	3	2	1
-6	3	5	1.5
-7	4	1	1
-8	4	7	0.5
-9	5	1	2.5
-10	5	8	2
-\.
-
-
---
--- Data for Name: relatedEvents; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1."relatedEvents" (id, "fk_Events", "fk_Nations") FROM stdin;
-1	1	1
-2	1	2
-3	2	3
-4	2	4
-5	3	1
-6	3	5
-7	4	2
-8	4	4
-9	5	1
-10	5	3
-\.
-
-
---
--- Data for Name: religions; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.religions (id, name, icon) FROM stdin;
-1	Pogaństwo	\N
-2	Chrześcijaństwo	\N
-3	Islam	\N
-4	Judaizm	\N
-5	Zoroastrianizm	\N
-\.
-
-
---
--- Data for Name: resources; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.resources (id, name, ismain, icon) FROM stdin;
-1	Złoto	t	\N
-2	Żelazo	t	\N
-3	Drewno	t	\N
-4	Żywność	t	\N
-5	Kamień	t	\N
-6	Tkaniny	f	\N
-7	Przyprawy	f	\N
-8	Wino	f	\N
-9	Drewno	t	\N
-11	Miód	t	\N
-\.
-
-
---
--- Data for Name: socialgroups; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.socialgroups (id, name, basehappiness, volunteers, icon) FROM stdin;
-1	Chłopi	5	10	\N
-2	Mieszczanie	6	20	\N
-3	Szlachta	7	30	\N
-4	Duchowieństwo	8	5	\N
-5	Kupcy	6.5	15	\N
-\.
-
-
---
--- Data for Name: tradeagreements; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.tradeagreements (id, fk_nationoffering, fk_nationreceiving, status, duration, description) FROM stdin;
-1	1	2	0	10	I am description
-2	1	3	0	5	I am also description
-3	2	4	3	8	But I m not description
-4	3	5	1	12	What about me?
-5	4	5	2	6	
-\.
-
-
---
--- Data for Name: troops; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.troops (id, "fk_UnitTypes", "fk_Armies", quantity) FROM stdin;
-1	1	1	500
-2	2	1	300
-3	3	2	400
-4	1	2	600
-5	5	3	20
-6	1	4	300
-7	3	4	150
-8	3	5	500
-\.
-
-
---
--- Data for Name: unitOrders; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1."unitOrders" (id, "fk_UnitTypes", "fk_Nations", quantity) FROM stdin;
-1	1	1	1
-2	1	2	1
-3	3	2	3
-4	4	2	1
-5	1	3	8
-6	5	3	5
-7	1	4	2
-8	2	4	4
-9	1	5	1
-10	3	5	4
-12	2	1	1
-\.
-
-
---
--- Data for Name: unitTypes; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1."unitTypes" (id, name, description, melee, range, defense, speed, morale, "volunteersNeeded", "isNaval") FROM stdin;
-1	Piechota	Podstawowa jednostka piechoty	5	0	3	3	5	100	f
-2	Łucznicy	Jednostka łuczników	1	6	2	3	4	80	f
-3	Kawaleria	Szybka jednostka kawalerii	7	0	4	6	7	120	f
-4	Oblężnicza	Machiny oblężnicze	1	8	1	2	3	150	f
-5	Okręty wojenne	Okręty bojowe	6	4	5	4	6	200	t
-\.
-
-
---
--- Data for Name: usedResources; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1."usedResources" (id, "fk_SocialGroups", "fk_Resources", amount) FROM stdin;
-1	1	4	100
-2	1	3	50
-3	2	4	75
-4	2	6	25
-5	3	4	50
-6	3	8	30
-7	4	4	30
-8	4	7	10
-9	5	4	60
-10	5	6	40
-\.
-
-
---
--- Data for Name: wantedresources; Type: TABLE DATA; Schema: game_1; Owner: -
---
-
-COPY game_1.wantedresources (id, fk_resource, fk_tradeagreement, amount) FROM stdin;
-1	1	1	50
-2	4	1	100
-3	2	3	75
-4	5	3	200
-5	7	4	25
-\.
-
-
---
--- Name: accessToUnits_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1."accessToUnits_id_seq"', 12, true);
-
-
---
--- Name: accessestonations_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.accessestonations_id_seq', 5, true);
-
-
---
--- Name: actions_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.actions_id_seq', 5, true);
-
-
---
--- Name: armies_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.armies_id_seq', 5, true);
-
-
---
--- Name: cultures_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.cultures_id_seq', 5, true);
-
-
---
--- Name: events_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.events_id_seq', 5, true);
-
-
---
--- Name: factions_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.factions_id_seq', 5, true);
-
-
---
--- Name: locationsResources_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1."locationsResources_id_seq"', 10, true);
-
-
---
--- Name: locations_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.locations_id_seq', 8, true);
-
-
---
--- Name: maintenanceCosts_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1."maintenanceCosts_id_seq"', 10, true);
-
-
---
--- Name: map_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.map_id_seq', 5, true);
-
-
---
--- Name: modifiers_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.modifiers_id_seq', 1, false);
-
-
---
--- Name: nations_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.nations_id_seq', 5, true);
-
-
---
--- Name: offeredresources_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.offeredresources_id_seq', 5, true);
-
-
---
--- Name: ownedResources_Id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1."ownedResources_Id_seq"', 45, true);
-
-
---
--- Name: players_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.players_id_seq', 4, true);
-
-
---
--- Name: populationproductionshares_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.populationproductionshares_id_seq', 8, true);
-
-
---
--- Name: populations_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.populations_id_seq', 8, true);
-
-
---
--- Name: populationusedresource_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.populationusedresource_id_seq', 8, true);
-
-
---
--- Name: productionCost_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1."productionCost_id_seq"', 10, true);
-
-
---
--- Name: productionShares_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1."productionShares_id_seq"', 10, true);
-
-
---
--- Name: relatedEvents_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1."relatedEvents_id_seq"', 10, true);
-
-
---
--- Name: religions_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.religions_id_seq', 5, true);
-
-
---
--- Name: resources_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.resources_id_seq', 11, true);
-
-
---
--- Name: socialgroups_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.socialgroups_id_seq', 5, true);
-
-
---
--- Name: tradeagreements_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.tradeagreements_id_seq', 5, true);
-
-
---
--- Name: troops_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.troops_id_seq', 8, true);
-
-
---
--- Name: unitOrders_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1."unitOrders_id_seq"', 12, true);
-
-
---
--- Name: unitTypes_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1."unitTypes_id_seq"', 5, true);
-
-
---
--- Name: usedResources_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1."usedResources_id_seq"', 10, true);
-
-
---
--- Name: wantedresources_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
---
-
-SELECT pg_catalog.setval('game_1.wantedresources_id_seq', 5, true);
-
-
---
 -- Name: accessToUnits PK_accessToUnits; Type: CONSTRAINT; Schema: game_1; Owner: -
 --
 
@@ -2230,7 +1500,7 @@ CREATE TRIGGER trg_after_usedresources_insert AFTER INSERT ON game_1."usedResour
 --
 
 ALTER TABLE ONLY game_1."accessToUnits"
-    ADD CONSTRAINT "FK_accessToUnits_fk_Nations" FOREIGN KEY ("fk_Nation") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_accessToUnits_fk_Nations" FOREIGN KEY ("fk_Nation") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2262,7 +1532,7 @@ ALTER TABLE ONLY game_1.accessestonations
 --
 
 ALTER TABLE ONLY game_1.actions
-    ADD CONSTRAINT "FK_actions_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_actions_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2278,7 +1548,7 @@ ALTER TABLE ONLY game_1.armies
 --
 
 ALTER TABLE ONLY game_1.armies
-    ADD CONSTRAINT "FK_armies_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_armies_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2286,7 +1556,7 @@ ALTER TABLE ONLY game_1.armies
 --
 
 ALTER TABLE ONLY game_1.factions
-    ADD CONSTRAINT "FK_factions_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_factions_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2310,7 +1580,7 @@ ALTER TABLE ONLY game_1."locationsResources"
 --
 
 ALTER TABLE ONLY game_1.locations
-    ADD CONSTRAINT "FK_locations_nations_fk_nations" FOREIGN KEY (fk_nations) REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_locations_nations_fk_nations" FOREIGN KEY (fk_nations) REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2358,7 +1628,7 @@ ALTER TABLE ONLY game_1.nations
 --
 
 ALTER TABLE ONLY game_1.nations
-    ADD CONSTRAINT "FK_nations_players_fk_religions" FOREIGN KEY (fk_religions) REFERENCES game_1.religions(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_nations_players_fk_religions" FOREIGN KEY (fk_religions) REFERENCES game_1.religions(id) ON DELETE RESTRICT;
 
 
 --
@@ -2375,6 +1645,22 @@ ALTER TABLE ONLY game_1.offeredresources
 
 ALTER TABLE ONLY game_1.offeredresources
     ADD CONSTRAINT "FK_offeredresources_tradeagreements_fk_tradeagreement" FOREIGN KEY (fk_tradeagreement) REFERENCES game_1.tradeagreements(id) ON DELETE CASCADE;
+
+
+--
+-- Name: ownedResources FK_ownedresources_nation_fk_nation; Type: FK CONSTRAINT; Schema: game_1; Owner: -
+--
+
+ALTER TABLE ONLY game_1."ownedResources"
+    ADD CONSTRAINT "FK_ownedresources_nation_fk_nation" FOREIGN KEY (fk_nation) REFERENCES game_1.nations(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: ownedResources FK_ownedresources_resource_fk_resource; Type: FK CONSTRAINT; Schema: game_1; Owner: -
+--
+
+ALTER TABLE ONLY game_1."ownedResources"
+    ADD CONSTRAINT "FK_ownedresources_resource_fk_resource" FOREIGN KEY (fk_resource) REFERENCES game_1.resources(id) ON DELETE CASCADE;
 
 
 --
@@ -2406,7 +1692,7 @@ ALTER TABLE ONLY game_1.populations
 --
 
 ALTER TABLE ONLY game_1.populations
-    ADD CONSTRAINT "FK_populations_religions_fk_religions" FOREIGN KEY (fk_religions) REFERENCES game_1.religions(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_populations_religions_fk_religions" FOREIGN KEY (fk_religions) REFERENCES game_1.religions(id) ON DELETE RESTRICT;
 
 
 --
@@ -2462,7 +1748,7 @@ ALTER TABLE ONLY game_1."relatedEvents"
 --
 
 ALTER TABLE ONLY game_1."relatedEvents"
-    ADD CONSTRAINT "FK_relatedEvents_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_relatedEvents_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2470,7 +1756,7 @@ ALTER TABLE ONLY game_1."relatedEvents"
 --
 
 ALTER TABLE ONLY game_1.tradeagreements
-    ADD CONSTRAINT "FK_tradeagreements_nations_fk_nationoffering" FOREIGN KEY (fk_nationoffering) REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_tradeagreements_nations_fk_nationoffering" FOREIGN KEY (fk_nationoffering) REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2478,7 +1764,7 @@ ALTER TABLE ONLY game_1.tradeagreements
 --
 
 ALTER TABLE ONLY game_1.tradeagreements
-    ADD CONSTRAINT "FK_tradeagreements_nations_fk_nationreceiving" FOREIGN KEY (fk_nationreceiving) REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_tradeagreements_nations_fk_nationreceiving" FOREIGN KEY (fk_nationreceiving) REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2502,7 +1788,7 @@ ALTER TABLE ONLY game_1.troops
 --
 
 ALTER TABLE ONLY game_1."unitOrders"
-    ADD CONSTRAINT "FK_unitOrders_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_unitOrders_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2543,22 +1829,6 @@ ALTER TABLE ONLY game_1.wantedresources
 
 ALTER TABLE ONLY game_1.wantedresources
     ADD CONSTRAINT "FK_wantedresources_tradeagreements_fk_tradeagreement" FOREIGN KEY (fk_tradeagreement) REFERENCES game_1.tradeagreements(id) ON DELETE CASCADE;
-
-
---
--- Name: ownedResources Nation; Type: FK CONSTRAINT; Schema: game_1; Owner: -
---
-
-ALTER TABLE ONLY game_1."ownedResources"
-    ADD CONSTRAINT "Nation" FOREIGN KEY (fk_nation) REFERENCES game_1.nations(id);
-
-
---
--- Name: ownedResources Resource; Type: FK CONSTRAINT; Schema: game_1; Owner: -
---
-
-ALTER TABLE ONLY game_1."ownedResources"
-    ADD CONSTRAINT "Resource" FOREIGN KEY (fk_resource) REFERENCES game_1.resources(id);
 
 
 --

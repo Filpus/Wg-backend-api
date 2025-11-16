@@ -2496,7 +2496,7 @@ ALTER TABLE ONLY "Global".refresh_tokens
 --
 
 ALTER TABLE ONLY game_1."accessToUnits"
-    ADD CONSTRAINT "FK_accessToUnits_fk_Nations" FOREIGN KEY ("fk_Nation") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_accessToUnits_fk_Nations" FOREIGN KEY ("fk_Nation") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2528,7 +2528,7 @@ ALTER TABLE ONLY game_1.accessestonations
 --
 
 ALTER TABLE ONLY game_1.actions
-    ADD CONSTRAINT "FK_actions_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_actions_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2544,7 +2544,7 @@ ALTER TABLE ONLY game_1.armies
 --
 
 ALTER TABLE ONLY game_1.armies
-    ADD CONSTRAINT "FK_armies_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_armies_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2552,7 +2552,7 @@ ALTER TABLE ONLY game_1.armies
 --
 
 ALTER TABLE ONLY game_1.factions
-    ADD CONSTRAINT "FK_factions_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_factions_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2576,7 +2576,7 @@ ALTER TABLE ONLY game_1."locationsResources"
 --
 
 ALTER TABLE ONLY game_1.locations
-    ADD CONSTRAINT "FK_locations_nations_fk_nations" FOREIGN KEY (fk_nations) REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_locations_nations_fk_nations" FOREIGN KEY (fk_nations) REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2624,7 +2624,7 @@ ALTER TABLE ONLY game_1.nations
 --
 
 ALTER TABLE ONLY game_1.nations
-    ADD CONSTRAINT "FK_nations_players_fk_religions" FOREIGN KEY (fk_religions) REFERENCES game_1.religions(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_nations_players_fk_religions" FOREIGN KEY (fk_religions) REFERENCES game_1.religions(id) ON DELETE RESTRICT;
 
 
 --
@@ -2641,6 +2641,22 @@ ALTER TABLE ONLY game_1.offeredresources
 
 ALTER TABLE ONLY game_1.offeredresources
     ADD CONSTRAINT "FK_offeredresources_tradeagreements_fk_tradeagreement" FOREIGN KEY (fk_tradeagreement) REFERENCES game_1.tradeagreements(id) ON DELETE CASCADE;
+
+
+--
+-- Name: ownedResources FK_ownedresources_nation_fk_nation; Type: FK CONSTRAINT; Schema: game_1; Owner: -
+--
+
+ALTER TABLE ONLY game_1."ownedResources"
+    ADD CONSTRAINT "FK_ownedresources_nation_fk_nation" FOREIGN KEY (fk_nation) REFERENCES game_1.nations(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: ownedResources FK_ownedresources_resource_fk_resource; Type: FK CONSTRAINT; Schema: game_1; Owner: -
+--
+
+ALTER TABLE ONLY game_1."ownedResources"
+    ADD CONSTRAINT "FK_ownedresources_resource_fk_resource" FOREIGN KEY (fk_resource) REFERENCES game_1.resources(id) ON DELETE CASCADE;
 
 
 --
@@ -2672,7 +2688,7 @@ ALTER TABLE ONLY game_1.populations
 --
 
 ALTER TABLE ONLY game_1.populations
-    ADD CONSTRAINT "FK_populations_religions_fk_religions" FOREIGN KEY (fk_religions) REFERENCES game_1.religions(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_populations_religions_fk_religions" FOREIGN KEY (fk_religions) REFERENCES game_1.religions(id) ON DELETE RESTRICT;
 
 
 --
@@ -2728,7 +2744,7 @@ ALTER TABLE ONLY game_1."relatedEvents"
 --
 
 ALTER TABLE ONLY game_1."relatedEvents"
-    ADD CONSTRAINT "FK_relatedEvents_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_relatedEvents_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2736,7 +2752,7 @@ ALTER TABLE ONLY game_1."relatedEvents"
 --
 
 ALTER TABLE ONLY game_1.tradeagreements
-    ADD CONSTRAINT "FK_tradeagreements_nations_fk_nationoffering" FOREIGN KEY (fk_nationoffering) REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_tradeagreements_nations_fk_nationoffering" FOREIGN KEY (fk_nationoffering) REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2744,7 +2760,7 @@ ALTER TABLE ONLY game_1.tradeagreements
 --
 
 ALTER TABLE ONLY game_1.tradeagreements
-    ADD CONSTRAINT "FK_tradeagreements_nations_fk_nationreceiving" FOREIGN KEY (fk_nationreceiving) REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_tradeagreements_nations_fk_nationreceiving" FOREIGN KEY (fk_nationreceiving) REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2768,7 +2784,7 @@ ALTER TABLE ONLY game_1.troops
 --
 
 ALTER TABLE ONLY game_1."unitOrders"
-    ADD CONSTRAINT "FK_unitOrders_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
+    ADD CONSTRAINT "FK_unitOrders_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
 
 
 --
@@ -2809,22 +2825,6 @@ ALTER TABLE ONLY game_1.wantedresources
 
 ALTER TABLE ONLY game_1.wantedresources
     ADD CONSTRAINT "FK_wantedresources_tradeagreements_fk_tradeagreement" FOREIGN KEY (fk_tradeagreement) REFERENCES game_1.tradeagreements(id) ON DELETE CASCADE;
-
-
---
--- Name: ownedResources Nation; Type: FK CONSTRAINT; Schema: game_1; Owner: -
---
-
-ALTER TABLE ONLY game_1."ownedResources"
-    ADD CONSTRAINT "Nation" FOREIGN KEY (fk_nation) REFERENCES game_1.nations(id);
-
-
---
--- Name: ownedResources Resource; Type: FK CONSTRAINT; Schema: game_1; Owner: -
---
-
-ALTER TABLE ONLY game_1."ownedResources"
-    ADD CONSTRAINT "Resource" FOREIGN KEY (fk_resource) REFERENCES game_1.resources(id);
 
 
 --

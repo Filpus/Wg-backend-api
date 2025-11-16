@@ -197,11 +197,6 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return NotFound(new { error = "Umowa handlowa nie została znaleziona." });
             }
 
-            // Usunięcie powiązanych zasobów
-            this._context.OfferedResources.RemoveRange(tradeAgreement.OfferedResources);
-            this._context.WantedResources.RemoveRange(tradeAgreement.WantedResources);
-
-            // Usunięcie umowy handlowej
             this._context.TradeAgreements.Remove(tradeAgreement);
             await this._context.SaveChangesAsync();
 
