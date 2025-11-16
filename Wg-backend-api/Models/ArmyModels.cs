@@ -168,7 +168,7 @@ namespace Wg_backend_api.Models
         [ForeignKey("NationId")]
         public Nation Nation { get; set; }
         [Required]
-        [Column("fk_Locations")]
+        [Column("fk_localisations")]
         public int LocationId { get; set; }
         [ForeignKey("LocationId")]
         public Localisation Location { get; set; }

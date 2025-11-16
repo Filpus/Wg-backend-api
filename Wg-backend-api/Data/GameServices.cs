@@ -34,43 +34,4 @@ namespace Wg_backend_api.Data
             GenerateNewGame(connectionString, sqlScriptPath, "Global");
         }
     }
-
-    //public class GameDbContextFactory : IDesignTimeDbContextFactory<GameDbContext>
-    //{
-    //    public GameDbContext CreateDbContext(string[] args)
-    //    {
-    //        // Konfiguracja opcji DbContext
-    //        var optionsBuilder = new DbContextOptionsBuilder<GameDbContext>();
-    //        optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg");
-
-    //        // Domyślny schemat na potrzeby design-time
-    //        string defaultSchema = "default_schema";
-
-    //        // Utworzenie instancji GameDbContext
-    //        return new GameDbContext(optionsBuilder.Options, defaultSchema);
-    //    }
-    //}
-
-    //public class GlobalDbContextFactory : IDesignTimeDbContextFactory<GlobalDbContext>
-    //{
-    //    public GlobalDbContext CreateDbContext(string[] args)
-    //    {
-    //        // Ładowanie konfiguracji z pliku appsettings.json
-    //        IConfigurationRoot configuration = new ConfigurationBuilder()
-    //            .SetBasePath(Directory.GetCurrentDirectory())
-    //            .AddJsonFile("appsettings.json")
-    //            .Build();
-
-    //        // Pobranie connection stringa z konfiguracji
-    //        var connectionString = configuration.GetConnectionString("Host=localhost;Username=postgres;Password=postgres;Database=wg");
-
-    //        // Konfiguracja DbContextOptions
-    //        var optionsBuilder = new DbContextOptionsBuilder<GlobalDbContext>();
-    //        optionsBuilder.UseNpgsql(connectionString); // Użyj UseSqlServer dla SQL Server
-
-    //        // Utworzenie instancji GlobalDbContext
-    //        return new GlobalDbContext(optionsBuilder.Options);
-    //    }
-    //}
-
 }

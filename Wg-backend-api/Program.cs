@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Wg_backend_api.Auth;
-using Wg_backend_api.Data.Seeders;
 using Wg_backend_api.Logic.Modifiers;
 using Wg_backend_api.Logic.Modifiers.Processors;
 using Wg_backend_api.Services;
