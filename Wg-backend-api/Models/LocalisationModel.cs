@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Wg_backend_api.Models
 {
-    [Table("locations")]
+    [Table("localisations")]
     public class Localisation
     {
         [Column("id")]
@@ -39,7 +39,7 @@ namespace Wg_backend_api.Models
         public ICollection<LocalisationResource> LocalisationResources { get; set; }
     }
 
-    [Table("locationsResources")]
+    [Table("localisationsResources")]
     public class LocalisationResource
     {
         [Column("id")]
@@ -47,7 +47,7 @@ namespace Wg_backend_api.Models
         [Key] // Oznaczenie klucza głównego
         public int? Id { get; set; }
         [Required]
-        [Column("fk_Locations")]
+        [Column("fk_localisations")]
         public int LocationId { get; set; }
         [ForeignKey("LocationId")]
         public Localisation Location { get; set; }

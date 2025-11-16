@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Wg_backend_api.Auth;
-using Wg_backend_api.Data.Seeders;
 using Wg_backend_api.Logic.Modifiers;
 using Wg_backend_api.Logic.Modifiers.Processors;
 using Wg_backend_api.Services;
@@ -191,37 +190,6 @@ namespace Wg_backend_api.Data
             app.UseAuthorization();
 
             app.MapControllers(); // Map controller routes
-
-            if (args.Contains("--global"))
-            {
-                if (string.IsNullOrEmpty(connectionString))
-                {
-                    throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
-                }
-
-                GameService.GenerateGlobalSchema(connectionString, Directory.GetCurrentDirectory() + "\\Migrations\\globalInitalize");
-            }
-
-            if (args.Contains("--tmp-game"))
-            {
-                if (string.IsNullOrEmpty(connectionString))
-                {
-                    throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
-                }
-
-                GameService.GenerateNewGame(connectionString, Directory.GetCurrentDirectory() + "\\Migrations\\initate.sql", "game_1");
-            }
-
-            if (args.Contains("--seeder"))
-            {
-                using (var scope = app.Services.CreateScope())
-                {
-                    var services = scope.ServiceProvider;
-                    var dbContext = services.GetRequiredService<GlobalDbContext>();
-                    var seeder = new GlobalSeeder(dbContext);
-                    seeder.Seed();
-                }
-            }
 
             app.Run();
         }

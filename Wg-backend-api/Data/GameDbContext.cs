@@ -88,7 +88,6 @@ namespace Wg_backend_api.Data
                 .WithMany(n => n.ReceivedTradeAgreements)
                 .HasForeignKey(ta => ta.ReceivingNationId)
                 .OnDelete(DeleteBehavior.Restrict);
-            //modelBuilder.HasDefaultSchema(_schema);
         }
     }
 }
