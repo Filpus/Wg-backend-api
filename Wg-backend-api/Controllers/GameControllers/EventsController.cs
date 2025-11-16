@@ -42,7 +42,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpPost]
         public async Task<ActionResult> CreateEvent([FromBody] EventDto dto)
         {
-            var ev = new Event { Name = dto.Name, Description = dto.Description };
+            var ev = new Event { Name = dto.Name, Description = dto.Description, IsActive = (bool)dto.IsActive };
             this._context.Add(ev);
             await this._context.SaveChangesAsync();
 
@@ -52,6 +52,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     EventId = ev.Id.Value,
                     ModifierType = m.ModifierType,
+                    
                     Effects = new ModifierEffect
                     {
                         Operation = m.Effect.Operation,
@@ -113,6 +114,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             ev.Name = dto.Name;
             ev.Description = dto.Description;
+            ev.IsActive = (bool)dto.IsActive;
             this._context.Modifiers.RemoveRange(ev.Modifiers);
 
             foreach (var m in dto.Modifiers)
@@ -127,6 +129,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                         Value = (float)m.Effect.Value,
                         Conditions = m.Effect.Conditions
                     }
+                    
                 });
             }
 
@@ -152,7 +155,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpPost("assign")]
         public async Task<ActionResult> AssignEvent([FromBody] AssignEventDto dto)
         {
-            this._context.Add(new RelatedEvents { EventId = dto.EventId, NationId = dto.NationId });
+            this._context.Add(new RelatedEvents { EventId = dto.EventId, NationId = (int)(dto.NationId == null ? this._nationId.Value : dto.NationId) });
             await this._context.SaveChangesAsync();
 
             var modifiers = await this._context.Modifiers
@@ -163,7 +166,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 var processor = this._processorFactory.GetProcessor(group.Key);
                 var effects = group.Select(m => m.Effects).ToList();
-                await processor.ProcessAsync(dto.NationId, effects, this._context);
+                await processor.ProcessAsync((int)(dto.NationId == null ? this._nationId.Value : dto.NationId), effects, this._context);
             }
 
             return Ok();
@@ -172,8 +175,10 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpDelete("assign")]
         public async Task<ActionResult> UnassignEvent([FromBody] AssignEventDto dto)
         {
+
+
             var rel = await this._context.RelatedEvents
-                .FirstOrDefaultAsync(r => r.EventId == dto.EventId && r.NationId == dto.NationId);
+                .FirstOrDefaultAsync(r => r.EventId == dto.EventId && r.NationId == (dto.NationId ?? this._nationId));
 
             if (rel == null)
                 return NotFound();
@@ -189,7 +194,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 var processor = this._processorFactory.GetProcessor(group.Key);
                 var effects = group.Select(m => m.Effects).ToList();
-                await processor.RevertAsync(dto.NationId, effects, this._context);
+                await processor.RevertAsync((int)(dto.NationId == null ? this._nationId.Value : dto.NationId), effects, this._context);
             }
 
             return Ok();
@@ -328,6 +333,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok(assignedNations);
         }
 
+
         [HttpGet("option-pack")]
         public async Task<ActionResult<OptionPackDTO>> GetOptionPack()
         {
@@ -367,6 +373,33 @@ namespace Wg_backend_api.Controllers.GameControllers
                 SocialGroups = socialGroups,
                 Factions = factions
             });
+        }
+        [HttpGet("unassigned-events/{nationId?}")]
+        public async Task<ActionResult<List<EventDto>>> GetUnassignedEvents(int? nationId)
+        {
+            if (!nationId.HasValue)
+                nationId = _nationId;
+
+            var assignedEventIds = await _context.RelatedEvents
+                .Where(re => re.NationId == nationId)
+                .Select(re => re.EventId)
+                .ToListAsync();
+
+            var unassignedEvents = await _context.Events
+                .Where(e => !assignedEventIds.Contains(e.Id.Value))
+                .Include(e => e.Modifiers)
+                .Select(e => new EventDto
+                {
+                    EventId = e.Id,
+                    Name = e.Name,
+                    Description = e.Description,
+                    ImageUrl = e.Picture,
+                    IsActive = e.IsActive,
+                    Modifiers =  new List<ModifierDto>()
+                })
+                .ToListAsync();
+
+            return Ok(unassignedEvents);
         }
     }
 }

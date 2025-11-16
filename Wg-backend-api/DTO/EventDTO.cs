@@ -32,7 +32,7 @@ namespace Wg_backend_api.DTO
     public class AssignEventDto
     {
         public int EventId { get; set; }
-        public int NationId { get; set; }
+        public int? NationId { get; set; }
     }
 
     public class AssignEventInfoDto
@@ -53,4 +53,6 @@ namespace Wg_backend_api.DTO
         public List<SocialGroupInfoDTO> SocialGroups { get; set; }
         public List<FactionDTO> Factions { get; set; }
     }
+
+
 }

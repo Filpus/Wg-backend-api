@@ -134,6 +134,7 @@ namespace Wg_backend_api.Data
                 options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
                 options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
 
+
             });
             ;
             // Add Swagger configuration
