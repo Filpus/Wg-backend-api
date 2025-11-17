@@ -31,7 +31,6 @@ namespace Wg_backend_api.Data
             else
             {
                 connectionString = builder.Configuration.GetConnectionString("DeploymentConection");
-
             }
 
             // Add DbContexts
@@ -133,8 +132,6 @@ namespace Wg_backend_api.Data
                 options.JsonSerializerOptions.WriteIndented = true;
                 options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
                 options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
-
-
             });
             ;
             // Add Swagger configuration
@@ -149,11 +146,6 @@ namespace Wg_backend_api.Data
             builder.Services.AddScoped<PopulationVolunteerProcessor>();
             builder.Services.AddScoped<FactionPowerProcessor>();
             builder.Services.AddScoped<FactionContentmentProcessor>();
-    //        builder.Services.AddControllers()
-    //.AddJsonOptions(options =>
-    //{
-    //    options.JsonSerializerOptions.Converters.Add(new IBaseModifierConditionsConverter());
-    //});
 
             // rejestracja factory
             builder.Services.AddScoped<ModifierProcessorFactory>();

@@ -38,7 +38,7 @@ namespace Wg_backend_api.Models
         public string Name { get; set; }
         [Column("description")]
         public string? Description { get; set; }
-        [Column("isActive")]
+        [Column("isactive")]
         public bool IsActive { get; set; }
         [Column("picture")]
         public string? Picture { get; set; }

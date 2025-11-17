@@ -24,8 +24,7 @@ namespace Wg_backend_api.Serialization
                     return DeserializeByTypeName(typeName, json, options);
                 }
 
-                // Jeśli NIE ma "$type" - spróbuj odgadnąć na podstawie properties
-                // To jest fallback dla frontenda które nie wysyła "$type"
+                // Jeśli NIE ma "$type" - spróbuj odgadnąć na podstawie properties. Nie wysyła "$type"
                 return GuessAndDeserialize(root, options);
             }
         }
@@ -46,7 +45,6 @@ namespace Wg_backend_api.Serialization
         {
             var json = root.GetRawText();
 
-            // Heurystyka - czym jest to Conditions?
             bool hasResourceId = root.TryGetProperty("resourceId", out _);
             bool hasCultureId = root.TryGetProperty("cultureId", out _);
             bool hasSocialGroupId = root.TryGetProperty("socialGroupId", out _);

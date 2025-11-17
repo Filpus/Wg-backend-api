@@ -153,6 +153,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
+
         [HttpGet("info")]
         public async Task<ActionResult<IEnumerable<SocialGroupInfoDTO>>> GetSocialGroupInfo()
         {
@@ -165,12 +166,12 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             var socialGroupInfoList = socialGroups?.Select(sg => new SocialGroupInfoDTO
             {
-                Name = sg.Name,
                 Id = sg.Id,
+                Name = sg.Name,
                 BaseHappiness = CalculateBaseHappiness(sg),
                 Volunteers = CalculateVolunteers(sg),
                 ConsumedResources = GetConsumedResources(sg),
-                ProducedResources = GetProducedResources(sg)
+                ProducedResources = GetProducedResources(sg),
             }).ToList() ?? [];
 
             return Ok(socialGroupInfoList);

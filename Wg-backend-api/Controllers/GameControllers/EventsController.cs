@@ -299,11 +299,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                         {
                             Operation = m.Effects.Operation,
                             Value = (decimal)m.Effects.Value,
-                            Conditions = m.Effects.Conditions
-                        } : null,
-                        EffectCount = 1
+                            Conditions = m.Effects.Conditions,
+                        }
+                        : null,
+                        EffectCount = 1,
                     })]
-                    : []
+                    : [],
             }).ToList();
 
             return Ok(eventDtos);
@@ -322,7 +323,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Select(n => new NationBaseInfoDTO
                 {
                     Id = n.Id,
-                    Name = n.Name
+                    Name = n.Name,
                 })
                 .ToListAsync();
 
@@ -338,7 +339,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Select(re => new NationBaseInfoDTO
                 {
                     Id = re.Nation.Id,
-                    Name = re.Nation.Name
+                    Name = re.Nation.Name,
                 })
                 .ToListAsync();
 
@@ -368,7 +369,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     BaseHappiness = sg.BaseHappiness,
                     Volunteers = sg.Volunteers,
                     ConsumedResources = new List<ResourceAmountDto>(),
-                    ProducedResources = new List<ResourceAmountDto>()
+                    ProducedResources = new List<ResourceAmountDto>(),
                 })
                 .ToListAsync();
 
@@ -385,6 +386,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Factions = factions
             });
         }
+
         [HttpGet("unassigned-events/{nationId?}")]
         public async Task<ActionResult<List<EventDto>>> GetUnassignedEvents(int? nationId)
         {
