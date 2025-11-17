@@ -46,7 +46,9 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
                 .ToListAsync();
 
             if (!modifiers.Any())
+            {
                 return 0f;
+            }
 
             float totalChange = 0f;
             int resourceId = balance.ResourceId;
@@ -55,10 +57,14 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             {
                 // ZMIANA: mod.Effects.Conditions już typowany!
                 if (mod.Effects?.Conditions is not ResourceConditions conditions)
+                {
                     continue;
+                }
 
                 if (conditions.ResourceId != resourceId)
+                {
                     continue;
+                }
 
                 var operation = Enum.Parse<ModifierOperation>(mod.Effects.Operation.ToString(), true);
 

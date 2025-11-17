@@ -1,6 +1,5 @@
 ﻿using Wg_backend_api.Enums;
 using Wg_backend_api.Logic.Modifiers.Interfaces;
-using Wg_backend_api.Logic.Modifiers.ModifierConditions;
 
 namespace Wg_backend_api.DTO
 {
@@ -44,15 +43,13 @@ namespace Wg_backend_api.DTO
         public string NationName { get; set; }
     }
 
-
     public class OptionPackDTO
     {
         public List<ResourceDto> Resources { get; set; }
         public List<ReligionDTO> Religions { get; set; }
-        public List<CultureDTO> Cultures{ get; set; }
+        public List<CultureDTO> Cultures { get; set; }
         public List<SocialGroupInfoDTO> SocialGroups { get; set; }
         public List<FactionDTO> Factions { get; set; }
     }
-
 
 }

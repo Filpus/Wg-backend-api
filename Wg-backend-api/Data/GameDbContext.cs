@@ -91,7 +91,7 @@ namespace Wg_backend_api.Data
                 .HasForeignKey(ta => ta.ReceivingNationId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-        
+
             // Użyj tych samych opcji co w Program.cs
             var jsonOptions = new JsonSerializerOptions
             {

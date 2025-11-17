@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using Wg_backend_api.Enums;
+﻿using Wg_backend_api.Enums;
 using Wg_backend_api.Logic.Modifiers.Interfaces;
 
 namespace Wg_backend_api.Models
@@ -84,6 +83,6 @@ namespace Wg_backend_api.Models
 
     }
 
-   
+
 
 }
