@@ -83,7 +83,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         // PUT: api/UnitTypes  
         [HttpPut]
-        public async Task<IActionResult> PutUnitTypes([FromBody] List<UnitTypeDTO> unitTypeDTOs)
+        public async Task<IActionResult> PutUnitTypes([FromBody] List<UnitTypeInfoDTO> unitTypeDTOs)
         {
             if (unitTypeDTOs == null || unitTypeDTOs.Count == 0)
             {
@@ -92,13 +92,17 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var unitTypeDTO in unitTypeDTOs)
             {
-                var unitType = await this._context.UnitTypes.FindAsync(unitTypeDTO.UnitId);
+                var unitType = await this._context.UnitTypes
+                    .Include(ut => ut.ProductionCosts)
+                    .Include(ut => ut.MaintenaceCosts)
+                    .FirstOrDefaultAsync(ut => ut.Id == unitTypeDTO.UnitId);
+
                 if (unitType == null)
                 {
                     return NotFound($"Nie znaleziono jednostki o ID {unitTypeDTO.UnitId}.");
                 }
 
-                unitType.Name = unitTypeDTO.UnitName;
+                unitType.Name = unitTypeDTO.UnitTypeName;
                 unitType.Description = unitTypeDTO.Description;
                 unitType.VolunteersNeeded = unitTypeDTO.Quantity;
                 unitType.Melee = unitTypeDTO.Melee;
@@ -107,6 +111,26 @@ namespace Wg_backend_api.Controllers.GameControllers
                 unitType.Speed = unitTypeDTO.Speed;
                 unitType.Morale = unitTypeDTO.Morale;
                 unitType.IsNaval = unitTypeDTO.IsNaval;
+
+                var updatedProductionCosts = unitTypeDTO.ProductionCost.Select(pc => new ProductionCost
+                {
+                    UnitTypeId = unitType.Id.Value,
+                    ResourceId = pc.ResourceId,
+                    Amount = pc.Amount
+                }).ToList();
+
+                this._context.ProductionCosts.RemoveRange(unitType.ProductionCosts);
+                this._context.ProductionCosts.AddRange(updatedProductionCosts);
+
+                var updatedMaintenaceCosts = unitTypeDTO.ConsumedResources.Select(mc => new MaintenaceCosts
+                {
+                    UnitTypeId = unitType.Id.Value,
+                    ResourceId = mc.ResourceId,
+                    Amount = mc.Amount
+                }).ToList();
+
+                this._context.MaintenaceCosts.RemoveRange(unitType.MaintenaceCosts);
+                this._context.MaintenaceCosts.AddRange(updatedMaintenaceCosts);
 
                 this._context.Entry(unitType).State = EntityState.Modified;
             }
@@ -125,7 +149,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         // POST: api/UnitTypes  
         [HttpPost]
-        public async Task<ActionResult<UnitTypeDTO>> PostUnitTypes([FromBody] List<UnitTypeDTO> unitTypeDTOs)
+        public async Task<ActionResult<UnitTypeDTO>> PostUnitTypes([FromBody] List<UnitTypeInfoDTO> unitTypeDTOs)
         {
             if (unitTypeDTOs == null || unitTypeDTOs.Count == 0)
             {
@@ -134,7 +158,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             var unitTypes = unitTypeDTOs.Select(dto => new UnitType
             {
-                Name = dto.UnitName,
+                Name = dto.UnitTypeName,
                 Description = dto.Description,
                 VolunteersNeeded = dto.Quantity,
                 Melee = dto.Melee,
@@ -146,6 +170,34 @@ namespace Wg_backend_api.Controllers.GameControllers
             }).ToList();
 
             this._context.UnitTypes.AddRange(unitTypes);
+            await this._context.SaveChangesAsync();
+
+            foreach (var unitType in unitTypes)
+            {
+                var correspondingDTO = unitTypeDTOs.FirstOrDefault(dto => dto.UnitTypeName == unitType.Name);
+
+                if (correspondingDTO != null)
+                {
+                    var productionCosts = correspondingDTO.ProductionCost.Select(pc => new ProductionCost
+                    {
+                        UnitTypeId = unitType.Id.Value,
+                        ResourceId = pc.ResourceId,
+                        Amount = pc.Amount
+                    }).ToList();
+
+                    this._context.ProductionCosts.AddRange(productionCosts);
+
+                    var maintenaceCosts = correspondingDTO.ConsumedResources.Select(mc => new MaintenaceCosts
+                    {
+                        UnitTypeId = unitType.Id.Value,
+                        ResourceId = mc.ResourceId,
+                        Amount = mc.Amount
+                    }).ToList();
+
+                    this._context.MaintenaceCosts.AddRange(maintenaceCosts);
+                }
+            }
+
             await this._context.SaveChangesAsync();
 
             var createdDTOs = unitTypes.Select(ut => new UnitTypeDTO
@@ -174,11 +226,21 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var unitTypes = await this._context.UnitTypes.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var unitTypes = await this._context.UnitTypes
+                .Include(ut => ut.ProductionCosts)
+                .Include(ut => ut.MaintenaceCosts)
+                .Where(ut => ids.Contains(ut.Id))
+                .ToListAsync();
 
             if (unitTypes.Count == 0)
             {
                 return NotFound("Nie znaleziono jednostek do usunięcia.");
+            }
+
+            foreach (var unitType in unitTypes)
+            {
+                this._context.ProductionCosts.RemoveRange(unitType.ProductionCosts);
+                this._context.MaintenaceCosts.RemoveRange(unitType.MaintenaceCosts);
             }
 
             this._context.UnitTypes.RemoveRange(unitTypes);

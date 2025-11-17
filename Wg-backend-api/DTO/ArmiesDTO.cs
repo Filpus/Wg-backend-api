@@ -37,7 +37,7 @@
     }
     public class UnitTypeInfoDTO
     {
-        public int UnitId { get; set; }
+        public int? UnitId { get; set; }
         public string Description { get; set; }
         public string UnitTypeName { get; set; }
         public int Quantity { get; set; }
