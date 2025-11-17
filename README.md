@@ -20,3 +20,14 @@ Format main project
 ```bash
 ./format.bat
 ```
+
+### Create sql backup
+Seeder
+```bash
+& 'C:\Program Files\PostgreSQL\17\bin\pg_dump.exe' --no-comments --no-owner --no-privileges -U postgres -d wg -f '.\Wg-backend-api\Migrations\wg-init-db-seeder.sql'
+```
+
+Game schema
+```bash
+& 'C:\Program Files\PostgreSQL\17\bin\pg_dump.exe' --no-comments --no-owner --no-privileges --schema=game_1 --schema-only -U postgres -d wg -f '.\Wg-backend-api\Migrations\game-schema-init.sql'
+```

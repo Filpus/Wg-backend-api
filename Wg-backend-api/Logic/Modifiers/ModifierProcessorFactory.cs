@@ -25,7 +25,6 @@ namespace Wg_backend_api.Logic.Modifiers
                 ModifierType.FactionPower => this._serviceProvider.GetRequiredService<FactionPowerProcessor>(),
                 ModifierType.FactionContenment => this._serviceProvider.GetRequiredService<FactionContentmentProcessor>(),
 
-                // Dodaj kolejne gdy je zaimplementujesz
                 _ => throw new NotSupportedException($"Nieobsługiwany typ modyfikatora: {type}")
             };
         }

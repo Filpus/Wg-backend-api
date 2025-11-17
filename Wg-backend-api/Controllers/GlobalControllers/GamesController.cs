@@ -367,7 +367,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             await this._globalDbContext.SaveChangesAsync();
 
             var created_game = GameService.GenerateNewGame(
-                "Host=localhost;Username=postgres;Password=postgres;Database=wg", //TODO Niezapomnieć że trzeba to będzie poprawnie ustawić
+                "Host=localhost;Username=postgres;Password=postgres;Database=wg", // TODO Niezapomnieć że trzeba to będzie poprawnie ustawić
                 Path.Combine(Directory.GetCurrentDirectory(), "Migrations", "game-schema-init.sql"),
                 $"game_{newGame.Id}"
             );

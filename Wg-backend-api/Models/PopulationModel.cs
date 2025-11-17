@@ -30,7 +30,7 @@ namespace Wg_backend_api.Models
         public SocialGroup SocialGroup { get; set; }
 
         [Required]
-        [Column("fk_locations")]
+        [Column("fk_localisations")]
         public int LocationId { get; set; }
         [ForeignKey("LocationId")]
         public Localisation Location { get; set; }

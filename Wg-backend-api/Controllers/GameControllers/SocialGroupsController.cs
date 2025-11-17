@@ -69,7 +69,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         // PUT: api/SocialGroups
         [HttpPut]
-        public async Task<IActionResult> PutSocialGroups([FromBody] List<SocialGroupDTO> socialGroupDTOs)
+        public async Task<IActionResult> PutSocialGroups([FromBody] List<SocialGroupInfoDTO> socialGroupDTOs)
         {
             if (socialGroupDTOs == null || socialGroupDTOs.Count == 0)
             {
@@ -78,15 +78,43 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var socialGroupDTO in socialGroupDTOs)
             {
-                var socialGroup = await this._context.SocialGroups.FindAsync(socialGroupDTO.Id);
+                var socialGroup = await this._context.SocialGroups
+                    .Include(sg => sg.UsedResources)
+                    .Include(sg => sg.ProductionShares)
+                    .FirstOrDefaultAsync(sg => sg.Id == (int)socialGroupDTO.Id);
+
                 if (socialGroup == null)
                 {
                     return NotFound($"Nie znaleziono grupy społecznej o ID {socialGroupDTO.Id}.");
                 }
 
+                // Aktualizacja podstawowych danych grupy społecznej
                 socialGroup.Name = socialGroupDTO.Name;
                 socialGroup.BaseHappiness = socialGroupDTO.BaseHappiness;
                 socialGroup.Volunteers = socialGroupDTO.Volunteers;
+
+                // Aktualizacja zasobów zużywanych (ConsumedResources)
+                var updatedUsedResources = socialGroupDTO.ConsumedResources.Select(cr => new UsedResource
+                {
+                    SocialGroupId = (int)socialGroup.Id,
+                    ResourceId = cr.ResourceId,
+                    Amount = cr.Amount
+                }).ToList();
+
+                this._context.UsedResources.RemoveRange(socialGroup.UsedResources);
+                this._context.UsedResources.AddRange(updatedUsedResources);
+
+                // Aktualizacja zasobów produkowanych (ProducedResources)
+                var updatedProductionShares = socialGroupDTO.ProducedResources.Select(pr => new ProductionShare
+                {
+                    SocialGroupId = (int)socialGroup.Id,
+                    ResourceId = pr.ResourceId,
+                    Coefficient = pr.Amount
+                }).ToList();
+
+                this._context.ProductionShares.RemoveRange(socialGroup.ProductionShares);
+                this._context.ProductionShares.AddRange(updatedProductionShares);
+
                 this._context.Entry(socialGroup).State = EntityState.Modified;
             }
 
@@ -104,7 +132,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         // POST: api/SocialGroups
         [HttpPost]
-        public async Task<ActionResult<IEnumerable<SocialGroupDTO>>> PostSocialGroups([FromBody] List<SocialGroupDTO> socialGroupDTOs)
+        public async Task<ActionResult<IEnumerable<SocialGroupDTO>>> PostSocialGroups([FromBody] List<SocialGroupInfoDTO> socialGroupDTOs)
         {
             if (socialGroupDTOs == null || socialGroupDTOs.Count == 0)
             {
@@ -119,6 +147,34 @@ namespace Wg_backend_api.Controllers.GameControllers
             }).ToList();
 
             this._context.SocialGroups.AddRange(socialGroups);
+            await this._context.SaveChangesAsync();
+
+            foreach (var socialGroup in socialGroups)
+            {
+                var correspondingDTO = socialGroupDTOs.FirstOrDefault(dto => dto.Name == socialGroup.Name);
+
+                if (correspondingDTO != null)
+                {
+                    var usedResources = correspondingDTO.ConsumedResources.Select(cr => new UsedResource
+                    {
+                        SocialGroupId = (int)socialGroup.Id,
+                        ResourceId = cr.ResourceId,
+                        Amount = cr.Amount
+                    }).ToList();
+
+                    this._context.UsedResources.AddRange(usedResources);
+
+                    var productionShares = correspondingDTO.ProducedResources.Select(pr => new ProductionShare
+                    {
+                        SocialGroupId = (int)socialGroup.Id,
+                        ResourceId = pr.ResourceId,
+                        Coefficient = pr.Amount
+                    }).ToList();
+
+                    this._context.ProductionShares.AddRange(productionShares);
+                }
+            }
+
             await this._context.SaveChangesAsync();
 
             var createdDTOs = socialGroups.Select(sg => new SocialGroupDTO
