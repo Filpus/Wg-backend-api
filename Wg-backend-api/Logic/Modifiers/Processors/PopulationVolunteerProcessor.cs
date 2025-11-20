@@ -10,7 +10,7 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
         public override ModifierType SupportedType => ModifierType.VoluneerChange;
 
         public PopulationVolunteerProcessor(GameDbContext context, ILogger<PopulationVolunteerProcessor> logger)
-            : base(context, logger) { }
+            : base(context) { }
 
         protected override void ApplyToEntity(Population entity, ModifierOperation operation, float value)
         {
@@ -18,7 +18,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Volunteers = (int)OperationProcessor.ApplyOperation(entity.Volunteers, value, operation);
             entity.Volunteers = Math.Max(0, entity.Volunteers);
 
-            this._logger?.LogDebug($"Population {entity.Id}: Volunteers {oldValue} → {entity.Volunteers}");
         }
 
         protected override void RevertFromEntity(Population entity, ModifierOperation operation, float value)
@@ -27,7 +26,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Volunteers = (int)OperationProcessor.ReverseOperation(entity.Volunteers, value, operation);
             entity.Volunteers = Math.Max(0, entity.Volunteers);
 
-            this._logger?.LogDebug($"Population {entity.Id}: Volunteers reverted {oldValue} → {entity.Volunteers}");
         }
 
     }

@@ -378,6 +378,7 @@ CREATE TABLE game_1.events (
     id integer NOT NULL,
     name text NOT NULL,
     description text,
+    isactive boolean NOT NULL,
     picture text
 );
 
@@ -1213,12 +1214,12 @@ COPY game_1.cultures (id, name) FROM stdin;
 -- Data for Name: events; Type: TABLE DATA; Schema: game_1; Owner: -
 --
 
-COPY game_1.events (id, name, description, picture) FROM stdin;
-1	Wielka Bitwa	Epiczna bitwa, która zmieniła losy świata	battle.jpg
-2	Plaga	Śmiertelna zaraza dziesiątkująca populację	plague.jpg
-3	Odkrycie	Odkrycie nowych terenów i technologii	discovery.jpg
-4	Rewolta	Rewolta społeczeństwa przeciwko władcy	revolt.jpg
-5	Sojusz	Zawarcie sojuszu między narodami	alliance.jpg
+COPY game_1.events (id, name, description, isactive, picture) FROM stdin;
+1	Wielka Bitwa	Epiczna bitwa, która zmieniła losy świata	true	battle.jpg
+2	Plaga	Śmiertelna zaraza dziesiątkująca populację	true	plague.jpg
+3	Odkrycie	Odkrycie nowych terenów i technologii	true	discovery.jpg
+4	Rewolta	Rewolta społeczeństwa przeciwko władcy	true	revolt.jpg
+5	Sojusz	Zawarcie sojuszu między narodami	true	alliance.jpg
 \.
 
 

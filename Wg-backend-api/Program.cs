@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors.Infrastructure;
@@ -9,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Logic.Modifiers;
 using Wg_backend_api.Logic.Modifiers.Processors;
+using Wg_backend_api.Serialization;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Data
@@ -27,7 +30,6 @@ namespace Wg_backend_api.Data
             else
             {
                 connectionString = builder.Configuration.GetConnectionString("DeploymentConection");
-
             }
 
             // Add DbContexts
@@ -70,6 +72,7 @@ namespace Wg_backend_api.Data
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
+                    
                     {
                         var accessToken = context.Request.Cookies["access_token"];
                         if (!string.IsNullOrEmpty(accessToken))
@@ -122,7 +125,14 @@ namespace Wg_backend_api.Data
             builder.Services.AddHostedService<RefreshTokenCleanupService>();
 
             // Add Controllers (API endpoints)
-            builder.Services.AddControllers(config => config.Filters.Add<UserIdActionFilter>());
+            builder.Services.AddControllers(config => config.Filters.Add<UserIdActionFilter>()).AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                options.JsonSerializerOptions.WriteIndented = true;
+                options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
+                options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
+            });
+            ;
             // Add Swagger configuration
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();

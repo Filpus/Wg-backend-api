@@ -7,9 +7,8 @@ namespace Wg_backend_api.Logic.Modifiers.Base
 {
     public abstract class BasePopulationProcessor : BaseCachedModifierProcessor<Population, PopulationConditions>
     {
-        protected BasePopulationProcessor(GameDbContext context, ILogger logger) : base(context, logger) { }
+        protected BasePopulationProcessor(GameDbContext context) : base(context) { }
 
-        // Wspólna implementacja GetTargetEntities dla wszystkich procesorów populacji
         protected override IQueryable<Population> GetTargetEntities(int nationId, PopulationConditions conditions)
         {
             var query = this._context.Populations
@@ -38,7 +37,5 @@ namespace Wg_backend_api.Logic.Modifiers.Base
         {
             return entity.Id ?? 0;
         }
-
-        // ApplyToEntity i RevertFromEntity pozostają abstrakcyjne - każdy procesor populacji modyfikuje inne pole
     }
 }

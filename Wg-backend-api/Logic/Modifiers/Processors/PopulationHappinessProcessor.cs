@@ -9,8 +9,8 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
     {
         public override ModifierType SupportedType => ModifierType.PopulationHappiness;
 
-        public PopulationHappinessProcessor(GameDbContext context, ILogger<PopulationHappinessProcessor> logger)
-            : base(context, logger) { }
+        public PopulationHappinessProcessor(GameDbContext context)
+            : base(context) { }
 
         protected override void ApplyToEntity(Population entity, ModifierOperation operation, float value)
         {
@@ -18,7 +18,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Happiness = OperationProcessor.ApplyOperation(entity.Happiness, value, operation);
             entity.Happiness = Math.Max(0, Math.Min(100, entity.Happiness)); // Clamp 0-100
 
-            this._logger?.LogDebug($"Population {entity.Id}: Happiness {oldValue} → {entity.Happiness}");
         }
 
         protected override void RevertFromEntity(Population entity, ModifierOperation operation, float value)
@@ -27,7 +26,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Happiness = OperationProcessor.ReverseOperation(entity.Happiness, value, operation);
             entity.Happiness = Math.Max(0, Math.Min(100, entity.Happiness));
 
-            this._logger?.LogDebug($"Population {entity.Id}: Happiness reverted {oldValue} → {entity.Happiness}");
         }
     }
 

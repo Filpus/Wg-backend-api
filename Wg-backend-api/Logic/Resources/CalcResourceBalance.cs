@@ -27,7 +27,7 @@ namespace Wg_backend_api.Logic.Resources
                 ResourceBalances = []
             };
 
-            var processor = new ResourceChangeProcessor(_context, null);
+            var processor = new ResourceChangeProcessor(_context);
 
             foreach (var resource in resources)
             {

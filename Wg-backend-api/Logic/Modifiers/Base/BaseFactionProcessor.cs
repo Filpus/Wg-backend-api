@@ -6,7 +6,7 @@ namespace Wg_backend_api.Logic.Modifiers.Base
 {
     public abstract class BaseFactionProcessor : BaseCachedModifierProcessor<Faction, FactionConditions>
     {
-        protected BaseFactionProcessor(GameDbContext context, ILogger logger) : base(context, logger) { }
+        protected BaseFactionProcessor(GameDbContext context) : base(context) { }
 
         protected override IQueryable<Faction> GetTargetEntities(int nationId, FactionConditions conditions)
         {

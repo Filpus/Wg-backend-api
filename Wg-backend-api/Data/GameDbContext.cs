@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Models;
 using Action = Wg_backend_api.Models.Action;
 
@@ -88,6 +90,21 @@ namespace Wg_backend_api.Data
                 .WithMany(n => n.ReceivedTradeAgreements)
                 .HasForeignKey(ta => ta.ReceivingNationId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            var jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+
+            modelBuilder.Entity<Modifiers>()
+                .Property(m => m.Effects)
+                .HasColumnType("jsonb")
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, jsonOptions),
+                    v => JsonSerializer.Deserialize<ModifierEffect>(v, jsonOptions)
+                         ?? new ModifierEffect()
+                );
         }
     }
 }

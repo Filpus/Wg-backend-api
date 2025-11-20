@@ -9,15 +9,14 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
     {
         public override ModifierType SupportedType => ModifierType.FactionPower;
 
-        public FactionPowerProcessor(GameDbContext context, ILogger<FactionPowerProcessor> logger)
-            : base(context, logger) { }
+        public FactionPowerProcessor(GameDbContext context)
+            : base(context) { }
 
         protected override void ApplyToEntity(Faction entity, ModifierOperation operation, float value)
         {
             var oldValue = entity.Power;
             entity.Power = (int)OperationProcessor.ApplyOperation(entity.Power, value, operation);
 
-            this._logger?.LogDebug($"Faction {entity.Id}: Power {oldValue} → {entity.Power}");
         }
 
         protected override void RevertFromEntity(Faction entity, ModifierOperation operation, float value)
@@ -26,7 +25,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Power = (int)OperationProcessor.ReverseOperation(entity.Power, (float)value, operation);
             entity.Power = Math.Max(0, Math.Min(100, entity.Power));
 
-            this._logger?.LogDebug($"Faction {entity.Id}: Power reverted {oldValue} → {entity.Power}");
         }
     }
 
@@ -35,14 +33,13 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
         public override ModifierType SupportedType => ModifierType.FactionContenment;
 
         public FactionContentmentProcessor(GameDbContext context, ILogger<FactionPowerProcessor> logger)
-            : base(context, logger) { }
+            : base(context) { }
 
         protected override void ApplyToEntity(Faction entity, ModifierOperation operation, float value)
         {
             var oldValue = entity.Contentment;
             entity.Contentment = (int)OperationProcessor.ApplyOperation(entity.Contentment, (float)value, operation);
 
-            this._logger?.LogDebug($"Faction {entity.Id}: Power {oldValue} → {entity.Contentment}");
         }
 
         protected override void RevertFromEntity(Faction entity, ModifierOperation operation, float value)
@@ -51,7 +48,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             entity.Contentment = (int)OperationProcessor.ReverseOperation(entity.Contentment, value, operation);
             entity.Contentment = Math.Max(0, Math.Min(100, entity.Contentment));
 
-            this._logger?.LogDebug($"Faction {entity.Id}: Power reverted {oldValue} → {entity.Contentment}");
         }
     }
 }

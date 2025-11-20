@@ -273,6 +273,7 @@ CREATE TABLE game_1.events (
     id integer NOT NULL,
     name text NOT NULL,
     description text,
+    isactive boolean NOT NULL,
     picture text
 );
 

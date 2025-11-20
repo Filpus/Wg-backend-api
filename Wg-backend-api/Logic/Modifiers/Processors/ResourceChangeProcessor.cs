@@ -1,8 +1,8 @@
-﻿using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Enums;
+using Wg_backend_api.Logic.Modifiers.Interfaces;
 using Wg_backend_api.Logic.Modifiers.ModifierConditions;
 using Wg_backend_api.Models;
 
@@ -11,12 +11,10 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
     public class ResourceChangeProcessor : IModifierProcessor
     {
         private readonly GameDbContext _context;
-        private readonly ILogger<ResourceChangeProcessor> _logger;
 
-        public ResourceChangeProcessor(GameDbContext context, ILogger<ResourceChangeProcessor> logger)
+        public ResourceChangeProcessor(GameDbContext context)
         {
             this._context = context;
-            this._logger = logger;
         }
 
         public ModifierType SupportedType => ModifierType.ResourceChange;
@@ -44,7 +42,7 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             var modifiers = await this._context.RelatedEvents
                 .Where(re => re.NationId == nationId)
                 .SelectMany(re => re.Event.Modifiers)
-                .Where(m => m.modiferType == ModifierType.ResourceChange)
+                .Where(m => m.ModifierType == ModifierType.ResourceChange)
                 .ToListAsync();
 
             if (!modifiers.Any())
@@ -57,45 +55,35 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
 
             foreach (var mod in modifiers)
             {
-                var rawEffects = JsonSerializer.Deserialize<List<ModifierEffect>>(mod.Effects);
-                if (rawEffects == null)
+                // ZMIANA: mod.Effects.Conditions już typowany!
+                if (mod.Effects?.Conditions is not ResourceConditions conditions)
                 {
                     continue;
                 }
 
-                foreach (var raw in rawEffects)
+                if (conditions.ResourceId != resourceId)
                 {
-                    // Zamiast słownika: typowane warunki
-                    var conditions = JsonSerializer.Deserialize<ResourceConditions>(
-                        JsonSerializer.Serialize(raw.Conditions)
-                    );
-                    if (conditions == null || conditions.ResourceId != resourceId)
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    var operation = Enum.Parse<ModifierOperation>(raw.Operation, true);
-                    float current = await this._context.LocalisationResources
-                        .Include(lr => lr.Location)
-                        .Where(lr => lr.Location.NationId == nationId
-                                     && lr.ResourceId == resourceId)
-                        .SumAsync(lr => lr.Amount);
+                var operation = Enum.Parse<ModifierOperation>(mod.Effects.Operation.ToString(), true);
 
-                    if (operation == ModifierOperation.Add)
-                    {
-                        totalChange += raw.Value;
-                    }
-                    else
-                    {
-                        float updated = OperationProcessor.ApplyOperation(current, raw.Value, operation);
-                        totalChange += updated - current;
-                    }
+                float current = await this._context.LocalisationResources
+                    .Include(lr => lr.Location)
+                    .Where(lr => lr.Location.NationId == nationId && lr.ResourceId == resourceId)
+                    .SumAsync(lr => lr.Amount);
+                if (operation == ModifierOperation.Add)
+                {
+                    totalChange += mod.Effects.Value;
+                }
+                else
+                {
+                    float updated = OperationProcessor.ApplyOperation(current, mod.Effects.Value, operation);
+                    totalChange += updated - current;
                 }
             }
 
-            totalChange = (float)Math.Round(totalChange, 3);
-            return totalChange;
+            return (float)Math.Round(totalChange, 3);
         }
-
     }
 }
