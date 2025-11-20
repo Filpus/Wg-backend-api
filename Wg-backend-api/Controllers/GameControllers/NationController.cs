@@ -78,6 +78,27 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
         }
 
+        [HttpGet("no-owner")]
+        public async Task<List<NationBaseInfoDTO>> GetNationsWithNoOwner()
+        {
+            var nations = await this._context.Nations
+                .Select(na => new
+                {
+                    na.Id,
+                    na.Name,
+                    Assigment = na.Assignment,
+                })
+                .Where(na => na.Assigment == null)
+                .Select(na => new NationBaseInfoDTO
+                {
+                    Id = na.Id,
+                    Name = na.Name,
+                })
+                .ToListAsync();
+
+            return nations;
+        }
+
         [HttpGet("other-nations")]
         public async Task<List<NationBaseInfoDTO>> GetOtherNations()
         {
