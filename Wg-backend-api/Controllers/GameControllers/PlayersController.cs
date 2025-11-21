@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
-using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GameControllers
@@ -34,6 +33,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 throw new InvalidOperationException("Nieprawidłowy identyfikator gry w schemacie.");
             }
+
             this._globalDbContext = globalDb;
         }
 

@@ -83,6 +83,4 @@ namespace Wg_backend_api.Models
 
     }
 
-
-
 }
