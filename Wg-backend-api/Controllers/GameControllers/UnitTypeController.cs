@@ -322,6 +322,67 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok(unitTypeInfoList);
         }
+
+        [HttpGet("GetAllLandUnitTypeInfo")]
+        public async Task<ActionResult<IEnumerable<UnitTypeInfoDTO>>> GetAllLandUnitTypeInfo()
+        {
+            var unitTypes = await this._context.UnitTypes
+                .Where(ut => !ut.IsNaval)
+                .Include(ut => ut.ProductionCosts)
+                .ThenInclude(pc => pc.Resource)
+                .Include(ut => ut.MaintenaceCosts)
+                .ThenInclude(mc => mc.Resource)
+                .ToListAsync();
+
+            var unitTypeInfoList = unitTypes.Select(ut => new UnitTypeInfoDTO
+            {
+                UnitId = ut.Id.Value,
+                UnitTypeName = ut.Name,
+                Description = ut.Description,
+                Quantity = ut.VolunteersNeeded,
+                Melee = ut.Melee,
+                Range = ut.Range,
+                Defense = ut.Defense,
+                Speed = ut.Speed,
+                Morale = ut.Morale,
+                IsNaval = ut.IsNaval,
+                ConsumedResources = this.GetConsumedResources(ut),
+                ProductionCost = this.GetProductionCost(ut),
+            }).ToList();
+
+            return this.Ok(unitTypeInfoList);
+        }
+
+        [HttpGet("GetAllNavalUnitTypeInfo")]
+        public async Task<ActionResult<IEnumerable<UnitTypeInfoDTO>>> GetAllNavalUnitTypeInfo()
+        {
+            var unitTypes = await this._context.UnitTypes
+                .Where(ut => ut.IsNaval)
+                .Include(ut => ut.ProductionCosts)
+                .ThenInclude(pc => pc.Resource)
+                .Include(ut => ut.MaintenaceCosts)
+                .ThenInclude(mc => mc.Resource)
+                .ToListAsync();
+
+            var unitTypeInfoList = unitTypes.Select(ut => new UnitTypeInfoDTO
+            {
+                UnitId = ut.Id.Value,
+                UnitTypeName = ut.Name,
+                Description = ut.Description,
+                Quantity = ut.VolunteersNeeded,
+                Melee = ut.Melee,
+                Range = ut.Range,
+                Defense = ut.Defense,
+                Speed = ut.Speed,
+                Morale = ut.Morale,
+                IsNaval = ut.IsNaval,
+                ConsumedResources = this.GetConsumedResources(ut),
+                ProductionCost = this.GetProductionCost(ut),
+            }).ToList();
+
+            return this.Ok(unitTypeInfoList);
+        }
+
         private List<ResourceAmountDto> GetConsumedResources(UnitType unitType)
         {
             return [.. unitType.MaintenaceCosts.Select(mc => new ResourceAmountDto
