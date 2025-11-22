@@ -176,9 +176,9 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     deletionResults.Add(new
                     {
-                        ReligionId = group?.ReligionId,
-                        CultureId = group?.CultureId,
-                        SocialGroupId = group?.SocialGroupId,
+                        group?.ReligionId,
+                        group?.CultureId,
+                        group?.SocialGroupId,
                         Requested = group?.Amount ?? 0,
                         Deleted = 0
                     });
@@ -201,9 +201,9 @@ namespace Wg_backend_api.Controllers.GameControllers
 
                 deletionResults.Add(new
                 {
-                    ReligionId = group.ReligionId,
-                    CultureId = group.CultureId,
-                    SocialGroupId = group.SocialGroupId,
+                    group.ReligionId,
+                    group.CultureId,
+                    group.SocialGroupId,
                     Requested = group.Amount,
                     Deleted = toDelete.Count
                 });
