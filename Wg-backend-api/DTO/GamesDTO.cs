@@ -25,6 +25,17 @@ namespace Wg_backend_api.DTO
         }
     }
 
+    public class GameWithRoleDTO : GameDTO
+    {
+        public UserRole Role { get; set; }
+
+        public GameWithRoleDTO(int? id, string name, string? description, string? image, string? gameCode, UserRole role)
+            : base(id, name, description, image, gameCode)
+        {
+            this.Role = role;
+        }
+    }
+
     public class CreateGameDTO
     {
         public string Name { get; set; }

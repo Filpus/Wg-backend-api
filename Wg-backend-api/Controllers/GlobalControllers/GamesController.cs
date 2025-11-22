@@ -64,6 +64,17 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             return this.Ok(gamesAccess);
         }
 
+        [HttpGet("with-roles")]
+        public async Task<IActionResult> GetGamesWithRoles()
+        {
+            var gamesAccess = await this._globalDbContext.GameAccesses
+                .Where(g => g.UserId == this._userId)
+                .Select(g => new GameWithRoleDTO(g.Game.Id, g.Game.Name, g.Game.Description, g.Game.Image, g.Game.GameCode, g.Role))
+                .ToListAsync();
+
+            return this.Ok(gamesAccess);
+        }
+
         [HttpGet("detailed/{gameId}")]
         public async Task<IActionResult> GetGameDetail(int gameId)
         {
