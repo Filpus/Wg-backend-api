@@ -235,11 +235,11 @@ namespace Wg_backend_api.Controllers.GameControllers
                     ReligionId = g.Key.ReligionId,
                     CultureId = g.Key.CultureId,
                     SocialGroupId = g.Key.SocialGroupId,
-                    Religion = this._context.Religions.Where(r => r.Id == g.Key.ReligionId).Select(r => r.Name).FirstOrDefault(),
-                    Culture = this._context.Cultures.Where(c => c.Id == g.Key.CultureId).Select(c => c.Name).FirstOrDefault(),
-                    SocialGroup = this._context.SocialGroups.Where(s => s.Id == g.Key.SocialGroupId).Select(s => s.Name).FirstOrDefault(),
+                    Religion = this._context.Religions.Where(r => r.Id == g.Key.ReligionId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
+                    Culture = this._context.Cultures.Where(c => c.Id == g.Key.CultureId).Select(c => c.Name).FirstOrDefault() ?? string.Empty,
+                    SocialGroup = this._context.SocialGroups.Where(s => s.Id == g.Key.SocialGroupId).Select(s => s.Name).FirstOrDefault() ?? string.Empty,
                     Amount = g.Count(),
-                    Happiness = g.Average(p => p.Happiness)
+                    Happiness = g.Average(p => p.Happiness),
                 })
                 .ToListAsync();
 
@@ -308,9 +308,9 @@ namespace Wg_backend_api.Controllers.GameControllers
                     ReligionId = g.Key.ReligionId,
                     CultureId = g.Key.CultureId,
                     SocialGroupId = g.Key.SocialGroupId,
-                    Religion = this._context.Religions.Where(r => r.Id == g.Key.ReligionId).Select(r => r.Name).FirstOrDefault(),
-                    Culture = this._context.Cultures.Where(c => c.Id == g.Key.CultureId).Select(c => c.Name).FirstOrDefault(),
-                    SocialGroup = this._context.SocialGroups.Where(s => s.Id == g.Key.SocialGroupId).Select(s => s.Name).FirstOrDefault(),
+                    Religion = this._context.Religions.Where(r => r.Id == g.Key.ReligionId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
+                    Culture = this._context.Cultures.Where(c => c.Id == g.Key.CultureId).Select(c => c.Name).FirstOrDefault() ?? string.Empty,
+                    SocialGroup = this._context.SocialGroups.Where(s => s.Id == g.Key.SocialGroupId).Select(s => s.Name).FirstOrDefault() ?? string.Empty,
                     Amount = g.Count(),
                     Happiness = g.Average(p => p.Happiness)
                 })

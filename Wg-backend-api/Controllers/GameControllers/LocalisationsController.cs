@@ -248,12 +248,13 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     ResourceName = lr.Resource.Name,
                     ResourceId = lr.Resource.Id.Value,
-                    ProductionAmount = totalProduction
+                    ProductionAmount = totalProduction,
                 });
             }
 
             return result;
         }
+
         private List<PopulationGroupDTO> GetPopulationGroups(int localisationId)
         {
             var populationGroups = this._context.Populations
@@ -267,18 +268,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                     SocialGroupId = g.Key.SocialGroupId,
 
                     // resolve names safely (if entity not found, return empty string)
-                    Religion = this._context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId) != null
-                        ? this._context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name
-                        : string.Empty,
-                    Culture = this._context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId) != null
-                        ? this._context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name
-                        : string.Empty,
-                    SocialGroup = this._context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId) != null
-                        ? this._context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name
-                        : string.Empty,
+                    Religion = this._context.Religions.Where(r => r.Id == g.Key.ReligionId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
+                    Culture = this._context.Cultures.Where(r => r.Id == g.Key.CultureId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
+                    SocialGroup = this._context.SocialGroups.Where(s => s.Id == g.Key.SocialGroupId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
 
                     Amount = g.Count(),
-                    Happiness = g.Average(p => p.Happiness)
+                    Happiness = g.Average(p => p.Happiness),
 
                 })
                 .ToList();
@@ -294,9 +289,10 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     ResourceId = lr.Resource.Id.Value,
                     ResourceName = lr.Resource.Name,
-                    Amount = lr.Amount
+                    Amount = lr.Amount,
                 })];
         }
+
         // POST: api/Localisations/Resources
         [HttpPost("Resources")]
         public async Task<IActionResult> CreateLocalisationResources([FromBody] List<LocalisationResourceDTO> localisationResourceDtos)
@@ -310,7 +306,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 LocationId = dto.LocationId,
                 ResourceId = dto.ResourceId,
-                Amount = dto.Amount
+                Amount = dto.Amount,
             }).ToList();
 
             this._context.LocalisationResources.AddRange(localisationResources);
