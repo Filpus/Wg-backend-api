@@ -1,4 +1,6 @@
-﻿namespace Wg_backend_api.DTO
+﻿using Wg_backend_api.Models;
+
+namespace Wg_backend_api.DTO
 {
     public class PlayerGamesDTO
     {
@@ -32,5 +34,12 @@
         public CreateGameDTO()
         {
         }
+    }
+
+    public class GameInfoDTO
+    {
+        public string? OwnedNationName { get; set; }
+        public int CurrentUsers { get; set; }
+        public UserRole Role { get; set; }
     }
 }

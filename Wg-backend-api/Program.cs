@@ -25,12 +25,13 @@ namespace Wg_backend_api.Data
             if (builder.Environment.IsDevelopment())
             {
                 connectionString = builder.Configuration.GetConnectionString("DevConection");
-
             }
             else
             {
                 connectionString = builder.Configuration.GetConnectionString("DeploymentConection");
             }
+
+            builder.Services.AddSingleton(new GameService(connectionString));
 
             // Add DbContexts
             builder.Services.AddDbContext<GlobalDbContext>(options =>
