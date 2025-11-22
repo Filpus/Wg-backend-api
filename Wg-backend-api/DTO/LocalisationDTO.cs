@@ -24,12 +24,14 @@
 
     public class LocalisationResourceInfoDTO
     {
+        public int ResourceId { get; set; }
         public string ResourceName { get; set; }
         public float Amount { get; set; }
     }
 
     public class LocalisationResourceProductionDTO
     {
+        public int ResourceId { get; set; }
         public string ResourceName { get; set; }
         public float ProductionAmount { get; set; }
     }
