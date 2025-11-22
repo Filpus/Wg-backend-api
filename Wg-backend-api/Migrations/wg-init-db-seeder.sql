@@ -1134,12 +1134,11 @@ COPY "Global".refresh_tokens (id, user_id, token, expires_at, revoked_at, create
 --
 
 COPY "Global".users (id, name, email, password, issso, isarchived, image) FROM stdin;
-1	Test	test	$2a$11$s/J0zefb5amFzjdjllmuZ.AXuziyjVRcYTeEhxyemaxsJJyKnzxU2	f	f	\N
-2	admin	admin	$2a$11$t8DGLO5spPxXzpyRb5j0vuuk54ycsFEo9scO7xswpGCH9WvMcwive	f	f	\N
-3	tomek	tomek	$2a$11$t8DGLO5spPxXzpyRb5j0vuuk54ycsFEo9scO7xswpGCH9WvMcwive	f	f	\N
-4	jakub	jakub	$2a$11$t8DGLO5spPxXzpyRb5j0vuuk54ycsFEo9scO7xswpGCH9WvMcwive	f	f	\N
+1	Test	test@test	$2a$11$s/J0zefb5amFzjdjllmuZ.AXuziyjVRcYTeEhxyemaxsJJyKnzxU2	f	f	\N
+2	admin	admin@admin	$2a$11$t8DGLO5spPxXzpyRb5j0vuuk54ycsFEo9scO7xswpGCH9WvMcwive	f	f	\N
+3	tomek	tomek@tomek	$2a$11$t8DGLO5spPxXzpyRb5j0vuuk54ycsFEo9scO7xswpGCH9WvMcwive	f	f	\N
+4	jakub	jakub@jakub	$2a$11$t8DGLO5spPxXzpyRb5j0vuuk54ycsFEo9scO7xswpGCH9WvMcwive	f	f	\N
 \.
-
 
 --
 -- Data for Name: accessToUnits; Type: TABLE DATA; Schema: game_1; Owner: -
@@ -1672,7 +1671,7 @@ SELECT pg_catalog.setval('"Global".games_id_seq', 1, true);
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: Global; Owner: -
 --
 
-SELECT pg_catalog.setval('"Global".users_id_seq', 2, true);
+SELECT pg_catalog.setval('"Global".users_id_seq', 4, true);
 
 
 --
