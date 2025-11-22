@@ -94,22 +94,22 @@ namespace Wg_backend_api.Controllers.GameControllers
                 socialGroup.Volunteers = socialGroupDTO.Volunteers;
 
                 // Aktualizacja zasobów zużywanych (ConsumedResources)
-                var updatedUsedResources = socialGroupDTO.ConsumedResources.Select(cr => new UsedResource
+                var updatedUsedResources = socialGroupDTO.ConsumedResources.GroupBy(cr => cr.ResourceId).Select(cr => new UsedResource
                 {
                     SocialGroupId = (int)socialGroup.Id,
-                    ResourceId = cr.ResourceId,
-                    Amount = cr.Amount
+                    ResourceId = cr.Key,
+                    Amount = cr.Sum(r => r.Amount),
                 }).ToList();
 
                 this._context.UsedResources.RemoveRange(socialGroup.UsedResources);
                 this._context.UsedResources.AddRange(updatedUsedResources);
 
                 // Aktualizacja zasobów produkowanych (ProducedResources)
-                var updatedProductionShares = socialGroupDTO.ProducedResources.Select(pr => new ProductionShare
+                var updatedProductionShares = socialGroupDTO.ProducedResources.GroupBy(pr => pr.ResourceId).Select(pr => new ProductionShare
                 {
                     SocialGroupId = (int)socialGroup.Id,
-                    ResourceId = pr.ResourceId,
-                    Coefficient = pr.Amount
+                    ResourceId = pr.Key,
+                    Coefficient = pr.Sum(r => r.Amount),
                 }).ToList();
 
                 this._context.ProductionShares.RemoveRange(socialGroup.ProductionShares);
