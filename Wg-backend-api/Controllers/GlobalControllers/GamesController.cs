@@ -16,13 +16,15 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         private readonly GlobalDbContext _globalDbContext;
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
+        private readonly GameService _gameService;
         private int _userId;
 
-        public GamesController(GlobalDbContext globalDb, IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+        public GamesController(GlobalDbContext globalDb, IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService, GameService gameService)
         {
             this._globalDbContext = globalDb;
             this._gameDbContextFactory = gameDbFactory;
             this._sessionDataService = sessionDataService;
+            this._gameService = gameService;
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
@@ -36,53 +38,63 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         {
             var gamesAccess = await this._globalDbContext.GameAccesses
                 .Where(g => g.UserId == this._userId)
-                .Select(g => g.GameId)
+                .Select(g => new GameDTO(g.Game.Id, g.Game.Name, g.Game.Description, g.Game.Image, g.Game.GameCode))
                 .ToListAsync();
 
-            if (gamesAccess.Count == 0)
-            {
-                return this.Ok(new List<GameDTO>());
-            }
-
-            var games = await this._globalDbContext.Games
-                .Where(g => gamesAccess.Contains(g.Id))
-                .ToListAsync();
-
-            var gamesDTOs = games.Select(game => new GameDTO(game.Id, game.Name, game.Description, game.Image, game.GameCode)).ToList();
-
-            return this.Ok(gamesDTOs);
+            return this.Ok(gamesAccess);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSpecificGame(int id)
         {
-            var hasAccess = await this._globalDbContext.GameAccesses
-                .AnyAsync(g => g.UserId == this._userId && g.GameId == id);
+            var gamesAccess = await this._globalDbContext.GameAccesses
+                .Where(g => g.UserId == this._userId && g.GameId == id)
+                .Select(g => new GameDTO(g.Game.Id, g.Game.Name, g.Game.Description, g.Game.Image, g.Game.GameCode))
+                .ToListAsync();
 
-            if (!hasAccess)
+            if (!gamesAccess.Any())
             {
                 return NotFound(new
                 {
                     error = "Not Found",
-                    message = $"Game with ID {id} not found"
+                    message = $"Game with ID {id} not found or user have no access"
                 });
             }
 
-            var game = await this._globalDbContext.Games
-                .Where(g => g.Id == id)
-                .Select(g => new GameDTO(g.Id, g.Name, g.Description, g.Image, g.GameCode))
-                .FirstOrDefaultAsync();
+            return this.Ok(gamesAccess);
+        }
 
-            if (game == null)
+        [HttpGet("detailed/{gameId}")]
+        public async Task<IActionResult> GetGameDetail(int gameId)
+        {
+            var gamesAccess = await this._globalDbContext.GameAccesses
+                .Where(g => g.UserId == this._userId && g.GameId == gameId)
+                .ToListAsync();
+
+            if (!gamesAccess.Any())
             {
                 return NotFound(new
                 {
                     error = "Not Found",
-                    message = $"Game with ID {id} not found"
+                    message = $"Game with ID {gameId} not found or user have no access"
                 });
             }
 
-            return Ok(game);
+            var gameContext = this._gameDbContextFactory.Create($"game_{gameId}");
+
+            var gameDetails = await gameContext.Assignments
+                .Include(a => a.Nation)
+                .Where(a => a.IsActive && a.UserId == this._userId)
+                .ToListAsync();
+
+            var playerCount = await gameContext.Players.CountAsync();
+
+            return Ok(new GameInfoDTO
+            {
+                OwnedNationName = gameDetails.FirstOrDefault()?.Nation.Name,
+                CurrentUsers = playerCount,
+                Role = gamesAccess.First().Role,
+            });
         }
 
         [HttpPost("joinGame")]
@@ -366,8 +378,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             this._globalDbContext.Games.Add(newGame);
             await this._globalDbContext.SaveChangesAsync();
 
-            var created_game = GameService.GenerateNewGame(
-                "Host=localhost;Username=postgres;Password=postgres;Database=wg", // TODO Niezapomnieć że trzeba to będzie poprawnie ustawić
+            var created_game = this._gameService.GenerateNewGame(
                 Path.Combine(Directory.GetCurrentDirectory(), "Migrations", "game-schema-init.sql"),
                 $"game_{newGame.Id}"
             );
@@ -453,6 +464,67 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 gameDbContext.Players.Remove(player);
                 await gameDbContext.SaveChangesAsync();
+            }
+
+            return Ok(new
+            {
+                message = "Player successfully removed from the game",
+            });
+        }
+
+        [HttpDelete("leave")]
+        public async Task<IActionResult> RemovePlayer([FromBody] int gameId)
+        {
+            var game = await this._globalDbContext.Games.FindAsync(gameId);
+            if (game == null)
+            {
+                return NotFound(new
+                {
+                    error = "Not Found",
+                    message = "Game not found",
+                });
+            }
+
+            var access = await this._globalDbContext.GameAccesses
+                .Where(a => a.GameId == gameId && a.UserId == this._userId)
+                .FirstOrDefaultAsync();
+
+            if (access == null)
+            {
+                return NotFound(new
+                {
+                    error = "Not Found",
+                    message = "User does not have access to this game",
+                });
+            }
+
+            if (access.Role == UserRole.GameMaster)
+            {
+                // I'm not sure if we should check if gm is game owner
+                this._gameService.DeleteGameSchema($"game_{gameId}");
+                this._globalDbContext.GameAccesses.RemoveRange(
+                    this._globalDbContext.GameAccesses.Where(a => a.GameId == gameId)
+                );
+
+                this._globalDbContext.Games.Remove(game);
+                await this._globalDbContext.SaveChangesAsync();
+            }
+            else if (access.Role == UserRole.Player)
+            {
+                var gameDbContext = this._gameDbContextFactory.Create($"game_{gameId}");
+                var player = await gameDbContext.Players
+                    .Where(p => p.UserId == this._userId)
+                    .FirstOrDefaultAsync();
+
+                if (player != null)
+                {
+                    gameDbContext.Players.Remove(player);
+                    await gameDbContext.SaveChangesAsync();
+                }
+                // TODO ensure assigmnet is deactivated
+
+                this._globalDbContext.GameAccesses.Remove(access);
+                await this._globalDbContext.SaveChangesAsync();
             }
 
             return Ok(new
