@@ -88,6 +88,8 @@ namespace Wg_backend_api.Controllers.GameControllers
 
                 localisation.Name = localisationDto.Name;
                 localisation.NationId = localisationDto.NationId;
+                localisation.Size = localisationDto.Size;
+                localisation.Fortification = localisationDto.Fortification;
 
                 this._context.Entry(localisation).State = EntityState.Modified;
             }
