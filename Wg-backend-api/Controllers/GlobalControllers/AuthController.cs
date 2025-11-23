@@ -32,7 +32,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var user = this._context.Users.FirstOrDefault(p => p.Email == request.Email);
+            var user = this._context.Users.FirstOrDefault(p => p.Email == request.Email || p.Name == request.Email);
 
             if (user == null)
             {
@@ -82,6 +82,24 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 {
                     error = "Conflict",
                     message = user.Name == request.Name ? "User with this username already exists" : "User with this email already exists",
+                });
+            }
+
+            if (!this.isValidEmail(request.Email))
+            {
+                return this.BadRequest(new
+                {
+                    error = "BadRequest",
+                    message = "Invalid email format",
+                });
+            }
+
+            if (!this.isValidUsername(request.Name))
+            {
+                return this.BadRequest(new
+                {
+                    error = "BadRequest",
+                    message = "Invalid username format. Username must be 3-40 characters long and can contain letters, digits, underscores, and hyphens.",
                 });
             }
 
@@ -273,6 +291,37 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             this.Response.Cookies.Append("access_token", accessToken, accessCookieOptions);
             this.Response.Cookies.Append("refresh_token", refreshToken, refreshCookieOptions);
+        }
+
+        private bool isValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool isValidUsername(string username)
+        {
+            if (string.IsNullOrWhiteSpace(username) || username.Length <= 3 || username.Length > 40)
+            {
+                return false;
+            }
+
+            foreach (char c in username)
+            {
+                if (!char.IsLetterOrDigit(c) && c != '_' && c != '-')
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         // [AllowAnonymous]

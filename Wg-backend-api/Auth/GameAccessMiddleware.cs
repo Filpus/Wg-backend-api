@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using Wg_backend_api.Data;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Auth
@@ -20,7 +19,7 @@ namespace Wg_backend_api.Auth
             this._next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, GlobalDbContext db, IGameDbContextFactory gameFactory, ISessionDataService sessionDataService)
+        public async Task InvokeAsync(HttpContext context, ISessionDataService sessionDataService)
         {
             var path = context.Request.Path;
 

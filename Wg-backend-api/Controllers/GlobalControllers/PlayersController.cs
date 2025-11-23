@@ -44,6 +44,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [HttpGet]
+        [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<IActionResult> GetPlayers()
         {
             var access = await this._globalDbContext.GameAccesses

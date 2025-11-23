@@ -41,8 +41,6 @@ namespace Wg_backend_api.Data
             // Add Scoped GameDbContextFactory
             builder.Services.AddScoped<IGameDbContextFactory, GameDbContextFactory>();
 
-            // builder.Services.AddScoped<UserIdActionFilter>();
-
             // Session setup
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession(options =>
@@ -124,15 +122,21 @@ namespace Wg_backend_api.Data
 
             builder.Services.AddHostedService<RefreshTokenCleanupService>();
 
+            builder.Services.AddScoped<UserIdActionFilter>();
+
             // Add Controllers (API endpoints)
-            builder.Services.AddControllers(config => config.Filters.Add<UserIdActionFilter>()).AddJsonOptions(options =>
+            builder.Services.AddControllers(config => 
+            {
+                config.Filters.Add<UserIdActionFilter>();
+            })
+            .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
                 options.JsonSerializerOptions.WriteIndented = true;
                 options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
                 options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
             });
-            ;
+
             // Add Swagger configuration
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
