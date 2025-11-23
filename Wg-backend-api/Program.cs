@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors.Infrastructure;
@@ -11,7 +11,6 @@ using Microsoft.IdentityModel.Tokens;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Logic.Modifiers;
 using Wg_backend_api.Logic.Modifiers.Processors;
-using Wg_backend_api.Serialization;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Data
@@ -54,7 +53,13 @@ namespace Wg_backend_api.Data
 
             // Authentication and Authorization setup
 
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = "External";
+            })
+            .AddCookie("External")
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
@@ -81,33 +86,21 @@ namespace Wg_backend_api.Data
                         return Task.CompletedTask;
                     },
                 };
+            })
+            .AddGoogle("Google", options =>
+            {
+               options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+               options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+
+               options.ClaimActions.MapJsonKey("picture", "picture");
+               options.ClaimActions.MapJsonKey("locale", "locale");
+               options.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
+
+               options.SaveTokens = true;
+               options.CallbackPath = "/signin-google";
+
+               options.SignInScheme = "External";
             });
-
-            // builder.Services.AddAuthentication(options =>
-            // {
-            //     options.DefaultScheme = "MyCookieAuth";
-            //     options.DefaultChallengeScheme = "Google";
-            // })
-            // .AddCookie("MyCookieAuth", options =>
-            // {
-            //     options.LoginPath = "/api/auth/login";
-            //     options.Cookie.Name = "MyAppAuth";
-            //     options.Cookie.HttpOnly = true;
-            //     options.Cookie.SameSite = SameSiteMode.None;
-            //     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-            // })
-            //.AddGoogle("Google", options =>
-            //{
-            //    options.ClientId = "";
-            //    options.ClientSecret = "";
-
-            //    options.ClaimActions.MapJsonKey("picture", "picture");
-            //    options.ClaimActions.MapJsonKey("locale", "locale");
-            //    options.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
-
-            //    options.SaveTokens = true;
-            //    options.CallbackPath = "/signin-google";
-            //});
 
             builder.Services.AddAuthorization(options => options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()

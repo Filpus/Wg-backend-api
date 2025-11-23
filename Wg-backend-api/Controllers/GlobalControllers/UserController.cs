@@ -109,17 +109,17 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return this.BadRequest(new { message = "User with the same name or email already exists." });
             }
 
-            if (!string.IsNullOrEmpty(userPathDTO.Name))
+            if (!string.IsNullOrEmpty(userPathDTO.Name) && ValidateUserData.isValidUsername(userPathDTO.Name))
             {
                 user.Name = userPathDTO.Name;
             }
 
-            if (!string.IsNullOrEmpty(userPathDTO.Email))
+            if (!string.IsNullOrEmpty(userPathDTO.Email) && ValidateUserData.isValidEmail(userPathDTO.Email))
             {
                 user.Email = userPathDTO.Email;
             }
 
-            if (!string.IsNullOrEmpty(userPathDTO.Password))
+            if (!user.IsSSO && !string.IsNullOrEmpty(userPathDTO.Password))
             {
                 user.Password = BCrypt.Net.BCrypt.HashPassword(userPathDTO.Password);
             }
@@ -128,19 +128,6 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             await this._context.SaveChangesAsync();
 
             return this.NoContent();
-        }
-
-        // Register a new user
-        [AllowAnonymous]
-        [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
-        {
-            user.Id = null;
-            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-            this._context.Users.Add(user);
-            await this._context.SaveChangesAsync();
-
-            return this.Ok();
         }
 
         // DELETE: api/Users/5
