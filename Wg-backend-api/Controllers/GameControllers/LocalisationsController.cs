@@ -262,12 +262,10 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .GroupBy(p => new { p.ReligionId, p.CultureId, p.SocialGroupId })
                 .Select(g => new PopulationGroupDTO
                 {
-                    // assign ids as requested
                     ReligionId = g.Key.ReligionId,
                     CultureId = g.Key.CultureId,
                     SocialGroupId = g.Key.SocialGroupId,
 
-                    // resolve names safely (if entity not found, return empty string)
                     Religion = this._context.Religions.Where(r => r.Id == g.Key.ReligionId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
                     Culture = this._context.Cultures.Where(r => r.Id == g.Key.CultureId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
                     SocialGroup = this._context.SocialGroups.Where(s => s.Id == g.Key.SocialGroupId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
@@ -381,12 +379,10 @@ namespace Wg_backend_api.Controllers.GameControllers
             var locationIds = keys.Select(k => k.LocationId).Distinct().ToList();
             var resourceIds = keys.Select(k => k.ResourceId).Distinct().ToList();
 
-            // Query DB using IN clauses which EF can translate to SQL
             var candidates = await this._context.LocalisationResources
                 .Where(lr => locationIds.Contains(lr.LocationId) && resourceIds.Contains(lr.ResourceId))
                 .ToListAsync();
 
-            // Filter exact pairs in-memory to avoid EF translation issues with composite Any(...)
             var localisationResources = candidates
                 .Where(lr => keys.Any(k => k.LocationId == lr.LocationId && k.ResourceId == lr.ResourceId))
                 .ToList();

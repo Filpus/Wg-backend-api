@@ -165,7 +165,6 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest();
             }
 
-            // Use a transaction to ensure atomicity
             using var transaction = await this._context.Database.BeginTransactionAsync();
 
             var deletionResults = new List<object>();
