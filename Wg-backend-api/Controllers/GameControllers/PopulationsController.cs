@@ -158,22 +158,68 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         // DELETE: api/Populations/5
         [HttpDelete]
-        public async Task<IActionResult> DeletePopulations([FromBody] int[] ids)
+        public async Task<IActionResult> DeletePopulations([FromBody] List<PopulationGroupDTO> groups)
         {
-            foreach (var id in ids)
+            if (groups == null || groups.Count == 0)
             {
-                var population = await this._context.Populations.FindAsync(id);
-                if (population == null)
-                {
-                    return NotFound();
-                }
-
-                this._context.Populations.Remove(population);
+                return BadRequest();
             }
 
-            await this._context.SaveChangesAsync();
+            using var transaction = await this._context.Database.BeginTransactionAsync();
 
-            return Ok();
+            var deletionResults = new List<object>();
+
+            foreach (var group in groups)
+            {
+                if (group == null || group.Amount <= 0)
+                {
+                    deletionResults.Add(new
+                    {
+                        group?.ReligionId,
+                        group?.CultureId,
+                        group?.SocialGroupId,
+                        Requested = group?.Amount ?? 0,
+                        Deleted = 0
+                    });
+                    continue;
+                }
+
+                var query = this._context.Populations
+                    .Where(p =>
+                        p.ReligionId == group.ReligionId &&
+                        p.CultureId == group.CultureId &&
+                        p.SocialGroupId == group.SocialGroupId)
+                    .OrderBy(p => p.Id);
+
+                var toDelete = await query.Take(group.Amount).ToListAsync();
+
+                if (toDelete.Count > 0)
+                {
+                    this._context.Populations.RemoveRange(toDelete);
+                }
+
+                deletionResults.Add(new
+                {
+                    group.ReligionId,
+                    group.CultureId,
+                    group.SocialGroupId,
+                    Requested = group.Amount,
+                    Deleted = toDelete.Count
+                });
+            }
+
+            try
+            {
+                await this._context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(500, "Błąd podczas usuwania populacji.");
+            }
+
+            return Ok(deletionResults);
         }
 
         [HttpGet("nation/population-groups/{nationId?}")]
@@ -185,11 +231,14 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .GroupBy(p => new { p.ReligionId, p.CultureId, p.SocialGroupId })
                 .Select(g => new PopulationGroupDTO
                 {
-                    Religion = this._context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
-                    Culture = this._context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
-                    SocialGroup = this._context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
+                    ReligionId = g.Key.ReligionId,
+                    CultureId = g.Key.CultureId,
+                    SocialGroupId = g.Key.SocialGroupId,
+                    Religion = this._context.Religions.Where(r => r.Id == g.Key.ReligionId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
+                    Culture = this._context.Cultures.Where(c => c.Id == g.Key.CultureId).Select(c => c.Name).FirstOrDefault() ?? string.Empty,
+                    SocialGroup = this._context.SocialGroups.Where(s => s.Id == g.Key.SocialGroupId).Select(s => s.Name).FirstOrDefault() ?? string.Empty,
                     Amount = g.Count(),
-                    Happiness = g.Average(p => p.Happiness)
+                    Happiness = g.Average(p => p.Happiness),
                 })
                 .ToListAsync();
 
@@ -255,9 +304,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .GroupBy(p => new { p.ReligionId, p.CultureId, p.SocialGroupId })
                 .Select(g => new PopulationGroupDTO
                 {
-                    Religion = this._context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
-                    Culture = this._context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
-                    SocialGroup = this._context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
+                    ReligionId = g.Key.ReligionId,
+                    CultureId = g.Key.CultureId,
+                    SocialGroupId = g.Key.SocialGroupId,
+                    Religion = this._context.Religions.Where(r => r.Id == g.Key.ReligionId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
+                    Culture = this._context.Cultures.Where(c => c.Id == g.Key.CultureId).Select(c => c.Name).FirstOrDefault() ?? string.Empty,
+                    SocialGroup = this._context.SocialGroups.Where(s => s.Id == g.Key.SocialGroupId).Select(s => s.Name).FirstOrDefault() ?? string.Empty,
                     Amount = g.Count(),
                     Happiness = g.Average(p => p.Happiness)
                 })

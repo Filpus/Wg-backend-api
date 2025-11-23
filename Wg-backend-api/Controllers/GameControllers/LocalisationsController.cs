@@ -88,6 +88,8 @@ namespace Wg_backend_api.Controllers.GameControllers
 
                 localisation.Name = localisationDto.Name;
                 localisation.NationId = localisationDto.NationId;
+                localisation.Size = localisationDto.Size;
+                localisation.Fortification = localisationDto.Fortification;
 
                 this._context.Entry(localisation).State = EntityState.Modified;
             }
@@ -247,12 +249,14 @@ namespace Wg_backend_api.Controllers.GameControllers
                 result.Add(new LocalisationResourceProductionDTO
                 {
                     ResourceName = lr.Resource.Name,
-                    ProductionAmount = totalProduction
+                    ResourceId = lr.Resource.Id.Value,
+                    ProductionAmount = totalProduction,
                 });
             }
 
             return result;
         }
+
         private List<PopulationGroupDTO> GetPopulationGroups(int localisationId)
         {
             var populationGroups = this._context.Populations
@@ -260,15 +264,21 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .GroupBy(p => new { p.ReligionId, p.CultureId, p.SocialGroupId })
                 .Select(g => new PopulationGroupDTO
                 {
-                    Religion = this._context.Religions.FirstOrDefault(r => r.Id == g.Key.ReligionId).Name,
-                    Culture = this._context.Cultures.FirstOrDefault(c => c.Id == g.Key.CultureId).Name,
-                    SocialGroup = this._context.SocialGroups.FirstOrDefault(s => s.Id == g.Key.SocialGroupId).Name,
-                    Amount = g.Count(),
-                    Happiness = g.Average(p => p.Happiness)
-                })
-                .ToListAsync();
+                    ReligionId = g.Key.ReligionId,
+                    CultureId = g.Key.CultureId,
+                    SocialGroupId = g.Key.SocialGroupId,
 
-            return populationGroups.Result;
+                    Religion = this._context.Religions.Where(r => r.Id == g.Key.ReligionId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
+                    Culture = this._context.Cultures.Where(r => r.Id == g.Key.CultureId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
+                    SocialGroup = this._context.SocialGroups.Where(s => s.Id == g.Key.SocialGroupId).Select(r => r.Name).FirstOrDefault() ?? string.Empty,
+
+                    Amount = g.Count(),
+                    Happiness = g.Average(p => p.Happiness),
+
+                })
+                .ToList();
+
+            return populationGroups;
         }
 
         private List<LocalisationResourceInfoDTO> GetLocalisationResources(int localisationId)
@@ -277,10 +287,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 .Where(lr => lr.LocationId == localisationId)
                 .Select(lr => new LocalisationResourceInfoDTO
                 {
+                    ResourceId = lr.Resource.Id.Value,
                     ResourceName = lr.Resource.Name,
-                    Amount = lr.Amount
+                    Amount = lr.Amount,
                 })];
         }
+
         // POST: api/Localisations/Resources
         [HttpPost("Resources")]
         public async Task<IActionResult> CreateLocalisationResources([FromBody] List<LocalisationResourceDTO> localisationResourceDtos)
@@ -294,7 +306,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 LocationId = dto.LocationId,
                 ResourceId = dto.ResourceId,
-                Amount = dto.Amount
+                Amount = dto.Amount,
             }).ToList();
 
             this._context.LocalisationResources.AddRange(localisationResources);
@@ -319,10 +331,12 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var dto in localisationResourceDtos)
             {
-                var localisationResource = await this._context.LocalisationResources.FindAsync(dto.Id);
+                var localisationResource = await this._context.LocalisationResources
+                    .FirstOrDefaultAsync(lr => lr.LocationId == dto.LocationId && lr.ResourceId == dto.ResourceId);
+
                 if (localisationResource == null)
                 {
-                    return NotFound($"LocalisationResource with ID {dto.Id} not found.");
+                    return NotFound($"LocalisationResource with LocationId {dto.LocationId} and ResourceId {dto.ResourceId} not found.");
                 }
 
                 localisationResource.LocationId = dto.LocationId;
@@ -340,9 +354,12 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 foreach (var dto in localisationResourceDtos)
                 {
-                    if (!this._context.LocalisationResources.Any(lr => lr.Id == dto.Id))
+                    var exists = await this._context.LocalisationResources
+                        .AnyAsync(lr => lr.LocationId == dto.LocationId && lr.ResourceId == dto.ResourceId);
+
+                    if (!exists)
                     {
-                        return NotFound($"LocalisationResource with ID {dto.Id} not found.");
+                        return NotFound($"LocalisationResource with LocationId {dto.LocationId} and ResourceId {dto.ResourceId} not found.");
                     }
                 }
 
@@ -354,20 +371,27 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         // DELETE: api/Localisations/Resources
         [HttpDelete("Resources")]
-        public async Task<IActionResult> DeleteLocalisationResources([FromBody] List<int> ids)
+        public async Task<IActionResult> DeleteLocalisationResources([FromBody] List<LocalisationResourceDTO> keys)
         {
-            if (ids == null || !ids.Any())
+            if (keys == null || !keys.Any())
             {
                 return BadRequest("Invalid data.");
             }
 
-            var localisationResources = await this._context.LocalisationResources
-                .Where(lr => ids.Contains(lr.Id.Value))
+            var locationIds = keys.Select(k => k.LocationId).Distinct().ToList();
+            var resourceIds = keys.Select(k => k.ResourceId).Distinct().ToList();
+
+            var candidates = await this._context.LocalisationResources
+                .Where(lr => locationIds.Contains(lr.LocationId) && resourceIds.Contains(lr.ResourceId))
                 .ToListAsync();
+
+            var localisationResources = candidates
+                .Where(lr => keys.Any(k => k.LocationId == lr.LocationId && k.ResourceId == lr.ResourceId))
+                .ToList();
 
             if (localisationResources == null || !localisationResources.Any())
             {
-                return NotFound("No LocalisationResources found for the provided IDs.");
+                return NotFound("No LocalisationResources found for the provided LocationId/ResourceId pairs.");
             }
 
             this._context.LocalisationResources.RemoveRange(localisationResources);
