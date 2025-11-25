@@ -211,20 +211,30 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
 
             // TODO ensure gm has nation assigned / can select game
-            var accesToNation = await gameDbContext.Assignments
-                .Include(a => a.Nation)
-                .Where(a => a.UserId == this._userId && a.IsActive)
-                .FirstOrDefaultAsync();
-            if (accesToNation == null)
+            if (userInGame.Role != UserRole.GameMaster)
             {
-                return Unauthorized(new
+                var accesToNation = await gameDbContext.Assignments
+                    .Include(a => a.Nation)
+                    .Where(a => a.UserId == this._userId && a.IsActive)
+                    .FirstOrDefaultAsync();
+                if (accesToNation == null)
                 {
-                    error = "Unauthorized",
-                    message = "User is not game member",
-                });
+                    return Unauthorized(new
+                    {
+                        error = "Unauthorized",
+                        message = "User is not game member",
+                    });
+                }
+
+                this._sessionDataService.SetNation($"{accesToNation.Nation.Id}");
+            }
+            else
+            {
+                // TODO Gm cannot have assigned nation !!!!!!
+                // TODO temporary walkaround -1 nation for gm !!!!!!!!
+                this._sessionDataService.SetNation($"{-1}");
             }
 
-            this._sessionDataService.SetNation($"{accesToNation.Nation.Id}");
             this._sessionDataService.SetSchema($"game_{game.Id}");
             this._sessionDataService.SetRole($"{access.Role}");
 

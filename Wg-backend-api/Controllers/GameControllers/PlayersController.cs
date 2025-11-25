@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
+using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GameControllers
@@ -69,7 +70,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         public async Task<ActionResult<PlayerDTO>> GetUnassignedPlayers()
         {
             var unassignedPlayers = await this._context.Players
-                .Where(p => p.Assignment == null)
+                .Where(p => p.Assignment == null && p.Role == UserRole.Player)
                 .Select(p => new PlayerDTO
                 {
                     Id = (int)p.Id,
@@ -88,6 +89,11 @@ namespace Wg_backend_api.Controllers.GameControllers
             if (player == null)
             {
                 return NotFound();
+            }
+
+            if (player.Role == UserRole.GameMaster)
+            {
+                return BadRequest("Cannot delete GameMaster player.");
             }
 
             this._context.Players.Remove(player);

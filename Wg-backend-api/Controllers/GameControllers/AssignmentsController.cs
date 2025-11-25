@@ -113,6 +113,11 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             foreach (var assignment in assignments)
             {
+                var user = await this._context.Players.FindAsync(assignment.UserId);
+                if (user == null || user.Role != UserRole.Player)
+                {
+                    return BadRequest("Invalid user for assignment.");
+                }
 
                 // TODO Temoprary settings one assignment per nation
                 var existingAssignment = await this._context.Assignments

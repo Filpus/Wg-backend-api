@@ -1,4 +1,6 @@
 ﻿using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using Wg_backend_api.Data;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Auth
@@ -11,7 +13,7 @@ namespace Wg_backend_api.Auth
             "/api/auth",
             "/api/games",
             "/api/user",
-            "/api/players", // TODO ensure if this is needed
+            "/api/games/players", // TODO ensure if this is needed
         ];
 
         public GameAccessMiddleware(RequestDelegate next)
@@ -19,7 +21,7 @@ namespace Wg_backend_api.Auth
             this._next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, ISessionDataService sessionDataService)
+        public async Task InvokeAsync(HttpContext context, GlobalDbContext db, ISessionDataService sessionDataService)
         {
             var path = context.Request.Path;
 
@@ -27,6 +29,14 @@ namespace Wg_backend_api.Auth
             {
                 // TODO ensure we dont need to check id in every middleware call
                 var userIdStr = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userId = int.TryParse(userIdStr, out var uid) ? uid : -1;
+
+                if (userId == -1)
+                {
+                    context.Response.StatusCode = 401;
+                    await context.Response.WriteAsync("Unauthorized - invalid user id");
+                    return;
+                }
 
                 if (string.IsNullOrEmpty(userIdStr))
                 {
@@ -36,28 +46,30 @@ namespace Wg_backend_api.Auth
                 }
 
                 sessionDataService.SetUserIdItems(userIdStr);
-            }
 
-            if (!ExcludedPaths.Any(p => path.StartsWithSegments(p)))
-            {
-                var gameIdHeader = sessionDataService.GetSchema();
-                if (string.IsNullOrEmpty(gameIdHeader))
+                if (!ExcludedPaths.Any(p => path.StartsWithSegments(p)))
                 {
-                    context.Response.StatusCode = 400;
-                    await context.Response.WriteAsync("Missing Game Schema");
-                    return;
-                }
+                    var gameIdHeader = sessionDataService.GetSchema();
+                    if (string.IsNullOrEmpty(gameIdHeader))
+                    {
+                        context.Response.StatusCode = 400;
+                        await context.Response.WriteAsync("Missing Game Schema");
+                        return;
+                    }
 
-                var gameRole = sessionDataService.GetRole();
-                if (string.IsNullOrEmpty(gameRole))
-                {
-                    context.Response.StatusCode = 400;
-                    await context.Response.WriteAsync("Missing Role in Game");
-                    return;
-                }
+                    var gameRole = sessionDataService.GetRole();
+                    if (string.IsNullOrEmpty(gameRole))
+                    {
+                        context.Response.StatusCode = 400;
+                        await context.Response.WriteAsync("Missing Role in Game");
+                        return;
+                    }
 
-                var gameId = int.Parse(gameIdHeader.Replace("game_", string.Empty));
-                context.Items["RoleInGame"] = gameRole;
+                    var gameId = int.Parse(gameIdHeader.Replace("game_", string.Empty));
+                    var gameAccess = await db.GameAccesses.FirstOrDefaultAsync(ga => ga.UserId == userId && ga.GameId == gameId);
+
+                    context.Items["RoleInGame"] = gameRole;
+                }
             }
 
             await this._next(context);
