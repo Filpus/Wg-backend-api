@@ -155,20 +155,20 @@ namespace Wg_backend_api.Controllers.GameControllers
 
                 if (correspondingDTO != null)
                 {
-                    var usedResources = correspondingDTO.ConsumedResources.Select(cr => new UsedResource
+                    var usedResources = correspondingDTO.ConsumedResources.GroupBy(cr => cr.ResourceId).Select(cr => new UsedResource
                     {
                         SocialGroupId = (int)socialGroup.Id,
-                        ResourceId = cr.ResourceId,
-                        Amount = cr.Amount
+                        ResourceId = cr.Key,
+                        Amount = cr.Sum(r => r.Amount),
                     }).ToList();
 
                     this._context.UsedResources.AddRange(usedResources);
 
-                    var productionShares = correspondingDTO.ProducedResources.Select(pr => new ProductionShare
+                    var productionShares = correspondingDTO.ProducedResources.GroupBy(pr => pr.ResourceId).Select(pr => new ProductionShare
                     {
                         SocialGroupId = (int)socialGroup.Id,
-                        ResourceId = pr.ResourceId,
-                        Coefficient = pr.Amount
+                        ResourceId = pr.Key,
+                        Coefficient = pr.Sum(x => x.Amount),
                     }).ToList();
 
                     this._context.ProductionShares.AddRange(productionShares);

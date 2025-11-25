@@ -112,21 +112,21 @@ namespace Wg_backend_api.Controllers.GameControllers
                 unitType.Morale = unitTypeDTO.Morale;
                 unitType.IsNaval = unitTypeDTO.IsNaval;
 
-                var updatedProductionCosts = unitTypeDTO.ProductionCost.Select(pc => new ProductionCost
+                var updatedProductionCosts = unitTypeDTO.ProductionCost.GroupBy(pc => pc.ResourceId).Select(pc => new ProductionCost
                 {
                     UnitTypeId = unitType.Id.Value,
-                    ResourceId = pc.ResourceId,
-                    Amount = pc.Amount
+                    ResourceId = pc.Key,
+                    Amount = pc.Sum(x => x.Amount),
                 }).ToList();
 
                 this._context.ProductionCosts.RemoveRange(unitType.ProductionCosts);
                 this._context.ProductionCosts.AddRange(updatedProductionCosts);
 
-                var updatedMaintenaceCosts = unitTypeDTO.ConsumedResources.Select(mc => new MaintenaceCosts
+                var updatedMaintenaceCosts = unitTypeDTO.ConsumedResources.GroupBy(mc => mc.ResourceId).Select(mc => new MaintenaceCosts
                 {
                     UnitTypeId = unitType.Id.Value,
-                    ResourceId = mc.ResourceId,
-                    Amount = mc.Amount
+                    ResourceId = mc.Key,
+                    Amount = mc.Sum(x => x.Amount),
                 }).ToList();
 
                 this._context.MaintenaceCosts.RemoveRange(unitType.MaintenaceCosts);
@@ -178,20 +178,20 @@ namespace Wg_backend_api.Controllers.GameControllers
 
                 if (correspondingDTO != null)
                 {
-                    var productionCosts = correspondingDTO.ProductionCost.Select(pc => new ProductionCost
+                    var productionCosts = correspondingDTO.ProductionCost.GroupBy(pc => pc.ResourceId).Select(pc => new ProductionCost
                     {
                         UnitTypeId = unitType.Id.Value,
-                        ResourceId = pc.ResourceId,
-                        Amount = pc.Amount
+                        ResourceId = pc.Key,
+                        Amount = pc.Sum(x => x.Amount),
                     }).ToList();
 
                     this._context.ProductionCosts.AddRange(productionCosts);
 
-                    var maintenaceCosts = correspondingDTO.ConsumedResources.Select(mc => new MaintenaceCosts
+                    var maintenaceCosts = correspondingDTO.ConsumedResources.GroupBy(mc => mc.ResourceId).Select(mc => new MaintenaceCosts
                     {
                         UnitTypeId = unitType.Id.Value,
-                        ResourceId = mc.ResourceId,
-                        Amount = mc.Amount
+                        ResourceId = mc.Key,
+                        Amount = mc.Sum(x => x.Amount),
                     }).ToList();
 
                     this._context.MaintenaceCosts.AddRange(maintenaceCosts);
