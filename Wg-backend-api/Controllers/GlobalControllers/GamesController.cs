@@ -34,6 +34,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [HttpGet]
+        [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<IActionResult> GetGames()
         {
             var gamesAccess = await this._globalDbContext.GameAccesses
@@ -45,6 +46,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [HttpGet("{id}")]
+        [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<IActionResult> GetSpecificGame(int id)
         {
             var gamesAccess = await this._globalDbContext.GameAccesses
@@ -109,6 +111,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [HttpPost("joinGame")]
+        [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<IActionResult> JoinGame([FromBody] string gameCode)
         {
             var game = await this._globalDbContext.Games
@@ -173,6 +176,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [HttpPost("select")]
+        [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<IActionResult> SelectGame([FromBody] int gameId)
         {
             var game = await this._globalDbContext.Games.FindAsync(gameId);
@@ -286,6 +290,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<IActionResult> CreateGame([FromForm] CreateGameDTO creteGame)
         {
             var userGames = await this._globalDbContext.Games
@@ -425,6 +430,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [HttpDelete("removePlayer/{gameId}/{userId}")]
+        [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<IActionResult> RemovePlayer(int gameId, int userId)
         {
             var game = await this._globalDbContext.Games.FindAsync(gameId);
