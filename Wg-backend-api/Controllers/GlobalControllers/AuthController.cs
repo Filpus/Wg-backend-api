@@ -273,7 +273,14 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
             else if (user.IsArchived)
             {
-                return this.Unauthorized(new { error = "User is archived" });
+                return Redirect($"https://localhost:4200/login?error=User+is+archived");
+            }
+            else
+            {
+                if (!user.IsSSO)
+                {
+                    return Redirect($"https://localhost:4200/login?error=User+is+not+registered+as+SSO");
+                }
             }
 
             var accessToken = this.GenerateJwtToken((int)user.Id, user.Name);
