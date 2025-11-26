@@ -242,14 +242,14 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             if (!result.Succeeded)
             {
-                return Unauthorized();
+                return Redirect($"https://localhost:4200/login?error=External+authentication+failed");
             }
 
             var externalUser = result.Principal;
             var email = externalUser.FindFirst(ClaimTypes.Email)?.Value;
             if (email == null)
             {
-                return BadRequest(new { error = "Email not found in external user data" });
+                return Redirect($"https://localhost:4200/login?error=Email+claim+not+found+in+external+authentication");
             }
 
             var user = this._context.Users.FirstOrDefault(u => u.Email == email);
@@ -273,7 +273,14 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
             else if (user.IsArchived)
             {
-                return this.Unauthorized(new { error = "User is archived" });
+                return Redirect($"https://localhost:4200/login?error=User+is+archived");
+            }
+            else
+            {
+                if (!user.IsSSO)
+                {
+                    return Redirect($"https://localhost:4200/login?error=User+is+not+registered+as+SSO");
+                }
             }
 
             var accessToken = this.GenerateJwtToken((int)user.Id, user.Name);
