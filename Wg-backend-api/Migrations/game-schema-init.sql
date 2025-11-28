@@ -130,6 +130,27 @@ END;
 $$;
 
 
+--
+-- Name: create_default_armies(); Type: FUNCTION; Schema: game_1; Owner: -
+--
+
+CREATE FUNCTION game_1.create_default_armies() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- Create Barracks (Land army)
+    INSERT INTO game_1.armies (name, "fk_Nations", fk_localisations, is_naval)
+    VALUES ('Baraki', NEW.id, NULL, FALSE);
+
+    -- Create Docks (Naval army)
+    INSERT INTO game_1.armies (name, "fk_Nations", fk_localisations, is_naval)
+    VALUES ('Doki', NEW.id, NULL, TRUE);
+
+    RETURN NEW;
+END;
+$$;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -222,7 +243,7 @@ CREATE TABLE game_1.armies (
     id integer NOT NULL,
     name text NOT NULL,
     "fk_Nations" integer NOT NULL,
-    fk_localisations integer NOT NULL,
+    fk_localisations integer,
     is_naval boolean NOT NULL
 );
 
@@ -1497,6 +1518,13 @@ CREATE TRIGGER trg_after_usedresources_insert AFTER INSERT ON game_1."usedResour
 
 
 --
+-- Name: nations trg_create_default_armies; Type: TRIGGER; Schema: game_1; Owner: -
+--
+
+CREATE TRIGGER trg_create_default_armies AFTER INSERT ON game_1.nations FOR EACH ROW EXECUTE FUNCTION game_1.create_default_armies();
+
+
+--
 -- Name: accessToUnits FK_accessToUnits_fk_Nations; Type: FK CONSTRAINT; Schema: game_1; Owner: -
 --
 
@@ -1549,7 +1577,7 @@ ALTER TABLE ONLY game_1.armies
 --
 
 ALTER TABLE ONLY game_1.armies
-    ADD CONSTRAINT "FK_armies_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
+    ADD CONSTRAINT "FK_armies_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
 
 
 --

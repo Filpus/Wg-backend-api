@@ -335,6 +335,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 }
             }
 
+            // Remember here docks and barracks in armies with location null will be deleted because of cascade delete
             this._context.Nations.RemoveRange(nations);
             await this._context.SaveChangesAsync();
 
@@ -490,7 +491,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             var hasDependencies = this._context.AccessToUnits.Any(e => e.NationId == id) ||
                                   this._context.Actions.Any(e => e.NationId == id) ||
                                   this._context.OwnedResources.Any(e => e.NationId == id) ||
-                                  this._context.Armies.Any(e => e.NationId == id) ||
+                                  this._context.Armies.Any(e => e.NationId == id && e.LocationId != null) ||
                                   this._context.Factions.Any(e => e.NationId == id) ||
                                   this._context.Localisations.Any(e => e.NationId == id) ||
                                   this._context.RelatedEvents.Any(e => e.NationId == id) ||

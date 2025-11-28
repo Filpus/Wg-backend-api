@@ -137,6 +137,22 @@ END;
 $$;
 
 
+CREATE OR REPLACE FUNCTION game_1.create_default_armies()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Create Barracks (Land army)
+    INSERT INTO game_1.armies (name, "fk_Nations", fk_localisations, is_naval)
+    VALUES ('Baraki', NEW.id, NULL, FALSE);
+
+    -- Create Docks (Naval army)
+    INSERT INTO game_1.armies (name, "fk_Nations", fk_localisations, is_naval)
+    VALUES ('Doki', NEW.id, NULL, TRUE);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -327,7 +343,7 @@ CREATE TABLE game_1.armies (
     id integer NOT NULL,
     name text NOT NULL,
     "fk_Nations" integer NOT NULL,
-    fk_localisations integer NOT NULL,
+    fk_localisations integer,
     is_naval boolean NOT NULL
 );
 
@@ -1188,11 +1204,21 @@ COPY game_1.actions (id, "fk_Nations", name, description, result, "isSettled") F
 --
 
 COPY game_1.armies (id, name, "fk_Nations", fk_localisations, is_naval) FROM stdin;
-1	Armia Północy	1	1	f
-2	Legiony Cesarskie	2	2	f
-3	Flota Republiki	3	3	t
-4	Drużyna Księcia	4	4	f
-5	Jeźdźcy Pustyni	5	5	f
+1	Armia Północy	        1	1	f
+2	Legiony Cesarskie	    2	2	f
+3	Flota Republiki	        3	3	t
+4	Drużyna Księcia	        4	4	f
+5	Jeźdźcy Pustyni	        5	5	f
+6	Baraki	                1	\N	f
+7	Baraki	                2	\N	f
+8	Baraki	                3	\N	f
+9	Baraki	                4	\N	f
+10	Baraki	                5	\N	f
+11	Doki	                1	\N	t
+12	Doki	                2	\N	t
+13	Doki	                3	\N	t
+14	Doki	                4	\N	t
+15	Doki	                5	\N	t
 \.
 
 
@@ -1699,7 +1725,7 @@ SELECT pg_catalog.setval('game_1.actions_id_seq', 5, true);
 -- Name: armies_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: -
 --
 
-SELECT pg_catalog.setval('game_1.armies_id_seq', 5, true);
+SELECT pg_catalog.setval('game_1.armies_id_seq', 15, true);
 
 
 --
@@ -2459,6 +2485,8 @@ CREATE TRIGGER trg_after_resources_insert AFTER INSERT ON game_1.resources FOR E
 CREATE TRIGGER trg_after_usedresources_insert AFTER INSERT ON game_1."usedResources" FOR EACH ROW EXECUTE FUNCTION game_1.add_used_resources_to_populations();
 
 
+CREATE TRIGGER trg_create_default_armies AFTER INSERT ON game_1.nations FOR EACH ROW EXECUTE FUNCTION game_1.create_default_armies();
+
 --
 -- Name: gameaccess FK_gameaccess_games_fk_Games; Type: FK CONSTRAINT; Schema: Global; Owner: -
 --
@@ -2544,7 +2572,7 @@ ALTER TABLE ONLY game_1.armies
 --
 
 ALTER TABLE ONLY game_1.armies
-    ADD CONSTRAINT "FK_armies_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE RESTRICT;
+    ADD CONSTRAINT "FK_armies_nations_fk_Nations" FOREIGN KEY ("fk_Nations") REFERENCES game_1.nations(id) ON DELETE CASCADE;
 
 
 --

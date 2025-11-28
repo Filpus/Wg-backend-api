@@ -167,11 +167,11 @@ namespace Wg_backend_api.Models
         public int NationId { get; set; }
         [ForeignKey("NationId")]
         public Nation Nation { get; set; }
-        [Required]
+
         [Column("fk_localisations")]
-        public int LocationId { get; set; }
+        public int? LocationId { get; set; }
         [ForeignKey("LocationId")]
-        public Localisation Location { get; set; }
+        public Localisation? Location { get; set; }
 
         [Required]
         [Column("is_naval")]
