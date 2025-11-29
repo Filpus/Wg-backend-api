@@ -1,19 +1,32 @@
 ﻿namespace Wg_backend_api.DTO
 {
+    public class CreateArmyDTO
+    {
+        public string Name { get; set; }
+        public int? LocationId { get; set; }
+        public int? NationId { get; set; }
+        public bool IsNaval { get; set; }
+    }
+
+    public class PutArmyDTO : CreateArmyDTO
+    {
+        public int Id { get; set; }
+    }
+
     public class ArmiesDTO
     {
         public int ArmyId { get; set; }
         public string ArmyName { get; set; }
-        public int LocationId { get; set; }
-        public string NationId { get; set; }
+        public int? LocationId { get; set; }
+        public int NationId { get; set; }
         public bool IsNaval { get; set; }
-        public int TotalStrength { get; set; }
     }
+
     public class ArmiesInfoDTO
     {
         public int ArmyId { get; set; }
         public string ArmyName { get; set; }
-        public string Location { get; set; }
+        public string? Location { get; set; }
         public string Nation { get; set; }
         public bool IsNaval { get; set; }
 
@@ -35,6 +48,7 @@
         public int Morale { get; set; }
         public bool IsNaval { get; set; }
     }
+
     public class UnitTypeInfoDTO
     {
         public int? UnitId { get; set; }
@@ -49,13 +63,20 @@
         public bool IsNaval { get; set; }
         public List<ResourceAmountDto> ConsumedResources { get; set; }
         public List<ResourceAmountDto> ProductionCost { get; set; }
-
     }
+
     public class TroopDTO
     {
         public int? Id { get; set; }
         public int UnitTypeId { get; set; }
         public int ArmyId { get; set; }
+        public int Quantity { get; set; }
+    }
+
+    public class CreteTroopDTO
+    {
+        public int UnitTypeId { get; set; }
+        public int? ArmyId { get; set; }
         public int Quantity { get; set; }
     }
 
@@ -72,6 +93,20 @@
         public int TroopCount { get; set; }
         public string UnitTypeName { get; set; }
         public int Quantity { get; set; }
+    }
+
+    public class TroopUpdateDTO
+    {
+        public int Id { get; set; }
+        public int UnitTypeId { get; set; }
+        public int? ArmyId { get; set; }
+        public int Quantity { get; set; }
+    }
+
+    public class TroopChangeArmyDTO
+    {
+        public int TroopId { get; set; }
+        public int NewArmyId { get; set; }
     }
 
     public class RecruitOrderDTO
@@ -121,7 +156,6 @@
     {
 
         public int? Id { get; set; }
-
         public int UnitTypeId { get; set; }
         public int ResourceId { get; set; }
         public float Amount { get; set; }

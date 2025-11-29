@@ -31,20 +31,6 @@ namespace Wg_backend_api.Auth
                 var userIdStr = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var userId = int.TryParse(userIdStr, out var uid) ? uid : -1;
 
-                if (userId == -1)
-                {
-                    context.Response.StatusCode = 401;
-                    await context.Response.WriteAsync("Unauthorized - invalid user id");
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(userIdStr))
-                {
-                    context.Response.StatusCode = 401;
-                    await context.Response.WriteAsync("Unauthorized");
-                    return;
-                }
-
                 sessionDataService.SetUserIdItems(userIdStr);
 
                 if (!ExcludedPaths.Any(p => path.StartsWithSegments(p)))

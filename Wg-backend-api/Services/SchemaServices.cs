@@ -12,7 +12,7 @@
         public void SetRole(string role);
 
         public string? GetUserIdItems();
-        public void SetUserIdItems(string role);
+        public void SetUserIdItems(string id);
     }
 
     public class SessionDataService : ISessionDataService
@@ -74,9 +74,9 @@
             return this._httpContextAccessor.HttpContext?.Items["UserId"]?.ToString();
         }
 
-        public void SetUserIdItems(string role)
+        public void SetUserIdItems(string id)
         {
-            this._httpContextAccessor.HttpContext.Items["UserId"] = role;
+            this._httpContextAccessor.HttpContext.Items["UserId"] = id;
         }
     }
 

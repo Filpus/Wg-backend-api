@@ -166,7 +166,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Defense = dto.Defense,
                 Speed = dto.Speed,
                 Morale = dto.Morale,
-                IsNaval = dto.IsNaval
+                IsNaval = dto.IsNaval,
             }).ToList();
 
             this._context.UnitTypes.AddRange(unitTypes);
@@ -211,7 +211,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Defense = ut.Defense,
                 Speed = ut.Speed,
                 Morale = ut.Morale,
-                IsNaval = ut.IsNaval
+                IsNaval = ut.IsNaval,
             }).ToList();
 
             return CreatedAtAction("GetUnitTypes", new { id = createdDTOs[0].UnitId }, createdDTOs);
@@ -248,6 +248,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok();
         }
+
         [HttpGet("GetLandUnitTypeInfo/{nationId?}")]
         public async Task<ActionResult<IEnumerable<UnitTypeInfoDTO>>> GetLandUnitTypeInfo(int? nationId)
         {
@@ -278,16 +279,16 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Speed = ut.Speed,
                 Morale = ut.Morale,
                 IsNaval = ut.IsNaval,
-                ConsumedResources = GetConsumedResources(ut),
-                ProductionCost = GetProductionCost(ut)
+                ConsumedResources = this.GetConsumedResources(ut),
+                ProductionCost = this.GetProductionCost(ut),
             }).ToList();
 
             return Ok(unitTypeInfoList);
         }
+
         [HttpGet("GetNavalUnitTypeInfo/{nationId?}")]
         public async Task<ActionResult<IEnumerable<UnitTypeInfoDTO>>> GetNavalUnitTypeInfo(int? nationId)
         {
-
             nationId ??= this._nationId;
 
             var accessibleUnitTypeIds = await this._context.AccessToUnits
@@ -316,8 +317,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Speed = ut.Speed,
                 Morale = ut.Morale,
                 IsNaval = ut.IsNaval,
-                ConsumedResources = GetConsumedResources(ut),
-                ProductionCost = GetProductionCost(ut)
+                ConsumedResources = this.GetConsumedResources(ut),
+                ProductionCost = this.GetProductionCost(ut),
             }).ToList();
 
             return Ok(unitTypeInfoList);
@@ -389,7 +390,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 ResourceId = mc.ResourceId,
                 ResourceName = mc.Resource.Name,
-                Amount = mc.Amount
+                Amount = mc.Amount,
             })];
         }
 
@@ -399,7 +400,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 ResourceId = pc.ResourceId,
                 ResourceName = pc.Resource.Name,
-                Amount = pc.Amount
+                Amount = pc.Amount,
             })];
         }
     }
