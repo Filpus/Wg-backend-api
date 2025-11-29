@@ -200,6 +200,55 @@ namespace Wg_backend_api.Controllers.GameControllers
             return Ok();
         }
 
+        [HttpPatch("changeArmy")]
+        public async Task<ActionResult> ChangeTroopsArmy([FromBody] List<TroopChangeArmyDTO> data)
+        {
+            if (data == null || data.Count == 0)
+            {
+                return BadRequest("Brak danych do edycji.");
+            }
+
+            foreach (var dto in data)
+            {
+                var troop = await this._context.Troops.FindAsync(dto.TroopId);
+
+                if (troop == null)
+                {
+                    return NotFound($"Troop ID {dto.TroopId} does not exsit.");
+                }
+
+                var army = await this._context.Armies.FindAsync(dto.NewArmyId);
+                if (army == null)
+                {
+                    return BadRequest($"Army ID {dto.NewArmyId} does not exist.");
+                }
+
+                var unitType = await this._context.UnitTypes.FindAsync(troop.UnitTypeId);
+                if (unitType == null)
+                {
+                    return BadRequest($"Unit Type ID {troop.UnitTypeId} does not exist.");
+                }
+
+                if (army.IsNaval != unitType.IsNaval)
+                {
+                    return BadRequest("Cannot assign naval unit to land army or vice versa.");
+                }
+
+                var accesToUnit = await this._context.AccessToUnits
+                    .FirstOrDefaultAsync(a => a.NationId == army.NationId && a.UnitTypeId == troop.UnitTypeId);
+
+                if (accesToUnit == null || accesToUnit.NationId != army.NationId)
+                {
+                    return BadRequest("The nation's army does not have access to this unit type.");
+                }
+
+                troop.ArmyId = dto.NewArmyId;
+            }
+
+            await this._context.SaveChangesAsync();
+            return Ok();
+        }
+
         // DELETE: api/Troops
         [HttpDelete]
         public async Task<ActionResult> DeleteTroops([FromBody] List<int?> ids)

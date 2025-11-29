@@ -80,11 +80,23 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest(this.ModelState);
             }
 
+            if (this._nationId == null)
+            {
+                return BadRequest("Nation ID is missing in session.");
+            }
+
+            var existingArmy = await this._context.Armies
+                .FirstOrDefaultAsync(a => a.Name == dto.Name);
+            if (existingArmy != null)
+            {
+                return BadRequest("Army with the same name already exists.");
+            }
+
             var army = new Army
             {
                 Name = dto.Name,
                 LocationId = dto.LocationId,
-                NationId = dto.NationId,
+                NationId = this._nationId.Value,
                 IsNaval = dto.IsNaval,
             };
 
@@ -104,8 +116,24 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return NotFound("Army not found.");
             }
 
+            var existingArmy = await this._context.Armies
+                .FirstOrDefaultAsync(a => a.Name == dto.Name && a.Id != dto.Id);
+            if (existingArmy != null)
+            {
+                return BadRequest("Army with the same name already exists.");
+            }
+
+            if (army.Troops.Any())
+            {
+                var firstTroop = army.Troops.First();
+                if (firstTroop.UnitType.IsNaval != dto.IsNaval)
+                {
+                    return BadRequest("Cannot change army type when it has troops.");
+                }
+            }
+
             army.Name = dto.Name ?? army.Name;
-            army.NationId = dto.NationId;
+            army.NationId = dto.NationId ?? army.NationId;
             army.LocationId = dto.LocationId ?? army.LocationId;
             army.IsNaval = dto.IsNaval;
 
@@ -114,21 +142,38 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpDelete]
-        public async Task<ActionResult> DeleteArmies([FromBody] List<int?> ids)
+        public async Task<ActionResult> DeleteArmy([FromBody] int id)
         {
-            if (ids == null || ids.Count == 0)
+            var army = await this._context.Armies.Where(r => r.Id == id).FirstOrDefaultAsync();
+
+            if (army == null)
             {
-                return BadRequest("Brak ID do usunięcia.");
+                return NotFound("Army not found.");
             }
 
-            var armies = await this._context.Armies.Where(r => ids.Contains(r.Id) && r.LocationId != null).ToListAsync();
-
-            if (armies.Count == 0)
+            if (army.LocationId == null)
             {
-                return NotFound("Nie znaleziono armii do usunięcia.");
+                return BadRequest("Cannot delete barracks or docks.");
             }
 
-            this._context.Armies.RemoveRange(armies);
+            var barracksOrDocks = await this._context.Armies
+                .Where(a => a.LocationId == null && a.NationId == army.NationId && a.IsNaval == army.IsNaval)
+                .FirstOrDefaultAsync();
+
+            if (barracksOrDocks == null)
+            {
+                return BadRequest("Cannot delete the only barracks or docks of the nation.");
+            }
+
+            var armyTroops = await this._context.Troops
+                .Where(t => t.ArmyId == army.Id)
+                .ToListAsync();
+            foreach (var troop in armyTroops)
+            {
+                troop.ArmyId = (int)barracksOrDocks.Id;
+            }
+
+            this._context.Armies.Remove(army);
             await this._context.SaveChangesAsync();
 
             return Ok();

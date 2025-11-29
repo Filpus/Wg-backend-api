@@ -4,7 +4,7 @@
     {
         public string Name { get; set; }
         public int? LocationId { get; set; }
-        public int NationId { get; set; }
+        public int? NationId { get; set; }
         public bool IsNaval { get; set; }
     }
 
@@ -101,6 +101,12 @@
         public int UnitTypeId { get; set; }
         public int? ArmyId { get; set; }
         public int Quantity { get; set; }
+    }
+
+    public class TroopChangeArmyDTO
+    {
+        public int TroopId { get; set; }
+        public int NewArmyId { get; set; }
     }
 
     public class RecruitOrderDTO
