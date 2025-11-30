@@ -47,6 +47,15 @@ namespace Wg_backend_api.DTO
         }
     }
 
+    public class PutGameDTO
+    {
+        public int Id { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public IFormFile? ImageFile { get; set; }
+        public string? GameCode { get; set; }
+    }
+
     public class GameInfoDTO
     {
         public string? OwnedNationName { get; set; }

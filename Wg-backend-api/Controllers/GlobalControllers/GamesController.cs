@@ -347,50 +347,17 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             if (creteGame.ImageFile != null)
             {
-                try
+                var result = this.UploadGameImage(creteGame.ImageFile, null);
+                if (!result.Result.success)
                 {
-                    if (creteGame.ImageFile.Length == 0)
+                    return BadRequest(new
                     {
-                        return BadRequest("Plik obrazu jest pusty lub nie został przesłany.");
-                    }
-
-                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-                    var fileExtension = Path.GetExtension(creteGame.ImageFile.FileName).ToLower();
-
-                    if (!allowedExtensions.Contains(fileExtension))
-                    {
-                        return BadRequest($"Nieobsługiwany format pliku. Dopuszczalne rozszerzenia: {string.Join(", ", allowedExtensions)}");
-                    }
-
-                    const int maxFileSize = 20 * 1024 * 1024; // 5 MB
-                    if (creteGame.ImageFile.Length > maxFileSize)
-                    {
-                        return BadRequest($"Maksymalny dopuszczalny rozmiar pliku to {maxFileSize / 1024 / 1024} MB");
-                    }
-
-                    var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Images");
-
-                    if (!Directory.Exists(uploadsFolder))
-                    {
-                        Directory.CreateDirectory(uploadsFolder);
-                    }
-
-                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await creteGame.ImageFile.CopyToAsync(stream);
-                    }
-
-                    gameImagePath = $"/images/{uniqueFileName}";
+                        error = "Bad Request",
+                        message = result.Result.errorMessage,
+                    });
                 }
-                catch (Exception ex)
-                {
-                    return StatusCode(
-                        StatusCodes.Status500InternalServerError,
-                        $"Wystąpił błąd podczas przetwarzania pliku: {ex.Message}"
-                    );
-                }
+
+                gameImagePath = result.Result.imagePath;
             }
 
             var newGame = new Game
@@ -558,6 +525,110 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 message = "Player successfully removed from the game",
             });
+        }
+
+        [HttpPut]
+        [ServiceFilter(typeof(UserIdActionFilter))]
+        public async Task<IActionResult> UpdateGame([FromForm] PutGameDTO updateGame)
+        {
+            var game = await this._globalDbContext.Games.Where(g => g.OwnerId == this._userId && g.Id == updateGame.Id).FirstOrDefaultAsync();
+            if (game == null)
+            {
+                return NotFound(new
+                {
+                    error = "Not Found",
+                    message = "Game not found or user is not the owner",
+                });
+            }
+
+            game.Name = updateGame.Name ?? game.Name;
+            game.Description = updateGame.Description ?? game.Description;
+            game.GameCode = updateGame.GameCode ?? game.GameCode;
+
+            if (updateGame.ImageFile != null)
+            {
+                var result = this.UploadGameImage(updateGame.ImageFile, game.Image);
+                if (!result.Result.success)
+                {
+                    return BadRequest(new
+                    {
+                        error = "Bad Request",
+                        message = result.Result.errorMessage,
+                    });
+                }
+
+                game.Image = result.Result.imagePath;
+            }
+
+            this._globalDbContext.Games.Update(game);
+            await this._globalDbContext.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Game updated successfully",
+            });
+        }
+
+        private async Task<(bool success, string imagePath, string errorMessage)> UploadGameImage(IFormFile imageFile, string? oldImagePath)
+        {
+            var gameImagePath = string.Empty;
+
+            if (imageFile != null)
+            {
+                try
+                {
+                    if (imageFile.Length == 0)
+                    {
+                        return (false, string.Empty, "Plik obrazu jest pusty lub nie został przesłany.");
+                    }
+
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                    var fileExtension = Path.GetExtension(imageFile.FileName).ToLower();
+
+                    if (!allowedExtensions.Contains(fileExtension))
+                    {
+                        return (false, string.Empty, $"Nieobsługiwany format pliku. Dopuszczalne rozszerzenia: {string.Join(", ", allowedExtensions)}");
+                    }
+
+                    const int maxFileSize = 20 * 1024 * 1024; // 5 MB
+                    if (imageFile.Length > maxFileSize)
+                    {
+                        return (false, string.Empty, $"Maksymalny dopuszczalny rozmiar pliku to {maxFileSize / 1024 / 1024} MB");
+                    }
+
+                    var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Images");
+
+                    if (!Directory.Exists(uploadsFolder))
+                    {
+                        Directory.CreateDirectory(uploadsFolder);
+                    }
+
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await imageFile.CopyToAsync(stream);
+                    }
+
+                    gameImagePath = $"/images/{uniqueFileName}";
+
+                    if (!string.IsNullOrEmpty(oldImagePath))
+                    {
+                        var oldFileName = Path.GetFileName(oldImagePath);
+                        var oldFilePath = Path.Combine(uploadsFolder, oldFileName);
+                        if (System.IO.File.Exists(oldFilePath))
+                        {
+                            System.IO.File.Delete(oldFilePath);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return (false, string.Empty, $"Wystąpił błąd podczas przetwarzania pliku: {ex.Message}");
+                }
+            }
+
+            return (true, gameImagePath, string.Empty);
         }
     }
 }
