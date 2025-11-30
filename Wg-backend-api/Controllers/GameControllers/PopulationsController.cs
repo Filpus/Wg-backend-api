@@ -368,16 +368,22 @@ namespace Wg_backend_api.Controllers.GameControllers
         public async Task<ActionResult<TotalPopulationInfoDTO>> GetTotalPopulationInfo(int? nationId)
         {
             nationId ??= this._nationId;
-            var totalPopulation = await this._context.Populations
-                .Where(p => this._context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
-                .CountAsync();
-            var averageHappiness = await this._context.Populations
-                .Where(p => this._context.Localisations.Any(l => l.Id == p.LocationId && l.NationId == nationId))
-                .AverageAsync(p => p.Happiness);
+            var populationQuery = this._context.Populations
+                .Where(p => this._context.Localisations
+                    .Any(l => l.Id == p.LocationId && l.NationId == nationId));
+
+            var totalPopulation = await populationQuery.CountAsync();
+
+            double averageHappiness = 0;
+            if (totalPopulation > 0)
+            {
+                averageHappiness = await populationQuery.AverageAsync(p => p.Happiness);
+            }
+
             return Ok(new TotalPopulationInfoDTO
             {
                 TotalPopulation = totalPopulation,
-                AverageHappiness = averageHappiness
+                AverageHappiness = (float)averageHappiness,
             });
         }
     }

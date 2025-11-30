@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Wg_backend_api.Models;
 using Action = Wg_backend_api.Models.Action;
 
@@ -10,6 +11,7 @@ namespace Wg_backend_api.Data
     {
 
         private readonly string _schema;
+        public string Schema => _schema;
 
         public GameDbContext(DbContextOptions<GameDbContext> options, string schema = "") // Fuszera drut this default schema name
             : base(options)
@@ -19,12 +21,14 @@ namespace Wg_backend_api.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            base.OnConfiguring(optionsBuilder);
+            // base.OnConfiguring(optionsBuilder);
 
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg");
-            }
+            // if (!optionsBuilder.IsConfigured)
+            // {
+            //     optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg");
+            // }
+            optionsBuilder
+                .ReplaceService<IModelCacheKeyFactory, DynamicSchemaModelCacheKeyFactory>();
         }
 
         public DbSet<Player> Players { get; set; }

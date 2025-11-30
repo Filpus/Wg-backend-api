@@ -432,6 +432,16 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             this._globalDbContext.GameAccesses.Add(gameAcces);
             await this._globalDbContext.SaveChangesAsync();
 
+            var newGameDbContext = this._gameDbContextFactory.Create($"game_{newGame.Id}");
+            var gameMasterPlayer = new Player
+            {
+                UserId = this._userId,
+                Name = userName,
+                Role = UserRole.GameMaster,
+            };
+            newGameDbContext.Players.Add(gameMasterPlayer);
+            await newGameDbContext.SaveChangesAsync();
+
             return Ok(new
             {
                 message = "Game created successfully",
