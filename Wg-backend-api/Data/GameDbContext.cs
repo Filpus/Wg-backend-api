@@ -9,14 +9,12 @@ namespace Wg_backend_api.Data
 {
     public class GameDbContext : DbContext
     {
-
-        private readonly string _schema;
-        public string Schema => _schema;
+        public string Schema { get; }
 
         public GameDbContext(DbContextOptions<GameDbContext> options, string schema = "") // Fuszera drut this default schema name
             : base(options)
         {
-            this._schema = schema ?? throw new ArgumentNullException(nameof(schema));
+            this.Schema = schema ?? throw new ArgumentNullException(nameof(schema));
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -67,18 +65,18 @@ namespace Wg_backend_api.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            if (!string.IsNullOrEmpty(this._schema))
+            if (!string.IsNullOrEmpty(this.Schema))
             {
-                modelBuilder.HasDefaultSchema(this._schema);  // Set the schema dynamically based on the provided schema
+                modelBuilder.HasDefaultSchema(this.Schema);  // Set the schema dynamically based on the provided schema
             }
 
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 entityType.SetTableName(entityType.GetTableName());
-                entityType.SetSchema(this._schema); // Ustawienie dynamicznego schematu
+                entityType.SetSchema(this.Schema); // Ustawienie dynamicznego schematu
             }
 
-            modelBuilder.HasDefaultSchema(this._schema);
+            modelBuilder.HasDefaultSchema(this.Schema);
 
             modelBuilder.Entity<MapAccess>()
                 .HasKey(ma => new { ma.NationId, ma.MapId });

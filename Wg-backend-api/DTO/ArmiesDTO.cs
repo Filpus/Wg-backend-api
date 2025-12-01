@@ -98,9 +98,9 @@
 
     public class TroopUpdateDTO
     {
-        public int? Id { get; set; }
         public int UnitTypeId { get; set; }
-        public int? ArmyId { get; set; }
+        public int CurrentArmyId { get; set; }
+        public int ArmyId { get; set; }
         public int Quantity { get; set; }
     }
 
