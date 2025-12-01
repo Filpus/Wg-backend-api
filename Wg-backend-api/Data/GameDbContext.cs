@@ -11,7 +11,7 @@ namespace Wg_backend_api.Data
     {
         public string Schema { get; }
 
-        public GameDbContext(DbContextOptions<GameDbContext> options, string schema = "") // Fuszera drut this default schema name
+        public GameDbContext(DbContextOptions<GameDbContext> options, string schema = "")
             : base(options)
         {
             this.Schema = schema ?? throw new ArgumentNullException(nameof(schema));
@@ -19,12 +19,6 @@ namespace Wg_backend_api.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            // base.OnConfiguring(optionsBuilder);
-
-            // if (!optionsBuilder.IsConfigured)
-            // {
-            //     optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg");
-            // }
             optionsBuilder
                 .ReplaceService<IModelCacheKeyFactory, DynamicSchemaModelCacheKeyFactory>();
         }
@@ -67,13 +61,13 @@ namespace Wg_backend_api.Data
             base.OnModelCreating(modelBuilder);
             if (!string.IsNullOrEmpty(this.Schema))
             {
-                modelBuilder.HasDefaultSchema(this.Schema);  // Set the schema dynamically based on the provided schema
+                modelBuilder.HasDefaultSchema(this.Schema);
             }
 
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 entityType.SetTableName(entityType.GetTableName());
-                entityType.SetSchema(this.Schema); // Ustawienie dynamicznego schematu
+                entityType.SetSchema(this.Schema);
             }
 
             modelBuilder.HasDefaultSchema(this.Schema);
