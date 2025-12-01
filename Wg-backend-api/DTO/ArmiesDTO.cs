@@ -27,6 +27,7 @@
         public int ArmyId { get; set; }
         public string ArmyName { get; set; }
         public string? Location { get; set; }
+        public int? LocationId { get; set; }
         public string Nation { get; set; }
         public bool IsNaval { get; set; }
 
@@ -97,7 +98,7 @@
 
     public class TroopUpdateDTO
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
         public int UnitTypeId { get; set; }
         public int? ArmyId { get; set; }
         public int Quantity { get; set; }
@@ -105,7 +106,7 @@
 
     public class TroopChangeArmyDTO
     {
-        public int TroopId { get; set; }
+        public int UnitId { get; set; }
         public int NewArmyId { get; set; }
     }
 

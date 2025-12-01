@@ -155,11 +155,26 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var dto in troopDTOs)
             {
-                var troop = await this._context.Troops.FindAsync(dto.Id);
+
+                var troop = null as Troop;
+                if (dto.Id == null && dto.ArmyId == null)
+                {
+                    return BadRequest("Either Troop ID or Army ID must be provided.");
+                }
+
+                if (dto.Id != null)
+                {
+                    troop = await this._context.Troops.FindAsync(dto.Id);
+                }
+                else
+                {
+                    troop = await this._context.Troops
+                        .FirstOrDefaultAsync(t => t.ArmyId == dto.ArmyId && t.UnitTypeId == dto.UnitTypeId);
+                }
 
                 if (troop == null)
                 {
-                    return NotFound($"Troop ID {dto.Id} does not exsit.");
+                    return NotFound($"Troop does not exsit.");
                 }
 
                 var unitType = await this._context.UnitTypes.FindAsync(dto.UnitTypeId);
@@ -170,15 +185,10 @@ namespace Wg_backend_api.Controllers.GameControllers
                 }
 
                 var army = await this._context.Armies.FindAsync(dto.ArmyId ?? troop.ArmyId);
-                if (dto.ArmyId == null)
+
+                if (army == null)
                 {
-                    var barracks_or_docks = await this._context.Armies
-                        .Where(a => a.NationId == nationId && unitType.IsNaval && a.LocationId == null)
-                        .FirstOrDefaultAsync();
-                    if (barracks_or_docks != null)
-                    {
-                        army = barracks_or_docks;
-                    }
+                    return BadRequest($"Army ID {dto.ArmyId} does not exist.");
                 }
 
                 if (army.IsNaval != unitType.IsNaval)
@@ -191,8 +201,81 @@ namespace Wg_backend_api.Controllers.GameControllers
                     return BadRequest("Quantity cannot be negative.");
                 }
 
+                if (troop.ArmyId == army.Id && troop.Quantity == dto.Quantity)
+                {
+                    continue;
+                }
+
+                // jeżeli id jest obecne a armyId jest null przenosimy do baraków OK 
+                // jeżeli armyId jest obecne a id jest null to przenosimy do danej armii OK
+                // jeżeli oba są obecne to przenosimy do danej armii OK
+                // jezeli quantity się różni od troop.quantity to różnicę przenosimy do baraków/doków
+
+                var barracks_or_docks = await this._context.Armies
+                    .Where(a => a.NationId == nationId && a.IsNaval == unitType.IsNaval && a.LocationId == null)
+                    .FirstOrDefaultAsync();
+
+                var existingTroopInBarracksOrDocks = await this._context.Troops
+                    .FirstOrDefaultAsync(t => t.ArmyId == barracks_or_docks.Id && t.UnitTypeId == dto.UnitTypeId);
+
+                // if no army specified, assign to barracks or docks
+                if (dto.ArmyId == null)
+                {
+                    if (barracks_or_docks != null)
+                    {
+                        if (existingTroopInBarracksOrDocks != null)
+                        {
+                            existingTroopInBarracksOrDocks.Quantity += troop.Quantity;
+                            this._context.Troops.Remove(troop);
+                            continue;
+                        }
+                        else
+                        {
+                            troop.ArmyId = (int)barracks_or_docks.Id;
+                        }
+                    }
+                }
+                else
+                {
+                    // in barracks or docks we cannot remove quantity
+                    if (troop.Quantity > dto.Quantity)
+                    {
+                        // move to docks / barracks if no left
+                        if (dto.Quantity == 0)
+                        {
+                            if (existingTroopInBarracksOrDocks != null)
+                            {
+                                existingTroopInBarracksOrDocks.Quantity += troop.Quantity;
+                                this._context.Troops.Remove(troop);
+                            }
+                            else
+                            {
+                                troop.ArmyId = (int)barracks_or_docks.Id;
+                            }
+                        }
+                        else
+                        {
+                            // create new troop/add to existing troops in docks/ barracks
+                            if (existingTroopInBarracksOrDocks != null)
+                            {
+                                existingTroopInBarracksOrDocks.Quantity += troop.Quantity - dto.Quantity;
+                            }
+                            else
+                            {
+                                this._context.Troops.Add(new Troop
+                                {
+                                    ArmyId = (int)barracks_or_docks.Id,
+                                    UnitTypeId = dto.UnitTypeId,
+                                    Quantity = troop.Quantity - dto.Quantity
+                                });
+                            }
+                        }
+                    }
+                }
+
                 troop.UnitTypeId = dto.UnitTypeId;
                 troop.ArmyId = army.Id ?? troop.ArmyId;
+
                 troop.Quantity = dto.Quantity;
             }
 
@@ -210,17 +293,17 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var dto in data)
             {
-                var troop = await this._context.Troops.FindAsync(dto.TroopId);
-
-                if (troop == null)
-                {
-                    return NotFound($"Troop ID {dto.TroopId} does not exsit.");
-                }
 
                 var army = await this._context.Armies.FindAsync(dto.NewArmyId);
                 if (army == null)
                 {
                     return BadRequest($"Army ID {dto.NewArmyId} does not exist.");
+                }
+                var troop = await this._context.Troops.Where(t => t.UnitTypeId == dto.UnitId && t.ArmyId == army.Id).FirstOrDefaultAsync();
+
+                if (troop == null)
+                {
+                    return NotFound($"Troop with Unit ID {dto.UnitId} does not exsit.");
                 }
 
                 var unitType = await this._context.UnitTypes.FindAsync(troop.UnitTypeId);
