@@ -66,6 +66,35 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             return this.Ok(gamesAccess);
         }
 
+        [HttpGet("selected")]
+        [ServiceFilter(typeof(UserIdActionFilter))]
+        public async Task<IActionResult> GetSelectedGame()
+        {
+            var selectedGame = this._sessionDataService.GetSchema();
+            if (string.IsNullOrEmpty(selectedGame) || !selectedGame.StartsWith("game_"))
+            {
+                return BadRequest(new
+                {
+                    error = "Bad Request",
+                    message = "No game selected in session",
+                });
+            }
+
+            var gameId = int.Parse(selectedGame.Split('_')[1]);
+
+            var gamesAccess = await this._globalDbContext.GameAccesses
+                .Where(g => g.UserId == this._userId && g.GameId == gameId)
+                .Select(g => new GameDTO(g.Game.Id, g.Game.Name, g.Game.Description, g.Game.Image, g.Game.GameCode))
+                .ToListAsync();
+
+            if (!gamesAccess.Any())
+            {
+                return Ok();
+            }
+
+            return this.Ok(gamesAccess.First());
+        }
+
         [HttpGet("with-roles")]
         public async Task<IActionResult> GetGamesWithRoles()
         {
@@ -557,17 +586,17 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             if (updateGame.ImageFile != null)
             {
-                var result = this.UploadGameImage(updateGame.ImageFile, game.Image);
-                if (!result.Result.success)
+                var (success, imagePath, errorMessage) = await this.UploadGameImage(updateGame.ImageFile, game.Image);
+                if (!success)
                 {
                     return BadRequest(new
                     {
                         error = "Bad Request",
-                        message = result.Result.errorMessage,
+                        message = errorMessage,
                     });
                 }
 
-                game.Image = result.Result.imagePath;
+                game.Image = imagePath;
             }
 
             this._globalDbContext.Games.Update(game);
@@ -600,7 +629,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                         return (false, string.Empty, $"Nieobsługiwany format pliku. Dopuszczalne rozszerzenia: {string.Join(", ", allowedExtensions)}");
                     }
 
-                    const int maxFileSize = 20 * 1024 * 1024; // 5 MB
+                    const int maxFileSize = 5 * 1024 * 1024; // 5 MB
                     if (imageFile.Length > maxFileSize)
                     {
                         return (false, string.Empty, $"Maksymalny dopuszczalny rozmiar pliku to {maxFileSize / 1024 / 1024} MB");
