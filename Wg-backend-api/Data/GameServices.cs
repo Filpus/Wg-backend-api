@@ -1,4 +1,5 @@
-﻿using Npgsql;
+﻿using System.Text.RegularExpressions;
+using Npgsql;
 
 namespace Wg_backend_api.Data
 {
@@ -15,7 +16,10 @@ namespace Wg_backend_api.Data
         {
             string script = File.ReadAllText(sqlScriptPath);
 
+            script = Regex.Replace(script, @"^\\.*$", "", RegexOptions.Multiline);
+
             script = script.Replace("game_1", schema);
+
 
             using var connection = new NpgsqlConnection(this._connectionString);
             connection.Open();
