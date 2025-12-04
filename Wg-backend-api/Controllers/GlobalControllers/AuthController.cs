@@ -104,6 +104,15 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
+            if (!ValidateUserData.isValidPassword(request.Password))
+            {
+                return this.BadRequest(new
+                {
+                    error = "BadRequest",
+                    message = "Invalid password format. Password must be 5-255 characters long.",
+                });
+            }
+
             user = new User
             {
                 Name = request.Name,

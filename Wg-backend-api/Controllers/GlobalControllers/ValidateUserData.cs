@@ -32,5 +32,16 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             return true;
         }
+
+        public static bool isValidPassword(string password)
+        {
+            if (string.IsNullOrWhiteSpace(password) || password.Length <= 5 || password.Length > 255)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
     }
 }
