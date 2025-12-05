@@ -1,5 +1,5 @@
 # Argumenty dla wersji .NET i konfiguracji
-ARG DOTNET_VERSION=8.0
+ARG DOTNET_VERSION=9.0
 ARG BUILD_CONFIGURATION=Release
 
 # Etap 1: Kompilacja (Build Stage)
