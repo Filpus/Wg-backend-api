@@ -141,7 +141,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
         [HttpPost("joinGame")]
         [ServiceFilter(typeof(UserIdActionFilter))]
-        public async Task<IActionResult> JoinGame([FromBody] string gameCode)
+        public async Task<IActionResult> JoinGame([FromForm] string gameCode)
         {
             var game = await this._globalDbContext.Games
                 .Where(g => g.GameCode == gameCode)
@@ -244,7 +244,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             {
                 var accesToNation = await gameDbContext.Assignments
                     .Include(a => a.Nation)
-                    .Where(a => a.UserId == this._userId && a.IsActive)
+                    .Where(a => a.UserId == userInGame.Id)
                     .FirstOrDefaultAsync();
                 if (accesToNation == null)
                 {
