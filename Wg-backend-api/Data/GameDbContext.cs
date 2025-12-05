@@ -9,24 +9,16 @@ namespace Wg_backend_api.Data
 {
     public class GameDbContext : DbContext
     {
+        public string Schema { get; }
 
-        private readonly string _schema;
-        public string Schema => _schema;
-
-        public GameDbContext(DbContextOptions<GameDbContext> options, string schema = "") // Fuszera drut this default schema name
+        public GameDbContext(DbContextOptions<GameDbContext> options, string schema = "")
             : base(options)
         {
-            this._schema = schema ?? throw new ArgumentNullException(nameof(schema));
+            this.Schema = schema ?? throw new ArgumentNullException(nameof(schema));
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            // base.OnConfiguring(optionsBuilder);
-
-            // if (!optionsBuilder.IsConfigured)
-            // {
-            //     optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Password=postgres;Database=wg");
-            // }
             optionsBuilder
                 .ReplaceService<IModelCacheKeyFactory, DynamicSchemaModelCacheKeyFactory>();
         }
@@ -67,18 +59,18 @@ namespace Wg_backend_api.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            if (!string.IsNullOrEmpty(this._schema))
+            if (!string.IsNullOrEmpty(this.Schema))
             {
-                modelBuilder.HasDefaultSchema(this._schema);  // Set the schema dynamically based on the provided schema
+                modelBuilder.HasDefaultSchema(this.Schema);
             }
 
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 entityType.SetTableName(entityType.GetTableName());
-                entityType.SetSchema(this._schema); // Ustawienie dynamicznego schematu
+                entityType.SetSchema(this.Schema);
             }
 
-            modelBuilder.HasDefaultSchema(this._schema);
+            modelBuilder.HasDefaultSchema(this.Schema);
 
             modelBuilder.Entity<MapAccess>()
                 .HasKey(ma => new { ma.NationId, ma.MapId });

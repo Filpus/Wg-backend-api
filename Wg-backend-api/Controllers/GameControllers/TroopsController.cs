@@ -30,7 +30,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             this._context = this._gameDbContextFactory.Create(schema);
         }
 
-        // GET: api/Troops/5  
+        // GET: api/Troops/5
         [HttpGet("{id?}")]
         public async Task<ActionResult<IEnumerable<TroopDTO>>> GetTroops(int? id)
         {
@@ -47,7 +47,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Id = troop.Id,
                     UnitTypeId = troop.UnitTypeId,
                     ArmyId = troop.ArmyId,
-                    Quantity = troop.Quantity
+                    Quantity = troop.Quantity,
                 };
                 return Ok(new List<TroopDTO> { troopDTO });
             }
@@ -59,74 +59,324 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Id = t.Id,
                     UnitTypeId = t.UnitTypeId,
                     ArmyId = t.ArmyId,
-                    Quantity = t.Quantity
+                    Quantity = t.Quantity,
                 }).ToList();
                 return Ok(troopDTOs);
             }
         }
 
-        // PUT: api/Troops  
-        [HttpPut]
-        public async Task<IActionResult> PutTroops([FromBody] List<TroopDTO> troopDTOs)
-        {
-            if (troopDTOs == null || troopDTOs.Count == 0)
-            {
-                return BadRequest("Brak danych do edycji.");
-            }
-
-            foreach (var troopDTO in troopDTOs)
-            {
-                var troop = new Troop
-                {
-                    Id = troopDTO.Id,
-                    UnitTypeId = troopDTO.UnitTypeId,
-                    ArmyId = troopDTO.ArmyId,
-                    Quantity = troopDTO.Quantity
-                };
-                this._context.Entry(troop).State = EntityState.Modified;
-            }
-
-            try
-            {
-                await this._context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "Błąd podczas aktualizacji.");
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Troops  
+        // POST: api/Troops
         [HttpPost]
-        public async Task<ActionResult<List<TroopDTO>>> PostTroops([FromBody] List<TroopDTO> troopDTOs)
+        public async Task<ActionResult<List<TroopDTO>>> PostTroops([FromBody] List<CreteTroopDTO> troopDTOs)
         {
             if (troopDTOs == null || troopDTOs.Count == 0)
             {
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            var troops = troopDTOs.Select(t => new Troop
+            var nationId = int.Parse(this._sessionDataService.GetNation());
+            if (nationId == -1)
             {
-                Id = null,
-                UnitTypeId = t.UnitTypeId,
-                ArmyId = t.ArmyId,
-                Quantity = t.Quantity
-            }).ToList();
+                return BadRequest("Brak ID nacji w sesji.");
+            }
 
-            this._context.Troops.AddRange(troops);
+            var troopsToInsert = new List<Troop>();
+
+            foreach (var dto in troopDTOs)
+            {
+                var unitType = await this._context.UnitTypes.FindAsync(dto.UnitTypeId);
+
+                if (unitType == null)
+                {
+                    return BadRequest($"Unit Type ID {dto.UnitTypeId} does not exist.");
+                }
+
+                var army = await this._context.Armies.FindAsync(dto.ArmyId);
+
+                if (dto.ArmyId == null)
+                {
+                    var barracks_or_docks = await this._context.Armies
+                        .Where(a => a.NationId == nationId && a.IsNaval == unitType.IsNaval && a.LocationId == null)
+                        .FirstOrDefaultAsync();
+                    army = barracks_or_docks;
+                }
+
+                if (army == null || army.Id == null)
+                {
+                    return BadRequest($"Army ID {dto.ArmyId} does not exist.");
+                }
+
+                if (army.IsNaval != unitType.IsNaval)
+                {
+                    return BadRequest("Cannot assign naval unit to land army or vice versa.");
+                }
+
+                if (dto.Quantity < 0)
+                {
+                    return BadRequest("Quantity cannot be negative.");
+                }
+
+                troopsToInsert.Add(new Troop
+                {
+                    UnitTypeId = dto.UnitTypeId,
+                    ArmyId = (int)army.Id,
+                    Quantity = dto.Quantity,
+                });
+            }
+
+            this._context.Troops.AddRange(troopsToInsert);
             await this._context.SaveChangesAsync();
 
-            var createdTroopDTOs = troops.Select(t => new TroopDTO
+            var result = troopsToInsert.Select(t => new TroopDTO
             {
                 Id = t.Id,
                 UnitTypeId = t.UnitTypeId,
                 ArmyId = t.ArmyId,
-                Quantity = t.Quantity
+                Quantity = t.Quantity,
             }).ToList();
 
-            return CreatedAtAction("GetTroops", new { id = createdTroopDTOs[0].Id }, createdTroopDTOs);
+            return CreatedAtAction(nameof(GetTroops), new { id = result[0].Id }, result);
+        }
+
+        // PUT: api/Troops
+        [HttpPut]
+        public async Task<ActionResult> PutTroops([FromBody] List<TroopUpdateDTO> troopDTOs)
+        {
+            if (troopDTOs == null || troopDTOs.Count == 0)
+            {
+                return BadRequest("Brak danych do edycji.");
+            }
+
+            var nationId = int.Parse(this._sessionDataService.GetNation());
+            if (nationId == -1)
+            {
+                return BadRequest("Brak ID nacji w sesji.");
+            }
+
+            using var transaction = await this._context.Database.BeginTransactionAsync();
+            try
+            {
+                foreach (var dto in troopDTOs)
+                {
+                    var currentTroop = await this._context.Troops
+                        .FirstOrDefaultAsync(t => t.ArmyId == dto.CurrentArmyId && t.UnitTypeId == dto.UnitTypeId);
+                    var currentArmy = await this._context.Armies.FindAsync(dto.CurrentArmyId);
+                    var destinationArmy = await this._context.Armies.FindAsync(dto.ArmyId);
+                    var troopInDestinationArmy = await this._context.Troops
+                        .FirstOrDefaultAsync(t => t.ArmyId == dto.ArmyId && t.UnitTypeId == dto.UnitTypeId);
+                    var unitType = await this._context.UnitTypes.FindAsync(dto.UnitTypeId);
+
+                    if (currentTroop == null || currentArmy == null || destinationArmy == null || unitType == null)
+                    {
+                        return NotFound($"Troop or Army does not exsit.");
+                    }
+
+                    if (currentArmy.NationId != nationId || destinationArmy.NationId != nationId)
+                    {
+                        return BadRequest("One of the armies does not belong to your nation.");
+                    }
+
+                    if (destinationArmy.IsNaval != unitType.IsNaval)
+                    {
+                        return BadRequest("Cannot assign naval unit to land army or vice versa.");
+                    }
+
+                    if (dto.Quantity < 0)
+                    {
+                        return BadRequest("Quantity cannot be negative.");
+                    }
+
+                    var barracks_or_docks = await this._context.Armies
+                        .Where(a => a.NationId == nationId && a.IsNaval == unitType.IsNaval && a.LocationId == null)
+                        .FirstOrDefaultAsync();
+
+                    if (barracks_or_docks == null)
+                    {
+                        return BadRequest("No barracks/docks found.");
+                    }
+
+                    var existingTroopInBarracksOrDocks = await this._context.Troops
+                        .FirstOrDefaultAsync(t => t.ArmyId == barracks_or_docks.Id && t.UnitTypeId == dto.UnitTypeId);
+
+                    // same army
+                    if (destinationArmy.Id == currentArmy.Id)
+                    {
+                        // no change
+                        if (currentTroop.Quantity == dto.Quantity)
+                        {
+                            continue;
+                        }
+
+                        // if quantity chaned move to barracs/docks
+                        if (dto.Quantity < currentTroop.Quantity)
+                        {
+                            var difference = currentTroop.Quantity - dto.Quantity;
+                            if (existingTroopInBarracksOrDocks != null)
+                            {
+                                existingTroopInBarracksOrDocks.Quantity += difference;
+                            }
+                            else
+                            {
+                                this._context.Troops.Add(new Troop
+                                {
+                                    ArmyId = (int)barracks_or_docks.Id,
+                                    UnitTypeId = dto.UnitTypeId,
+                                    Quantity = difference,
+                                });
+                            }
+
+                            if (dto.Quantity == 0)
+                            {
+                                this._context.Troops.Remove(currentTroop);
+                            }
+                            else
+                            {
+                                currentTroop.Quantity = dto.Quantity;
+                            }
+                        }
+                        else
+                        {
+                            // or return error
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        // move to different army
+                        if (destinationArmy.Id != barracks_or_docks.Id)
+                        {
+                            if (dto.Quantity == currentTroop.Quantity)
+                            {
+                                if (troopInDestinationArmy != null)
+                                {
+                                    troopInDestinationArmy.Quantity += currentTroop.Quantity;
+                                    this._context.Troops.Remove(currentTroop);
+                                    continue;
+                                }
+                                else
+                                {
+                                    currentTroop.ArmyId = (int)destinationArmy.Id;
+                                    continue;
+                                }
+                            }
+                            else if (dto.Quantity < currentTroop.Quantity)
+                            {
+                                var difference = currentTroop.Quantity - dto.Quantity;
+
+                                // move difference to barracks/docks
+                                if (existingTroopInBarracksOrDocks != null)
+                                {
+                                    existingTroopInBarracksOrDocks.Quantity += difference;
+                                }
+                                else
+                                {
+                                    this._context.Troops.Add(new Troop
+                                    {
+                                        ArmyId = (int)barracks_or_docks.Id,
+                                        UnitTypeId = dto.UnitTypeId,
+                                        Quantity = difference,
+                                    });
+                                }
+
+                                // move to destination army
+                                if (troopInDestinationArmy != null)
+                                {
+                                    troopInDestinationArmy.Quantity += dto.Quantity;
+                                    this._context.Troops.Remove(currentTroop);
+                                    continue;
+                                }
+                                else
+                                {
+                                    currentTroop.ArmyId = (int)destinationArmy.Id;
+                                    currentTroop.Quantity = dto.Quantity;
+                                    continue;
+                                }
+                            }
+                            else
+                            {
+                                // or return error
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            // moving to barracks or docks
+                            if (existingTroopInBarracksOrDocks != null)
+                            {
+                                existingTroopInBarracksOrDocks.Quantity += currentTroop.Quantity;
+                                this._context.Troops.Remove(currentTroop);
+                                continue;
+                            }
+                            else
+                            {
+                                currentTroop.ArmyId = (int)barracks_or_docks.Id;
+                                continue;
+                            }
+                        }
+                    }
+                }
+
+                await this._context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+
+            await this._context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPatch("changeArmy")]
+        public async Task<ActionResult> ChangeTroopsArmy([FromBody] List<TroopChangeArmyDTO> data)
+        {
+            if (data == null || data.Count == 0)
+            {
+                return BadRequest("Brak danych do edycji.");
+            }
+
+            foreach (var dto in data)
+            {
+
+                var army = await this._context.Armies.FindAsync(dto.NewArmyId);
+                if (army == null)
+                {
+                    return BadRequest($"Army ID {dto.NewArmyId} does not exist.");
+                }
+
+                var troop = await this._context.Troops.Where(t => t.UnitTypeId == dto.UnitId && t.ArmyId == army.Id).FirstOrDefaultAsync();
+
+                if (troop == null)
+                {
+                    return NotFound($"Troop with Unit ID {dto.UnitId} does not exsit.");
+                }
+
+                var unitType = await this._context.UnitTypes.FindAsync(troop.UnitTypeId);
+                if (unitType == null)
+                {
+                    return BadRequest($"Unit Type ID {troop.UnitTypeId} does not exist.");
+                }
+
+                if (army.IsNaval != unitType.IsNaval)
+                {
+                    return BadRequest("Cannot assign naval unit to land army or vice versa.");
+                }
+
+                var accesToUnit = await this._context.AccessToUnits
+                    .FirstOrDefaultAsync(a => a.NationId == army.NationId && a.UnitTypeId == troop.UnitTypeId);
+
+                if (accesToUnit == null || accesToUnit.NationId != army.NationId)
+                {
+                    return BadRequest("The nation's army does not have access to this unit type.");
+                }
+
+                troop.ArmyId = dto.NewArmyId;
+            }
+
+            await this._context.SaveChangesAsync();
+            return Ok();
         }
 
         // DELETE: api/Troops

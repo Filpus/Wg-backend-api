@@ -33,7 +33,8 @@ namespace Wg_backend_api.Controllers.GameControllers
             string nationIdStr = this._sessionDataService.GetNation();
             this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
-        // GET: api/Localisations  
+
+        // GET: api/Localisations
         [HttpGet]
         public async Task<ActionResult<IEnumerable<LocalisationDTO>>> GetLocalisation()
         {
@@ -73,6 +74,27 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             return localisation;
+        }
+
+        [HttpGet("nation")]
+        public async Task<ActionResult<IEnumerable<LocalisationDTO>>> GetLocalisationInNation()
+        {
+            if (this._nationId == null)
+            {
+                return BadRequest("No nation ID in session.");
+            }
+
+            return await this._context.Localisations
+                .Where(l => l.NationId == this._nationId)
+                .Select(l => new LocalisationDTO
+                {
+                    Id = l.Id,
+                    Name = l.Name,
+                    NationId = l.NationId,
+                    Fortification = l.Fortification,
+                    Size = l.Size,
+                })
+                .ToListAsync();
         }
 
         [HttpPut]

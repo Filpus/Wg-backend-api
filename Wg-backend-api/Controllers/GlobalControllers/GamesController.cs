@@ -37,6 +37,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [ServiceFilter(typeof(UserIdActionFilter))]
         public async Task<IActionResult> GetGames()
         {
+            // var playerId = this.HttpContext.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
             var gamesAccess = await this._globalDbContext.GameAccesses
                 .Where(g => g.UserId == this._userId)
                 .Select(g => new GameDTO(g.Game.Id, g.Game.Name, g.Game.Description, g.Game.Image, g.Game.GameCode))
