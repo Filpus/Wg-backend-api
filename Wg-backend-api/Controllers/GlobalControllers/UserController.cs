@@ -25,11 +25,31 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             this._userId = userId;
         }
 
-        // get user data
+        [Authorize]
+        [HttpGet]
+        [ServiceFilter(typeof(UserIdActionFilter))]
+        public async Task<ActionResult<UserDTO>> GetUser()
+        {
+            var user = await this._context.Users.FindAsync(this._userId);
+
+            if (user == null)
+            {
+                return this.NotFound(new { message = "User not found." });
+            }
+
+            return this.Ok(new UserDTO
+            {
+                Name = user.Name,
+                Email = user.Email,
+                IsSSO = user.IsSSO,
+                Image = user.Image,
+            });
+        }
+
         [Authorize]
         [HttpGet("{id}")]
         [ServiceFilter(typeof(UserIdActionFilter))]
-        public async Task<ActionResult<User>> GetUser(int? id)
+        public async Task<ActionResult<UserDTO>> GetUser(int id)
         {
             if (this._userId != id)
             {
@@ -43,7 +63,13 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 return this.NotFound(new { message = "User not found." });
             }
 
-            return this.Ok(user);
+            return this.Ok(new UserDTO
+            {
+                Name = user.Name,
+                Email = user.Email,
+                IsSSO = user.IsSSO,
+                Image = user.Image,
+            });
         }
 
         // Edit user data
@@ -119,7 +145,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 user.Email = userPathDTO.Email;
             }
 
-            if (!user.IsSSO && !string.IsNullOrEmpty(userPathDTO.Password))
+            if (!user.IsSSO && !string.IsNullOrEmpty(userPathDTO.Password) && ValidateUserData.isValidPassword(userPathDTO.Password))
             {
                 user.Password = BCrypt.Net.BCrypt.HashPassword(userPathDTO.Password);
             }
@@ -160,15 +186,10 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         }
 
         [Authorize]
-        [HttpPost("{id}/profile-picture")]
+        [HttpPatch("profile-picture")]
         [ServiceFilter(typeof(UserIdActionFilter))]
-        public async Task<IActionResult> UploadProfilePicture(int? id, IFormFile file)
+        public async Task<IActionResult> UploadProfilePicture(IFormFile file)
         {
-            if (this._userId != id)
-            {
-                return this.Unauthorized(new { message = "Unauthorized access: User ID mismatch." });
-            }
-
             try
             {
                 if (file == null)
@@ -194,7 +215,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                     return this.BadRequest($"Nieobsługiwany format pliku. Dopuszczalne rozszerzenia: {string.Join(", ", allowedExtensions)}");
                 }
 
-                const int maxFileSize = 20 * 1024 * 1024;
+                const int maxFileSize = 5 * 1024 * 1024;
                 if (file.Length > maxFileSize)
                 {
                     return this.BadRequest($"Maksymalny dopuszczalny rozmiar pliku to {maxFileSize / 1024 / 1024} MB");
@@ -215,7 +236,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 }
 
                 var imageUrl = $"/images/{uniqueFileName}";
-                var user = await this._context.Users.FindAsync(id);
+                var user = await this._context.Users.FindAsync(this._userId);
                 if (user == null)
                 {
                     return this.NotFound(new { message = "User not found." });
@@ -241,6 +262,87 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                     StatusCodes.Status500InternalServerError,
                     $"Wystąpił błąd podczas przetwarzania pliku: {ex.Message}");
             }
+        }
+
+        [Authorize]
+        [HttpPatch("change-password")]
+        [ServiceFilter(typeof(UserIdActionFilter))]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDTO)
+        {
+            var user = await this._context.Users.FindAsync(this._userId);
+            if (user == null)
+            {
+                return this.NotFound(new { message = "User not found." });
+            }
+
+            if (user.IsSSO)
+            {
+                return this.BadRequest(new { message = "Cannot change password for SSO users." });
+            }
+
+            if (!ValidateUserData.isValidPassword(changePasswordDTO.NewPassword))
+            {
+                return this.BadRequest(new { message = "New password does not meet the required criteria." });
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(changePasswordDTO.OldPassword, user.Password))
+            {
+                return this.BadRequest(new { message = "Current password is incorrect." });
+            }
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(changePasswordDTO.NewPassword);
+            this._context.Entry(user).State = EntityState.Modified;
+            await this._context.SaveChangesAsync();
+
+            return this.Ok(new { message = "Password changed successfully." });
+        }
+
+        [Authorize]
+        [HttpPatch("change-email")]
+        [ServiceFilter(typeof(UserIdActionFilter))]
+        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailDTO changeEmailDTO)
+        {
+            var user = await this._context.Users.FindAsync(this._userId);
+            if (user == null)
+            {
+                return this.NotFound(new { message = "User not found." });
+            }
+
+            if (user.IsSSO)
+            {
+                return this.BadRequest(new { message = "Cannot change email for SSO users." });
+            }
+
+            var emailExists = await this._context.Users.AnyAsync(u => u.Email == changeEmailDTO.NewEmail && u.Id != this._userId);
+            if (emailExists)
+            {
+                return this.BadRequest(new { message = "Email is already in use by another account." });
+            }
+
+            if (!ValidateUserData.isValidEmail(changeEmailDTO.NewEmail))
+            {
+                return this.BadRequest(new { message = "Invalid email format." });
+            }
+
+            user.Email = changeEmailDTO.NewEmail;
+            this._context.Entry(user).State = EntityState.Modified;
+            await this._context.SaveChangesAsync();
+
+            return this.Ok(new { message = "Email changed successfully." });
+        }
+
+        [Authorize]
+        [HttpGet("profile-picture")]
+        [ServiceFilter(typeof(UserIdActionFilter))]
+        public async Task<IActionResult> GetProfilePicture(string? fileName)
+        {
+            var user = await this._context.Users.FindAsync(this._userId);
+            if (user == null)
+            {
+                return this.NotFound(new { message = "User or profile picture not found." });
+            }
+
+            return this.Ok(new { path = user.Image });
         }
     }
 }
