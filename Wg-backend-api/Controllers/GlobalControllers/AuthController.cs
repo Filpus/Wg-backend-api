@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.Configuration;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -251,14 +252,16 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             if (!result.Succeeded)
             {
-                return Redirect($"https://localhost:4200/login?error=External+authentication+failed");
+                var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://localhost:4200";
+                return Redirect($"{frontendUrl}/login?error=External+authentication+failed");
             }
 
             var externalUser = result.Principal;
             var email = externalUser.FindFirst(ClaimTypes.Email)?.Value;
             if (email == null)
             {
-                return Redirect($"https://localhost:4200/login?error=Email+claim+not+found+in+external+authentication");
+                var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://localhost:4200";
+                return Redirect($"{frontendUrl}/login?error=Email+claim+not+found+in+external+authentication");
             }
 
             var user = this._context.Users.FirstOrDefault(u => u.Email == email);
@@ -282,13 +285,15 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
             else if (user.IsArchived)
             {
-                return Redirect($"https://localhost:4200/login?error=User+is+archived");
+                var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://localhost:4200";
+                return Redirect($"{frontendUrl}/login?error=User+is+archived");
             }
             else
             {
                 if (!user.IsSSO)
                 {
-                    return Redirect($"https://localhost:4200/login?error=User+is+not+registered+as+SSO");
+                    var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://localhost:4200";
+                    return Redirect($"{frontendUrl}/login?error=User+is+not+registered+as+SSO");
                 }
             }
 
