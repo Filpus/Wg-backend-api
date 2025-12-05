@@ -328,5 +328,163 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             return Ok(armies);
         }
+
+        [HttpPost("ChangeTroopsNumberInArmy")]
+        public async Task<ActionResult> ChangeTroopsNumberInArmy([FromBody] TroopAmountDTO dto)
+        {
+            if (dto == null)
+            {
+                return BadRequest("Brak danych wejściowych.");
+            }
+
+            if (dto.ArmyId <= 0 || dto.UnitTypeId <= 0 || dto.Amount < 0)
+            {
+                return BadRequest("Nieprawidłowe dane: sprawdź ArmmyId, UnitTypeId oraz Amount.");
+            }
+
+            var army = await this._context.Armies.FindAsync(dto.ArmyId);
+            if (army == null)
+            {
+                return NotFound("Army not found.");
+            }
+
+            var unitType = await this._context.UnitTypes.FindAsync(dto.UnitTypeId);
+            if (unitType == null)
+            {
+                return BadRequest("Unit type not found.");
+            }
+
+            var troops = await this._context.Troops
+                .Where(t => t.ArmyId == army.Id && t.UnitTypeId == dto.UnitTypeId)
+                .OrderBy(t => t.Id)
+                .ToListAsync();
+
+            var currentCount = troops.Count;
+
+            if (currentCount == dto.Amount)
+            {
+                return Ok();
+            }
+
+            if (currentCount > dto.Amount)
+            {
+                var needToRemove = currentCount - dto.Amount;
+                for (var i = troops.Count - 1; i >= 0 && needToRemove > 0; i--)
+                {
+                    var troop = troops[i];
+                    this._context.Troops.Remove(troop);
+                    needToRemove--;
+                }
+            }
+            else 
+            {
+                var needToAdd = dto.Amount - currentCount;
+                for (var i = 0; i < needToAdd; i++)
+                {
+                    var newTroop = new Troop
+                    {
+                        ArmyId = (int)army.Id,
+                        UnitTypeId = dto.UnitTypeId,
+                        Quantity = unitType.VolunteersNeeded,
+                    };
+
+                    this._context.Troops.Add(newTroop);
+                }
+            }
+
+            await this._context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPost("ReasignTroopsAmountInAmount")]
+        public async Task<ActionResult> ReasignTroopsAmountInAmount([FromBody] TroopAmountDTO dto)
+        {
+            if (dto == null)
+            {
+                return BadRequest("Brak danych wejściowych.");
+            }
+
+            if (dto.ArmyId <= 0 || dto.UnitTypeId <= 0 || dto.Amount < 0)
+            {
+                return BadRequest("Nieprawidłowe dane: sprawdź ArmmyId, UnitTypeId oraz Amount.");
+            }
+
+            var army = await this._context.Armies.FindAsync(dto.ArmyId);
+            if (army == null)
+            {
+                return NotFound("Army not found.");
+            }
+
+            var unitType = await this._context.UnitTypes.FindAsync(dto.UnitTypeId);
+            if (unitType == null)
+            {
+                return BadRequest("Unit type not found.");
+            }
+
+            var targetArmy = await this._context.Armies
+                .Where(a => a.NationId == army.NationId && a.Id == dto.TargetArmyId && a.IsNaval == army.IsNaval)
+                .FirstOrDefaultAsync();
+            if (targetArmy == null)
+            {
+                return BadRequest("Nie znaleziono odpowiednich koszar/stoczni dla tego państwa i typu.");
+            }
+
+            var troopsInArmy = await this._context.Troops
+                .Where(t => t.ArmyId == army.Id && t.UnitTypeId == dto.UnitTypeId)
+                .OrderBy(t => t.Id)
+                .ToListAsync();
+
+            var currentCount = troopsInArmy.Count;
+
+            if (currentCount == dto.Amount)
+            {
+                return Ok();
+            }
+
+            if (currentCount > dto.Amount)
+            {
+                var needToMove = currentCount - dto.Amount;
+                for (var i = troopsInArmy.Count - 1; i >= 0 && needToMove > 0; i--)
+                {
+                    var troop = troopsInArmy[i];
+                    troop.ArmyId = (int)targetArmy.Id;
+                    needToMove--;
+                }
+            }
+            else
+            {
+                var needToMove = dto.Amount - currentCount;
+
+                var troopsInBarracks = await this._context.Troops
+                    .Where(t => t.ArmyId == targetArmy.Id && t.UnitTypeId == dto.UnitTypeId)
+                    .OrderBy(t => t.Id)
+                    .Take(needToMove)
+                    .ToListAsync();
+
+                foreach (var troop in troopsInBarracks)
+                {
+                    troop.ArmyId = (int)army.Id;
+                    needToMove--;
+                }
+
+                for (var i = 0; i < needToMove; i++)
+                {
+                    var newTroop = new Troop
+                    {
+                        ArmyId = (int)army.Id,
+                        UnitTypeId = dto.UnitTypeId,
+                        Quantity = unitType.VolunteersNeeded,
+                    };
+
+                    this._context.Troops.Add(newTroop);
+                }
+            }
+
+            await this._context.SaveChangesAsync();
+            return Ok();
+        }
+
+
+
     }
 }

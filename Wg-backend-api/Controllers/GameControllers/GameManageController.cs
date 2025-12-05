@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -43,9 +47,9 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             try
             {
-                ResolveResourceBalance();
-                ResolveArmyRecrutment();
-                ResolveTradeAgreements();
+                await this.ResolveResourceBalance();
+                await this.ResolveArmyRecrutment();
+                await this.ResolveTradeAgreements();
 
                 return Ok(new { message = "Tura zakończona pomyślnie." });
             }
@@ -102,8 +106,12 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         private async Task ResolveArmyRecrutment()
         {
+            const string landBarracksName = "Baraki";
+            const string navalBarracksName = "Doki";
+
             var nations = await this._context.Nations
                 .Include(n => n.Armies)
+                    .ThenInclude(a => a.Troops)
                 .Include(n => n.UnitOrders)
                 .ToListAsync();
 
@@ -115,31 +123,60 @@ namespace Wg_backend_api.Controllers.GameControllers
                     continue;
                 }
 
-                var recruitsArmy = nation.Armies.FirstOrDefault(a => a.Name == "Rekruci");
-                if (recruitsArmy == null)
-                {
-                    recruitsArmy = new Army
-                    {
-                        NationId = (int)nation.Id,
-                        Name = "Rekruci",
-                        Troops = []
-                    };
-                    this._context.Armies.Add(recruitsArmy);
-                    nation.Armies.Add(recruitsArmy);
-                }
+                var landBarracks = nation.Armies.FirstOrDefault(a => a.LocationId == null && !a.IsNaval);
+                var navalBarracks = nation.Armies.FirstOrDefault(a => a.LocationId == null && a.IsNaval);
 
                 foreach (var order in recruitOrders)
                 {
+                    var unitType = await this._context.Set<UnitType>().FindAsync(order.UnitTypeId);
+                    bool isNaval = unitType != null && unitType.IsNaval;
+
+                    Army targetArmy;
+                    if (isNaval)
+                    {
+                        if (navalBarracks == null)
+                        {
+                            navalBarracks = new Army
+                            {
+                                NationId = (int)nation.Id,
+                                Name = navalBarracksName,
+                                IsNaval = true,
+                                Troops = new List<Troop>()
+                            };
+                            this._context.Armies.Add(navalBarracks);
+                            nation.Armies.Add(navalBarracks);
+                        }
+
+                        targetArmy = navalBarracks;
+                    }
+                    else
+                    {
+                        if (landBarracks == null)
+                        {
+                            landBarracks = new Army
+                            {
+                                NationId = (int)nation.Id,
+                                Name = landBarracksName,
+                                IsNaval = false,
+                                Troops = new List<Troop>()
+                            };
+                            this._context.Armies.Add(landBarracks);
+                            nation.Armies.Add(landBarracks);
+                        }
+
+                        targetArmy = landBarracks;
+                    }
+
                     int amount = order.Quantity;
                     for (int i = 0; i < amount; i++)
                     {
                         var troop = new Troop
                         {
                             UnitTypeId = order.UnitTypeId,
-                            Army = recruitsArmy,
-                            ArmyId = (int)recruitsArmy.Id
+                            Army = targetArmy
                         };
-                        recruitsArmy.Troops.Add(troop);
+
+                        targetArmy.Troops.Add(troop);
                         this._context.Troops.Add(troop);
                     }
 

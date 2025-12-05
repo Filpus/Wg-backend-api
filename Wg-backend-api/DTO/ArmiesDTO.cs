@@ -66,6 +66,20 @@
         public List<ResourceAmountDto> ProductionCost { get; set; }
     }
 
+
+
+
+    public class TroopAmountDTO
+    {
+        public int UnitTypeId { get; set; }
+        public string? UnitTypeName { get; set; }
+        public int ArmyId { get; set; }
+        public string? ArmyName { get; set; }
+        public int Amount { get; set; }
+        public int? TargetArmyId { get; set; }
+
+    }
+
     public class TroopDTO
     {
         public int? Id { get; set; }
