@@ -93,8 +93,12 @@ builder.Services.AddAuthentication(options =>
 {
 
 
-    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    options.ClientId = !string.IsNullOrEmpty(googleClientId)
+        ? googleClientId
+        : builder.Configuration["Authentication:Google:ClientId"];
+    options.ClientSecret = !string.IsNullOrEmpty(googleClientSecret)
+        ? googleClientSecret
+        : builder.Configuration["Authentication:Google:ClientSecret"];
 
     options.ClaimActions.MapJsonKey("picture", "picture");
     options.ClaimActions.MapJsonKey("locale", "locale");
