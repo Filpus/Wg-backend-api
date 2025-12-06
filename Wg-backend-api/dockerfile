@@ -1,5 +1,5 @@
 # Argumenty dla wersji .NET i konfiguracji
-ARG DOTNET_VERSION=8.0
+ARG DOTNET_VERSION=9.0
 ARG BUILD_CONFIGURATION=Release
 
 # Etap 1: Kompilacja (Build Stage)
@@ -13,6 +13,7 @@ RUN dotnet restore
 # Kopiowanie ca³ego kodu Ÿród³owego
 COPY . ./
 
+
 # Publikacja aplikacji
 RUN dotnet publish "Wg-backend-api.csproj" -c Release -o /app/publish 
 
@@ -22,6 +23,8 @@ WORKDIR /app
 
 # Kopiowanie opublikowanej aplikacji z etapu kompilacji
 COPY --from=build /app/publish .
+COPY Migrations /app/Migrations
+
 COPY Resources/Images /app/Resources/Images
 
 # Eksponowanie portów (dla .NET 8+ domyœlnie 8080 i 8081)

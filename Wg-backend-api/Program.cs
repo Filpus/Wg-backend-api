@@ -18,14 +18,9 @@ var googleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
 var googleClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = string.Empty;
-if (builder.Environment.IsDevelopment())
-{
-    connectionString = builder.Configuration.GetConnectionString("DevConection");
-}
-else
-{
-    connectionString = builder.Configuration.GetConnectionString("DeploymentConection");
-}
+
+connectionString = builder.Configuration.GetConnectionString("DeploymentDatabaseConection");
+
 
 builder.Services.AddSingleton(new GameService(connectionString));
 
