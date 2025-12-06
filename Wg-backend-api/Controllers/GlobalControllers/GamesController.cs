@@ -396,6 +396,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 Description = creteGame.Description,
                 Image = gameImagePath != string.Empty ? gameImagePath : null,
                 OwnerId = this._userId,
+                GameCode = await this.GenerateUniqueGameCodeAsync(6),
             };
 
             this._globalDbContext.Games.Add(newGame);
@@ -669,6 +670,30 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             }
 
             return (true, gameImagePath, string.Empty);
+        }
+
+        private string GenerateGameCode(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            var sb = new System.Text.StringBuilder(length);
+            for (int i = 0; i < length; i++)
+            {
+                int idx = System.Security.Cryptography.RandomNumberGenerator.GetInt32(chars.Length);
+                sb.Append(chars[idx]);
+            }
+
+            return sb.ToString();
+        }
+
+        private async Task<string> GenerateUniqueGameCodeAsync(int length)
+        {
+            string code;
+            do
+            {
+                code = this.GenerateGameCode(length);
+            } while (await this._globalDbContext.Games.AnyAsync(g => g.GameCode == code));
+
+            return code;
         }
     }
 }
