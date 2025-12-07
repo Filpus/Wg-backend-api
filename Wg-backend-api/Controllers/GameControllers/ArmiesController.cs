@@ -376,7 +376,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     needToRemove--;
                 }
             }
-            else 
+            else
             {
                 var needToAdd = dto.Amount - currentCount;
                 for (var i = 0; i < needToAdd; i++)
@@ -483,8 +483,6 @@ namespace Wg_backend_api.Controllers.GameControllers
             await this._context.SaveChangesAsync();
             return Ok();
         }
-
-
 
     }
 }
