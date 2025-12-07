@@ -29,12 +29,12 @@ namespace Wg_backend_api.DTO
 
     public class OfferTradeAgreementDTO
     {
-        public int receivingNationId { get; set; }
+        public int ReceivingNationId { get; set; }
         public int Duration { get; set; }
         public string Description { get; set; } = "";
         public TradeStatus TradeStatus { get; set; } = TradeStatus.Pending;
-        public List<ResourceAmountDto> offeredResources { get; set; } = [];
-        public List<ResourceAmountDto> requestedResources { get; set; } = [];
+        public List<ResourceAmountDto> OfferedResources { get; set; } = [];
+        public List<ResourceAmountDto> RequestedResources { get; set; } = [];
     }
 
 }

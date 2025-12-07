@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -141,7 +137,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                                 NationId = (int)nation.Id,
                                 Name = navalBarracksName,
                                 IsNaval = true,
-                                Troops = new List<Troop>()
+                                Troops = []
                             };
                             this._context.Armies.Add(navalBarracks);
                             nation.Armies.Add(navalBarracks);
@@ -158,7 +154,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                                 NationId = (int)nation.Id,
                                 Name = landBarracksName,
                                 IsNaval = false,
-                                Troops = new List<Troop>()
+                                Troops = []
                             };
                             this._context.Armies.Add(landBarracks);
                             nation.Armies.Add(landBarracks);
