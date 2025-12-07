@@ -20,7 +20,6 @@ namespace Wg_backend_api.Data
 
             script = script.Replace("game_1", schema);
 
-
             using var connection = new NpgsqlConnection(this._connectionString);
             connection.Open();
 

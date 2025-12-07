@@ -66,9 +66,6 @@
         public List<ResourceAmountDto> ProductionCost { get; set; }
     }
 
-
-
-
     public class TroopAmountDTO
     {
         public int UnitTypeId { get; set; }
