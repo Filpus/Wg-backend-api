@@ -59,6 +59,9 @@ namespace Wg_backend_api.Models
         [Column("accessType")]
         public UserRole Role { get; set; }
 
+        [Column("nationName")]
+        public string? NationName { get; set; }
+
         [Required]
         [Column("isArchived")]
         public bool IsArchived { get; set; }

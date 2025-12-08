@@ -107,14 +107,15 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             return this.Ok(gamesAccess);
         }
 
+        [ServiceFilter(typeof(UserIdActionFilter))]
         [HttpGet("detailed/{gameId}")]
         public async Task<IActionResult> GetGameDetail(int gameId)
         {
             var gamesAccess = await this._globalDbContext.GameAccesses
-                .Where(g => g.UserId == this._userId && g.GameId == gameId)
+                .Where(g => g.GameId == gameId)
                 .ToListAsync();
 
-            if (!gamesAccess.Any())
+            if (!gamesAccess.Any(ga => ga.UserId == this._userId))
             {
                 return NotFound(new
                 {
@@ -123,19 +124,13 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 });
             }
 
-            var gameContext = this._gameDbContextFactory.Create($"game_{gameId}");
-
-            var gameDetails = await gameContext.Assignments
-                .Include(a => a.Nation)
-                .Where(a => a.IsActive && a.UserId == this._userId)
-                .ToListAsync();
-
-            var playerCount = await gameContext.Players.CountAsync();
+            var nationName = gamesAccess.Where(ga => ga.UserId == this._userId).Select(ga => ga.NationName).FirstOrDefault();
+            var playersCount = gamesAccess.Count;
 
             return Ok(new GameInfoDTO
             {
-                OwnedNationName = gameDetails.FirstOrDefault()?.Nation.Name,
-                CurrentUsers = playerCount,
+                OwnedNationName = nationName,
+                CurrentUsers = playersCount,
                 Role = gamesAccess.First().Role,
             });
         }
@@ -173,6 +168,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 GameId = game.Id,
                 UserId = this._userId,
                 Role = UserRole.Player,
+                NationName = null,
                 IsArchived = false,
             };
             this._globalDbContext.GameAccesses.Add(gameAccess);
@@ -424,6 +420,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                 UserId = this._userId,
                 GameId = newGame.Id,
                 Role = UserRole.GameMaster,
+                NationName = null,
                 IsArchived = false,
             };
 

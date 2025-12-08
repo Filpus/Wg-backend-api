@@ -17,11 +17,13 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+        private readonly GlobalDbContext _globalDbContext;
 
-        public AssignmentsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+        public AssignmentsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService, GlobalDbContext globalDbContext)
         {
             this._gameDbContextFactory = gameDbFactory;
             this._sessionDataService = sessionDataService;
+            this._globalDbContext = globalDbContext;
 
             string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
@@ -82,12 +84,37 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpPut]
         public async Task<IActionResult> PutAssignment([FromBody] Assignment[] assignments)
         {
+            if (!TryGetGameId(out var gameId))
+            {
+                return BadRequest(new { error = "Bad Request", message = "No game selected in session" });
+            }
+
+            var gameAccess = await GetGameAccessAsync(gameId);
+
             foreach (var assignment in assignments)
             {
+                var user = await this._context.Players.FindAsync(assignment.UserId);
+                if (user == null || user.Role != UserRole.Player)
+                {
+                    return BadRequest("Invalid user for assignment.");
+                }
+
+                var nation = await this._context.Nations.FindAsync(assignment.NationId);
+                if (nation == null)
+                {
+                    return BadRequest("Invalid nation for assignment.");
+                }
+
                 this._context.Entry(assignment).State = EntityState.Modified;
+                gameAccess
+                    .Where(ga => ga.UserId == user.UserId)
+                    .ToList()
+                    .ForEach(ga => ga.NationName = nation.Name);
+                this._globalDbContext.GameAccesses.UpdateRange(gameAccess);
 
                 try
                 {
+                    await this._globalDbContext.SaveChangesAsync();
                     await this._context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -111,6 +138,13 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpPost]
         public async Task<IActionResult> PostAssignment([FromBody] AssignmentDTO[] assignments)
         {
+            if (!TryGetGameId(out var gameId))
+            {
+                return BadRequest(new { error = "Bad Request", message = "No game selected in session" });
+            }
+
+            var gameAccess = await GetGameAccessAsync(gameId);
+
             foreach (var assignment in assignments)
             {
                 var user = await this._context.Players.FindAsync(assignment.UserId);
@@ -136,11 +170,17 @@ namespace Wg_backend_api.Controllers.GameControllers
                     continue;
                 }
 
-                var nation = await this._context.Assignments.Where(a => a.NationId == assignment.NationId).FirstOrDefaultAsync();
-                if (nation != null)
+                var nationAssigmnet = await this._context.Assignments.Where(a => a.NationId == assignment.NationId).FirstOrDefaultAsync();
+                if (nationAssigmnet != null)
                 {
-                    this._context.Assignments.Remove(nation);
+                    this._context.Assignments.Remove(nationAssigmnet);
                     await this._context.SaveChangesAsync();
+                }
+
+                var nation = await this._context.Nations.FindAsync(assignment.NationId);
+                if (nation == null)
+                {
+                    return BadRequest("Invalid nation for assignment.");
                 }
 
                 // End of temporary settings
@@ -156,6 +196,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                     };
                     this._context.Assignments.Add(newAssignment);
                     await this._context.SaveChangesAsync();
+                    gameAccess
+                        .Where(ga => ga.UserId == user.UserId)
+                        .ToList()
+                        .ForEach(ga => ga.NationName = nation.Name);
+                    this._globalDbContext.GameAccesses.UpdateRange(gameAccess);
+                    await this._globalDbContext.SaveChangesAsync();
                 }
                 else
                 {
@@ -170,6 +216,12 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpDelete]
         public async Task<IActionResult> DeleteAssignmentById([FromBody] int[] ids)
         {
+            if (!TryGetGameId(out var gameId))
+            {
+                return BadRequest(new { error = "Bad Request", message = "No game selected in session" });
+            }
+
+            var gameAccess = await GetGameAccessAsync(gameId);
 
             foreach (var id in ids)
             {
@@ -178,6 +230,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     return NotFound();
                 }
+
+                var user = await this._context.Players.FindAsync(assignment.UserId);
+
+                gameAccess
+                    .Where(ga => ga.UserId == user.UserId)
+                    .ToList()
+                    .ForEach(ga => ga.NationName = null);
+                this._globalDbContext.GameAccesses.UpdateRange(gameAccess);
+                await this._globalDbContext.SaveChangesAsync();
 
                 this._context.Assignments.Remove(assignment);
                 await this._context.SaveChangesAsync();
@@ -189,6 +250,13 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpDelete("by-assignment")]
         public async Task<IActionResult> DeleteAssignment([FromBody] AssignmentDTO[] assignments)
         {
+            if (!TryGetGameId(out var gameId))
+            {
+                return BadRequest(new { error = "Bad Request", message = "No game selected in session" });
+            }
+
+            var gameAccess = await GetGameAccessAsync(gameId);
+
             foreach (var assign in assignments)
             {
                 var assignment = await this._context.Assignments
@@ -200,6 +268,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                     return NotFound();
                 }
 
+                var user = await this._context.Players.FindAsync(assignment.UserId);
+
+                gameAccess
+                    .Where(ga => ga.UserId == user.UserId)
+                    .ToList()
+                    .ForEach(ga => ga.NationName = null);
+                this._globalDbContext.GameAccesses.UpdateRange(gameAccess);
+                await this._globalDbContext.SaveChangesAsync();
+
                 this._context.Assignments.Remove(assignment);
                 await this._context.SaveChangesAsync();
             }
@@ -210,6 +287,26 @@ namespace Wg_backend_api.Controllers.GameControllers
         private bool AssignmentExists(int? id)
         {
             return this._context.Assignments.Any(e => e.Id == id);
+        }
+
+        private bool TryGetGameId(out int gameId)
+        {
+            gameId = -1;
+            var selectedGame = this._sessionDataService.GetSchema();
+            if (string.IsNullOrEmpty(selectedGame) || !selectedGame.StartsWith("game_"))
+            {
+                return false;
+            }
+
+            gameId = int.Parse(selectedGame.Split('_')[1]);
+            return true;
+        }
+
+        private Task<List<GameAccess>> GetGameAccessAsync(int gameId)
+        {
+            return this._globalDbContext.GameAccesses
+                .Where(ga => ga.GameId == gameId)
+                .ToListAsync();
         }
     }
 }
