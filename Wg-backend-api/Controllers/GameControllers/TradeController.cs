@@ -123,29 +123,25 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             offeringNationId ??= this._nationId;
 
-            if (offerTradeAgreementDTO == null || (offerTradeAgreementDTO.offeredResources.Count == 0 && offerTradeAgreementDTO.requestedResources.Count == 0))
+            if (offerTradeAgreementDTO == null || (offerTradeAgreementDTO.OfferedResources.Count == 0 && offerTradeAgreementDTO.RequestedResources.Count == 0))
             {
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            // Tworzenie nowej umowy handlowej
             var tradeAgreement = new TradeAgreement
             {
                 OfferingNationId = (int)offeringNationId,
-                ReceivingNationId = offerTradeAgreementDTO.receivingNationId,
+                ReceivingNationId = offerTradeAgreementDTO.ReceivingNationId,
                 OfferedResources = [],
                 WantedResources = [],
                 Status = offerTradeAgreementDTO.TradeStatus,
                 Duration = offerTradeAgreementDTO.Duration,
-                Description = offerTradeAgreementDTO.Description ?? ""
+                Description = offerTradeAgreementDTO.Description ?? string.Empty,
             };
 
-            // Dodanie oferowanych zasobów z przypisaniem ID umowy
-            // Po zapisaniu obiektu w bazie danych, właściwość Id jest automatycznie przypisana.  
             this._context.TradeAgreements.Add(tradeAgreement);
             await this._context.SaveChangesAsync();
 
-            // W tym momencie tradeAgreement.Id zawiera wartość wygenerowaną przez bazę danych.  
             if (tradeAgreement.Id.HasValue)
             {
                 Console.WriteLine($"Wygenerowane ID: {tradeAgreement.Id.Value}");
@@ -155,7 +151,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Console.WriteLine("ID nie zostało przypisane.");
             }
 
-            foreach (var resource in offerTradeAgreementDTO.offeredResources)
+            foreach (var resource in offerTradeAgreementDTO.OfferedResources)
             {
                 tradeAgreement.OfferedResources.Add(new OfferedResource
                 {
@@ -165,8 +161,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 });
             }
 
-            // Dodanie chcianych zasobów z przypisaniem ID umowy
-            foreach (var resource in offerTradeAgreementDTO.requestedResources)
+            foreach (var resource in offerTradeAgreementDTO.RequestedResources)
             {
                 tradeAgreement.WantedResources.Add(new WantedResource
                 {
@@ -176,7 +171,6 @@ namespace Wg_backend_api.Controllers.GameControllers
                 });
             }
 
-            // Zapisanie zasobów w bazie danych
             this._context.OfferedResources.AddRange(tradeAgreement.OfferedResources);
             this._context.WantedResources.AddRange(tradeAgreement.WantedResources);
             await this._context.SaveChangesAsync();

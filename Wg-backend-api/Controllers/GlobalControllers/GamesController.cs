@@ -213,7 +213,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             if (game == null)
             {
-                return NotFound("Game not found");
+                return this.NotFound("Game not found");
             }
 
             var access = await this._globalDbContext.GameAccesses
@@ -221,9 +221,9 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
             if (access == null)
             {
-                return Unauthorized(new
+                return this.StatusCode(403, new
                 {
-                    error = "Unauthorized",
+                    error = "Forbidden",
                     message = "User is not game member",
                 });
             }
@@ -233,9 +233,9 @@ namespace Wg_backend_api.Controllers.GlobalControllers
             var userInGame = await gameDbContext.Players.Where(u => u.UserId == this._userId).FirstOrDefaultAsync();
             if (userInGame == null)
             {
-                return Unauthorized(new
+                return this.StatusCode(403, new
                 {
-                    error = "Unauthorized",
+                    error = "Forbidden",
                     message = "User is not game member",
                 });
             }
@@ -249,10 +249,10 @@ namespace Wg_backend_api.Controllers.GlobalControllers
                     .FirstOrDefaultAsync();
                 if (accesToNation == null)
                 {
-                    return Unauthorized(new
+                    return this.StatusCode(403, new
                     {
-                        error = "Unauthorized",
-                        message = "User is not game member",
+                        error = "Forbidden",
+                        message = "User has no assigned nation in game",
                     });
                 }
 

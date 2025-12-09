@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
+using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Auth
@@ -21,7 +22,7 @@ namespace Wg_backend_api.Auth
             this._next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, GlobalDbContext db, ISessionDataService sessionDataService)
+        public async Task InvokeAsync(HttpContext context, GlobalDbContext db, ISessionDataService sessionDataService, IGameDbContextFactory gameDbContextFactory)
         {
             var path = context.Request.Path;
 
@@ -53,6 +54,32 @@ namespace Wg_backend_api.Auth
 
                     var gameId = int.Parse(gameIdHeader.Replace("game_", string.Empty));
                     var gameAccess = await db.GameAccesses.FirstOrDefaultAsync(ga => ga.UserId == userId && ga.GameId == gameId);
+                    var gameDbContext = gameDbContextFactory.Create($"game_{gameId}");
+                    if (gameAccess == null)
+                    {
+                        context.Response.StatusCode = 403;
+                        await context.Response.WriteAsync("No Access to Game");
+                        return;
+                    }
+
+                    if (gameAccess.Role == UserRole.Player)
+                    {
+                        var playerExists = await gameDbContext.Assignments.Include(a => a.User)
+                            .FirstOrDefaultAsync(a => a.User.UserId == userId);
+                        if (playerExists == null)
+                        {
+                            context.Response.StatusCode = 403;
+                            await context.Response.WriteAsync("User has no assigned nation in game");
+                            return;
+                        }
+
+                        if (!playerExists.IsActive)
+                        {
+                            context.Response.StatusCode = 403;
+                            await context.Response.WriteAsync("No Active Assignment in Game");
+                            return;
+                        }
+                    }
 
                     context.Items["RoleInGame"] = gameRole;
                 }
