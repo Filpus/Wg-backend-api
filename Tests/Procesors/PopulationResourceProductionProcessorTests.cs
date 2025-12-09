@@ -6,7 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Wg_backend_api.Data;
+using Wg_backend_api.Enums;
 using Wg_backend_api.Logic.Modifiers.Processors;
+using Wg_backend_api.Logic.Modifiers.ModifierConditions;
 using Wg_backend_api.Models;
 
 namespace Tests.Procesors
@@ -26,8 +28,7 @@ namespace Tests.Procesors
 
             _context = new GameDbContext(options, "Test");
             _processor = new PopulationResourceProductionProcessor(
-                _context,
-                NullLogger<PopulationResourceProductionProcessor>.Instance);
+                _context);
 
             SeedTestData();
         }
@@ -96,14 +97,12 @@ namespace Tests.Procesors
         {
             new()
             {
-                Operation = "Add",
+                Operation = ModifierOperation.Add,
                 Value = 0.2f,
-                Conditions = new Dictionary<string, object>
+                Conditions = new PopulationResourceConditions
                 {
-                    ["SocialGroupId"] = 1,
-                    ["ResourceId"] = 1
-                    
-
+                    SocialGroupId = 1,
+                    ResourceId = 1
                 }
             }
         };
@@ -133,12 +132,12 @@ namespace Tests.Procesors
         {
             new()
             {
-                Operation = "Add",
+                Operation = ModifierOperation.Add,
                 Value = changeValue,
-                Conditions = new Dictionary<string, object>
+                Conditions = new PopulationResourceConditions
                 {
-                    ["SocialGroupId"] = 1,  // Lub SocialGroupId
-                    ["ResourceId"] = 1       // Lub ResourceId
+                    SocialGroupId = 1,
+                    ResourceId = 1
                 }
             }
         };
@@ -161,12 +160,12 @@ namespace Tests.Procesors
         {
             new()
             {
-                Operation = "Add",
-                Value = 0.2f,
-                Conditions = new Dictionary<string, object>
+                Operation = ModifierOperation.Add,
+                Value = 0.1f,
+                Conditions = new PopulationResourceConditions
                 {
-                    ["SocialGroupId"] = 1,
-                    ["ResourceId"] = 1
+                    SocialGroupId = 1,
+                    ResourceId = 1
                 }
             }
         };

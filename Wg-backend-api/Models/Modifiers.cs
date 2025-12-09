@@ -37,7 +37,6 @@ namespace Wg_backend_api.Models
         /// Różnica (NewValue - OldValue)
         /// </summary>
         public object Change { get; set; }
-
     }
 
     /// <summary>
@@ -80,7 +79,5 @@ namespace Wg_backend_api.Models
         public ModifierOperation Operation { get; set; }
         public float Value { get; set; }
         public IBaseModifierConditions Conditions { get; set; }
-
     }
-
 }
