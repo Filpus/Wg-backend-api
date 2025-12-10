@@ -1,10 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Resources;
-using NUnit.Framework;
-using NUnit.Framework.Internal.Execution;
-using System;
-using System.Collections.Generic;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Enums;
