@@ -18,7 +18,6 @@ public static class TestDatabaseManager
         using var admin = new NpgsqlConnection(AdminConnection);
         admin.Open();
 
-        Console.WriteLine("Terminating existing connections...");
         using (var cmd = new NpgsqlCommand($@"
             SELECT pg_terminate_backend(pid) 
             FROM pg_stat_activity 
@@ -27,13 +26,11 @@ public static class TestDatabaseManager
             cmd.ExecuteNonQuery();
         }
 
-        Console.WriteLine($"Dropping database {TestDbName} if exists...");
         using (var cmd = new NpgsqlCommand($"DROP DATABASE IF EXISTS {TestDbName}", admin))
         {
             cmd.ExecuteNonQuery();
         }
 
-        Console.WriteLine($"Creating database {TestDbName}...");
         using (var cmd = new NpgsqlCommand($"CREATE DATABASE {TestDbName}", admin))
         {
             cmd.ExecuteNonQuery();
@@ -44,7 +41,6 @@ public static class TestDatabaseManager
         
         script = Regex.Replace(script, @"^\\.*$", "", RegexOptions.Multiline);
 
-        Console.WriteLine($"Executing migration script (size: {script.Length} bytes)...");
         using var connection = new NpgsqlConnection(TestDbConnection);
         connection.Open();
 
@@ -53,11 +49,9 @@ public static class TestDatabaseManager
         try
         {
             command.ExecuteNonQuery();
-            Console.WriteLine($"✓ Database initialized successfully");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"✗ Error initializing database: {ex.Message}");
             throw;
         }
 
