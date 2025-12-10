@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Wg_backend_api</RootNamespace>
     <UserSecretsId>3f09c764-3f01-45a2-95b0-e003043bc9ae</UserSecretsId>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,5 +40,8 @@
   <ItemGroup>
     <Folder Include="wwwroot\" />
   </ItemGroup>
+       <ItemGroup>
+        <InternalsVisibleTo Include="Tests" />
+      </ItemGroup>
 
 </Project>

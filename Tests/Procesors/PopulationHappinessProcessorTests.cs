@@ -1,10 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Wg_backend_api.Data;
 using Wg_backend_api.Enums;
 using Wg_backend_api.Logic.Modifiers.Processors;

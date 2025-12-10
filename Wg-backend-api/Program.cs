@@ -121,34 +121,34 @@ builder.Services.AddHostedService<RefreshTokenCleanupService>();
 
 builder.Services.AddScoped<UserIdActionFilter>();
 
-            // Add Controllers (API endpoints)
-            builder.Services.AddControllers(config => 
-            {
-                config.Filters.Add<UserIdActionFilter>();
-            })
-            .AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-                options.JsonSerializerOptions.WriteIndented = true;
-                options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
-                options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
-            });
+// Add Controllers (API endpoints)
+builder.Services.AddControllers(config => 
+{
+    config.Filters.Add<UserIdActionFilter>();
+})
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    options.JsonSerializerOptions.WriteIndented = true;
+    options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
+    options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
+});
 
-            // Add Swagger configuration
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddHttpContextAccessor();
-            builder.Services.AddScoped<ISessionDataService, SessionDataService>();
-            builder.Services.AddScoped<ResourceChangeProcessor>();
-            builder.Services.AddScoped<PopulationHappinessProcessor>();
-            builder.Services.AddScoped<PopulationResourceProductionProcessor>();
-            builder.Services.AddScoped<PopulationResourceUsageProcessor>();
-            builder.Services.AddScoped<PopulationVolunteerProcessor>();
-            builder.Services.AddScoped<FactionPowerProcessor>();
-            builder.Services.AddScoped<FactionContentmentProcessor>();
+// Add Swagger configuration
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ISessionDataService, SessionDataService>();
+builder.Services.AddScoped<ResourceChangeProcessor>();
+builder.Services.AddScoped<PopulationHappinessProcessor>();
+builder.Services.AddScoped<PopulationResourceProductionProcessor>();
+builder.Services.AddScoped<PopulationResourceUsageProcessor>();
+builder.Services.AddScoped<PopulationVolunteerProcessor>();
+builder.Services.AddScoped<FactionPowerProcessor>();
+builder.Services.AddScoped<FactionContentmentProcessor>();
 
-            // rejestracja factory
-            builder.Services.AddScoped<ModifierProcessorFactory>();
+// rejestracja factory
+builder.Services.AddScoped<ModifierProcessorFactory>();
 
             builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
@@ -158,7 +158,7 @@ builder.Services.AddScoped<UserIdActionFilter>();
                     ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
 
-            var app = builder.Build();
+var app = builder.Build();
 
             // Configure the HTTP request pipeline
             if (app.Environment.IsDevelopment())
@@ -169,8 +169,8 @@ builder.Services.AddScoped<UserIdActionFilter>();
 
             app.UseForwardedHeaders();
 
-            var corsService = app.Services.GetRequiredService<ICorsService>();
-            var corsPolicyProvider = app.Services.GetRequiredService<ICorsPolicyProvider>();
+var corsService = app.Services.GetRequiredService<ICorsService>();
+var corsPolicyProvider = app.Services.GetRequiredService<ICorsPolicyProvider>();
 
 // Konfiguracja plik�w statycznych z CORS
 app.UseStaticFiles(new StaticFileOptions
@@ -211,3 +211,5 @@ app.UseAuthorization();
 app.MapControllers(); // Map controller routes
 
 app.Run();
+
+public partial class Program { }
