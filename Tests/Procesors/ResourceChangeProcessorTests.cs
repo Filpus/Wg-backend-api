@@ -4,9 +4,11 @@ using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Resources;
 using NUnit.Framework;
 using NUnit.Framework.Internal.Execution;
 using System;
+using System.Collections.Generic;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
 using Wg_backend_api.Enums;
+using Wg_backend_api.Logic.Modifiers.ModifierConditions;
 using Wg_backend_api.Logic.Modifiers.Processors;
 using Wg_backend_api.Models;
 
@@ -24,7 +26,7 @@ public class ResourceChangeProcessorTests
             .Options;
 
         _context = new GameDbContext(options, "test");
-        _processor = new ResourceChangeProcessor(_context, NullLogger<ResourceChangeProcessor>.Instance);
+        _processor = new ResourceChangeProcessor(_context);
 
         SeedTestData();
     }
@@ -53,8 +55,8 @@ public class ResourceChangeProcessorTests
         {
             Id = 1,
             EventId = 1,
-            modiferType = ModifierType.ResourceChange,
-            Effects = """[{"Operation": "Add", "Value": 50, "Conditions": {"ResourceId": 1}}]"""
+            ModifierType = ModifierType.ResourceChange,
+            Effects = new ModifierEffect() { Operation =ModifierOperation.Add, Value= 50, Conditions= new ResourceConditions() { ResourceId = 1 } }
         };
         var relatedEvent = new RelatedEvents { EventId = 1, NationId = 1 };
 
@@ -96,8 +98,8 @@ public class ResourceChangeProcessorTests
         {
             Id = 2,
             EventId = 1,
-            modiferType = ModifierType.ResourceChange,
-            Effects = """[{"Operation": "Percentage", "Value": 20, "Conditions": {"ResourceId": 1}}]"""
+            ModifierType = ModifierType.ResourceChange,
+            Effects = new ModifierEffect() { Operation = ModifierOperation.Percentage, Value = 20, Conditions = new ResourceConditions() { ResourceId = 1 } }
         };
         _context.Modifiers.Add(modifier);
         _context.SaveChanges();

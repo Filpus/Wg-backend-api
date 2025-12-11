@@ -4,7 +4,6 @@ using Wg_backend_api.Enums;
 
 namespace Wg_backend_api.Models
 {
-
     [Table("relatedEvents")]
     public class RelatedEvents
     {

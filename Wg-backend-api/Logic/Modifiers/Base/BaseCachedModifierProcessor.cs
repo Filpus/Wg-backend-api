@@ -28,6 +28,7 @@ namespace Wg_backend_api.Logic.Modifiers.Base
         public async Task<ModifierApplicationResult> ProcessAsync(int nationId, List<ModifierEffect> effects, GameDbContext context)
         {
             var result = new ModifierApplicationResult { Success = true };
+            int totalAffectedEntities = 0;
 
             try
             {
@@ -54,6 +55,8 @@ namespace Wg_backend_api.Logic.Modifiers.Base
                         ApplyToEntity(entity, operation, (float)effect.Value);
                     }
 
+                    totalAffectedEntities += entities.Count;
+
                     result.AffectedEntities.Add(
                         $"affected_{typeof(TEntity).Name}_{DateTime.UtcNow.Ticks}",
                         new ModifierChangeRecord
@@ -63,6 +66,13 @@ namespace Wg_backend_api.Logic.Modifiers.Base
                             Change = entities.Count
                         }
                     );
+                }
+
+                if (totalAffectedEntities == 0)
+                {
+                    result.Success = false;
+                    result.Message = $"Nie znaleziono encji spełniających warunki dla {this.SupportedType}";
+                    return result;
                 }
 
                 await context.SaveChangesAsync();

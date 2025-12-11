@@ -17,6 +17,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         private readonly IGameDbContextFactory _gameDbContextFactory;
         private readonly ISessionDataService _sessionDataService;
         private GameDbContext _context;
+        private readonly GlobalDbContext _globalDbContext;
 
         private class FileUploadResult
         {
@@ -27,10 +28,11 @@ namespace Wg_backend_api.Controllers.GameControllers
             public string? ErrorMessage { get; set; }
         }
 
-        public NationController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+        public NationController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService, GlobalDbContext globalDbContext)
         {
             this._gameDbContextFactory = gameDbFactory;
             this._sessionDataService = sessionDataService;
+            this._globalDbContext = globalDbContext;
 
             string schema = this._sessionDataService.GetSchema();
             if (string.IsNullOrEmpty(schema))
@@ -223,6 +225,20 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpPut]
         public async Task<IActionResult> PutNations([FromBody] List<NationDTO> nations)
         {
+            var selectedGame = this._sessionDataService.GetSchema();
+            if (string.IsNullOrEmpty(selectedGame) || !selectedGame.StartsWith("game_"))
+            {
+                return BadRequest(new
+                {
+                    error = "Bad Request",
+                    message = "No game selected in session",
+                });
+            }
+
+            var gameId = int.Parse(selectedGame.Split('_')[1]);
+
+            var globalGameAccesse = this._globalDbContext.GameAccesses.Where(ga => ga.GameId == gameId).ToList();
+
             if (nations == null || nations.Count == 0)
             {
                 return BadRequest("Brak danych do edycji.");
@@ -236,7 +252,17 @@ namespace Wg_backend_api.Controllers.GameControllers
                     return NotFound($"Nie znaleziono państwa o ID {nationDto.Id}.");
                 }
 
-                nation.Name = nationDto.Name;
+                if (nation.Name != nationDto.Name)
+                {
+                    nation.Name = nationDto.Name;
+                    var accessesToUpdate = globalGameAccesse.Where(ga => ga.NationName == nation.Name).ToList();
+                    foreach (var access in accessesToUpdate)
+                    {
+                        access.NationName = nationDto.Name;
+                        this._globalDbContext.Entry(access).State = EntityState.Modified;
+                    }
+                }
+
                 nation.ReligionId = nationDto.ReligionId;
                 nation.CultureId = nationDto.CultureId;
 
@@ -246,6 +272,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             try
             {
                 await this._context.SaveChangesAsync();
+                await this._globalDbContext.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -321,6 +348,18 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             var nations = await this._context.Nations.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var selectedGame = this._sessionDataService.GetSchema();
+            if (string.IsNullOrEmpty(selectedGame) || !selectedGame.StartsWith("game_"))
+            {
+                return BadRequest(new
+                {
+                    error = "Bad Request",
+                    message = "No game selected in session",
+                });
+            }
+
+            var gameId = int.Parse(selectedGame.Split('_')[1]);
+            var globalGameAccesse = this._globalDbContext.GameAccesses.Where(ga => ga.GameId == gameId).ToList();
 
             if (nations.Count == 0)
             {
@@ -329,6 +368,14 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var nation in nations)
             {
+                globalGameAccesse
+                    .Where(ga => ga.NationName == nation.Name)
+                    .ToList()
+                    .ForEach(ga =>
+                    {
+                        ga.NationName = null;
+                        this._globalDbContext.Entry(ga).State = EntityState.Modified;
+                    });
                 if (nation.Id.HasValue && this.IsNationDependency(nation.Id.Value))
                 {
                     return this.BadRequest($"Can't delete nation {nation.Id}, because nation is dependency");
@@ -336,6 +383,8 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             // Remember here docks and barracks in armies with location null will be deleted because of cascade delete
+            this._globalDbContext.GameAccesses.UpdateRange(globalGameAccesse);
+            await this._globalDbContext.SaveChangesAsync();
             this._context.Nations.RemoveRange(nations);
             await this._context.SaveChangesAsync();
 
@@ -363,6 +412,32 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             if (nationDto.Name != null)
             {
+                var nationWithSameName = await this._context.Nations
+                    .FirstOrDefaultAsync(n => n.Name.ToLower() == nationDto.Name.ToLower() && n.Id != nationDto.Id);
+                if (nationWithSameName != null)
+                {
+                    return this.BadRequest("Nation with the same name already exists.");
+                }
+
+                var selectedGame = this._sessionDataService.GetSchema();
+                if (string.IsNullOrEmpty(selectedGame) || !selectedGame.StartsWith("game_"))
+                {
+                    return BadRequest(new
+                    {
+                        error = "Bad Request",
+                        message = "No game selected in session",
+                    });
+                }
+
+                var gameId = int.Parse(selectedGame.Split('_')[1]);
+
+                var globalGameAccesse = this._globalDbContext.GameAccesses.Where(ga => ga.GameId == gameId && ga.NationName == nation.Name).ToList();
+                foreach (var access in globalGameAccesse)
+                {
+                    access.NationName = nationDto.Name;
+                    this._globalDbContext.Entry(access).State = EntityState.Modified;
+                }
+
                 nation.Name = nationDto.Name;
             }
 
@@ -416,6 +491,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             try
             {
                 await this._context.SaveChangesAsync();
+                await this._globalDbContext.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -490,7 +566,6 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             var hasDependencies = this._context.AccessToUnits.Any(e => e.NationId == id) ||
                                   this._context.Actions.Any(e => e.NationId == id) ||
-                                  this._context.OwnedResources.Any(e => e.NationId == id) ||
                                   this._context.Armies.Any(e => e.NationId == id && e.LocationId != null) ||
                                   this._context.Factions.Any(e => e.NationId == id) ||
                                   this._context.Localisations.Any(e => e.NationId == id) ||

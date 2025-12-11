@@ -17,7 +17,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             var oldValue = entity.Happiness;
             entity.Happiness = OperationProcessor.ApplyOperation(entity.Happiness, value, operation);
             entity.Happiness = Math.Max(0, Math.Min(100, entity.Happiness)); // Clamp 0-100
-
         }
 
         protected override void RevertFromEntity(Population entity, ModifierOperation operation, float value)
@@ -25,8 +24,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             var oldValue = entity.Happiness;
             entity.Happiness = OperationProcessor.ReverseOperation(entity.Happiness, value, operation);
             entity.Happiness = Math.Max(0, Math.Min(100, entity.Happiness));
-
         }
     }
-
 }

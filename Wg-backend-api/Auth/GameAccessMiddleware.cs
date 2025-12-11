@@ -81,6 +81,30 @@ namespace Wg_backend_api.Auth
                         }
                     }
 
+                    if (gameAccess == null)
+                    {
+                        context.Response.StatusCode = 403;
+                        await context.Response.WriteAsync("No Access to Game");
+                        return;
+                    }
+
+                    if (gameAccess.Role == UserRole.Player)
+                    {
+                        if (gameAccess.IsArchived)
+                        {
+                            context.Response.StatusCode = 403;
+                            await context.Response.WriteAsync("User is archived in Game");
+                            return;
+                        }
+
+                        if (gameAccess.NationName == null)
+                        {
+                            context.Response.StatusCode = 403;
+                            await context.Response.WriteAsync("User has no assigned nation in game");
+                            return;
+                        }
+                    }
+
                     context.Items["RoleInGame"] = gameRole;
                 }
             }

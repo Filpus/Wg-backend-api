@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -120,48 +121,56 @@ builder.Services.AddHostedService<RefreshTokenCleanupService>();
 
 builder.Services.AddScoped<UserIdActionFilter>();
 
-// Add Controllers (API endpoints)
-builder.Services.AddControllers(config =>
-{
-    config.Filters.Add<UserIdActionFilter>();
-})
-.AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-    options.JsonSerializerOptions.WriteIndented = true;
-    options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
-    options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
-});
+            // Add Controllers (API endpoints)
+            builder.Services.AddControllers(config => 
+            {
+                config.Filters.Add<UserIdActionFilter>();
+            })
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                options.JsonSerializerOptions.WriteIndented = true;
+                options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
+                options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
+            });
 
-// Add Swagger configuration
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ISessionDataService, SessionDataService>();
-builder.Services.AddScoped<ResourceChangeProcessor>();
-builder.Services.AddScoped<PopulationHappinessProcessor>();
-builder.Services.AddScoped<PopulationResourceProductionProcessor>();
-builder.Services.AddScoped<PopulationResourceUsageProcessor>();
-builder.Services.AddScoped<PopulationVolunteerProcessor>();
-builder.Services.AddScoped<FactionPowerProcessor>();
-builder.Services.AddScoped<FactionContentmentProcessor>();
+            // Add Swagger configuration
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<ISessionDataService, SessionDataService>();
+            builder.Services.AddScoped<ResourceChangeProcessor>();
+            builder.Services.AddScoped<PopulationHappinessProcessor>();
+            builder.Services.AddScoped<PopulationResourceProductionProcessor>();
+            builder.Services.AddScoped<PopulationResourceUsageProcessor>();
+            builder.Services.AddScoped<PopulationVolunteerProcessor>();
+            builder.Services.AddScoped<FactionPowerProcessor>();
+            builder.Services.AddScoped<FactionContentmentProcessor>();
 
-// rejestracja factory
-builder.Services.AddScoped<ModifierProcessorFactory>();
+            // rejestracja factory
+            builder.Services.AddScoped<ModifierProcessorFactory>();
 
-builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
+            builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
-var app = builder.Build();
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders =
+                    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            });
 
-// Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+            var app = builder.Build();
 
-var corsService = app.Services.GetRequiredService<ICorsService>();
-var corsPolicyProvider = app.Services.GetRequiredService<ICorsPolicyProvider>();
+            // Configure the HTTP request pipeline
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseForwardedHeaders();
+
+            var corsService = app.Services.GetRequiredService<ICorsService>();
+            var corsPolicyProvider = app.Services.GetRequiredService<ICorsPolicyProvider>();
 
 // Konfiguracja plik�w statycznych z CORS
 app.UseStaticFiles(new StaticFileOptions
