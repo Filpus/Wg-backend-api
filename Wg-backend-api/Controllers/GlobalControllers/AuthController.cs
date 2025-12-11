@@ -233,8 +233,9 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
         [AllowAnonymous]
         [HttpGet("google-login")]
-        public IActionResult GoogleLogin(string returnUrl = "https://localhost:4200/loggedin")
+        public IActionResult GoogleLogin(string returnUrl = "")
         {
+            returnUrl = Environment.GetEnvironmentVariable("FRONTEND_URL")+ "/loggedin" ?? "https://localhost:4200/loggedin";
             var props = new AuthenticationProperties
             {
                 RedirectUri = this.Url.Action(nameof(GoogleCallback), new { returnUrl })

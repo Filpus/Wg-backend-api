@@ -160,8 +160,17 @@ builder.Services.AddScoped<UserIdActionFilter>();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline
-            if (app.Environment.IsDevelopment())
+            var forwardedHeadersOptions = new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                RequireHeaderSymmetry = false
+            };
+            forwardedHeadersOptions.KnownNetworks.Clear();
+            forwardedHeadersOptions.KnownProxies.Clear();
+
+            app.UseForwardedHeaders(forwardedHeadersOptions);
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
