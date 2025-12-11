@@ -142,15 +142,6 @@ namespace Wg_backend_api.Controllers.GameControllers
             this._context.TradeAgreements.Add(tradeAgreement);
             await this._context.SaveChangesAsync();
 
-            if (tradeAgreement.Id.HasValue)
-            {
-                Console.WriteLine($"Wygenerowane ID: {tradeAgreement.Id.Value}");
-            }
-            else
-            {
-                Console.WriteLine("ID nie zostało przypisane.");
-            }
-
             foreach (var resource in offerTradeAgreementDTO.OfferedResources)
             {
                 tradeAgreement.OfferedResources.Add(new OfferedResource

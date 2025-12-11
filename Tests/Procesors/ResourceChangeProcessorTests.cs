@@ -6,8 +6,9 @@ using Wg_backend_api.Logic.Modifiers.ModifierConditions;
 using Wg_backend_api.Logic.Modifiers.Processors;
 using Wg_backend_api.Models;
 
-
-public class ResourceChangeProcessorTests
+namespace Tests.Procesors
+{ 
+    public class ResourceChangeProcessorTests
 {
     private GameDbContext _context;
     private ResourceChangeProcessor _processor;
@@ -106,4 +107,6 @@ public class ResourceChangeProcessorTests
         // Assert
         Assert.AreEqual(70f, result); // 50 (Add) + 20% of 100 = 70
     }
+}
+
 }

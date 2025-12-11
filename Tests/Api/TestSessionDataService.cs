@@ -1,5 +1,6 @@
 using Wg_backend_api.Services;
 
+namespace Tests.Api;
 public class TestSessionDataService : ISessionDataService
 {
     private string _schema;
