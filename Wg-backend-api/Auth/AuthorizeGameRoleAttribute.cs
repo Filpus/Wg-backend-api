@@ -15,7 +15,6 @@ namespace Wg_backend_api.Auth
         public void OnAuthorization(AuthorizationFilterContext context)
         {
             var role = context.HttpContext.Items["RoleInGame"]?.ToString();
-            Console.WriteLine($"AuthorizeGameRoleAttribute: User role in game is '{role}'.");
 
             if (string.IsNullOrEmpty(role) || !this._roles.Contains(role, StringComparer.OrdinalIgnoreCase))
             {

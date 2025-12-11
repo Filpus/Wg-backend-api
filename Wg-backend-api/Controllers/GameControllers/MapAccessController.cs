@@ -103,7 +103,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
                 var existingMapAccess = await this._context.MapAccesses
                     .FirstOrDefaultAsync(ma => ma.NationId == nationId && ma.MapId == mapId);
-                Console.WriteLine(existingMapAccess);
+
                 if (existingMapAccess != null)
                 {
                     return this.BadRequest("Map access already exists");

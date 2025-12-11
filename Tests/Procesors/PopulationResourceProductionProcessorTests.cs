@@ -104,10 +104,6 @@ namespace Tests.Procesors
             // Act
             var result = await _processor.ProcessAsync(1, effects, _context);
 
-            // Assert - dodaj debug
-            Console.WriteLine($"Success: {result.Success}");
-            Console.WriteLine($"Message: {result.Message}");
-
             Assert.That(result.Success, Is.True);
 
             var share = await _context.PopulationProductionShares.FindAsync(1);

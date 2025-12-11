@@ -27,11 +27,9 @@ namespace Wg_backend_api.Data
             try
             {
                 command.ExecuteNonQuery();
-                Console.WriteLine($"Migracje zostały zastosowane dla schematu: {schema}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Błąd podczas stosowania migracji dla schematu {schema}: {ex.Message}");
                 return false;
             }
 
@@ -54,11 +52,9 @@ namespace Wg_backend_api.Data
             try
             {
                 command.ExecuteNonQuery();
-                Console.WriteLine($"Schema {schema} has been deleted.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error deleting schema {schema}: {ex.Message}");
                 return false;
             }
 
