@@ -166,6 +166,7 @@ CREATE TABLE "Global".gameaccess (
     "fk_Users" integer NOT NULL,
     "fk_Games" integer NOT NULL,
     "accessType" integer NOT NULL,
+    "nationName" text,
     "isArchived" boolean NOT NULL
 );
 
@@ -1120,11 +1121,11 @@ ALTER TABLE ONLY game_1."ownedResources" ALTER COLUMN id SET DEFAULT nextval('ga
 -- Data for Name: gameaccess; Type: TABLE DATA; Schema: Global; Owner: -
 --
 
-COPY "Global".gameaccess (id, "fk_Users", "fk_Games", "accessType", "isArchived") FROM stdin;
-1	1	1	1	f
-2	2	1	0	f
-3	3	1	1	f
-4	4	1	1	f
+COPY "Global".gameaccess (id, "fk_Users", "fk_Games", "accessType", "nationName", "isArchived") FROM stdin;
+1	1	1	1	Królestwo Północy	f
+2	2	1	0	Cesarstwo Centralne	f
+3	3	1	1	\N	f
+4	4	1	1	\N	f
 \.
 
 
@@ -2676,7 +2677,7 @@ ALTER TABLE ONLY game_1.offeredresources
 --
 
 ALTER TABLE ONLY game_1."ownedResources"
-    ADD CONSTRAINT "FK_ownedresources_nation_fk_nation" FOREIGN KEY (fk_nation) REFERENCES game_1.nations(id) ON DELETE RESTRICT;
+    ADD CONSTRAINT "FK_ownedresources_nation_fk_nation" FOREIGN KEY (fk_nation) REFERENCES game_1.nations(id) ON DELETE CASCADE;
 
 
 --
