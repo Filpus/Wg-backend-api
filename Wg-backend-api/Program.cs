@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -149,6 +150,12 @@ namespace Wg_backend_api.Data
 
             builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders =
+                    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline
@@ -157,6 +164,8 @@ namespace Wg_backend_api.Data
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            app.UseForwardedHeaders();
 
             var corsService = app.Services.GetRequiredService<ICorsService>();
             var corsPolicyProvider = app.Services.GetRequiredService<ICorsPolicyProvider>();
