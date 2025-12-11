@@ -22,7 +22,7 @@ public class ApiControllersTests
         mockSession.Setup(s => s.GetSchema()).Returns("game_1");
         mockSession.Setup(s => s.GetRole()).Returns("Player");
 
-        var _factory = new TestingWebAppFactory(db.ConnectionString, schema: "game_1", nation: "1",mockSession);
+        var _factory = new TestingWebAppFactory(db.ConnectionString, schema: "game_1", nation: "1", mockSession);
         _client = _factory.CreateClient();
     }
 
@@ -33,7 +33,7 @@ public class ApiControllersTests
 
         response.EnsureSuccessStatusCode();
         XAssert.Equal(HttpStatusCode.OK, response.StatusCode);
-        
+
         var json = await response.Content.ReadAsStringAsync();
         XAssert.NotEmpty(json);
     }
@@ -58,7 +58,7 @@ public class ApiControllersTests
     public async Task PostPopulation_ValidData()
     {
         var dto = new List<PopulationDTO>()
-        { new PopulationDTO{ 
+        { new PopulationDTO{
             ReligionId = 1,
             CultureId = 1,
             SocialGroupId = 1,

@@ -10,47 +10,47 @@ using Wg_backend_api.Services;
 
 namespace Tests.Api
 {
-internal class TestingWebAppFactory : WebApplicationFactory<Program>
-{
-    private readonly string _connectionString;
-    private readonly string _schema = "game_1";
-    private readonly string _nation = "1";
-    private readonly Mock<ISessionDataService> _sessionDataService;
-
-
-    public TestingWebAppFactory(string connectionString, string schema, string nation, Mock<ISessionDataService> sessionDataService)
+    internal class TestingWebAppFactory : WebApplicationFactory<Program>
     {
-        _connectionString = connectionString;
-        _schema = schema;
-        _nation = nation;
-        _sessionDataService = sessionDataService;
-    }
+        private readonly string _connectionString;
+        private readonly string _schema = "game_1";
+        private readonly string _nation = "1";
+        private readonly Mock<ISessionDataService> _sessionDataService;
 
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
 
-        builder.ConfigureServices(services =>
+        public TestingWebAppFactory(string connectionString, string schema, string nation, Mock<ISessionDataService> sessionDataService)
         {
-            services.AddSingleton(_sessionDataService);
-            services.RemoveAll<IGameDbContextFactory>();
+            _connectionString = connectionString;
+            _schema = schema;
+            _nation = nation;
+            _sessionDataService = sessionDataService;
+        }
 
-            services.AddSingleton<IGameDbContextFactory>(sp =>
-                new TestGameDbContextFactory(_connectionString));
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
 
-            services.RemoveAll<ISessionDataService>();
-            services.AddSingleton<ISessionDataService>(
-                new TestSessionDataService(_schema, _nation, "Player"));
-
-            services.AddAuthentication(options =>
+            builder.ConfigureServices(services =>
             {
-                options.DefaultAuthenticateScheme = "Test";
-                options.DefaultChallengeScheme = "Test";
-            })
-                .AddScheme<AuthenticationSchemeOptions, FakeAuthHandler>("Test", _ => { });
+                services.AddSingleton(_sessionDataService);
+                services.RemoveAll<IGameDbContextFactory>();
 
-        });
+                services.AddSingleton<IGameDbContextFactory>(sp =>
+                    new TestGameDbContextFactory(_connectionString));
 
-        builder.UseEnvironment("Development");
+                services.RemoveAll<ISessionDataService>();
+                services.AddSingleton<ISessionDataService>(
+                    new TestSessionDataService(_schema, _nation, "Player"));
+
+                services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = "Test";
+                    options.DefaultChallengeScheme = "Test";
+                })
+                    .AddScheme<AuthenticationSchemeOptions, FakeAuthHandler>("Test", _ => { });
+
+            });
+
+            builder.UseEnvironment("Development");
+        }
     }
-}
 }

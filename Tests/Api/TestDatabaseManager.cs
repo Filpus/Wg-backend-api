@@ -5,7 +5,7 @@ namespace Tests.Api;
 
 public static class TestDatabaseManager
 {
-    private const string AdminConnection 
+    private const string AdminConnection
         = "Host=localhost;Username=postgres;Password=postgres";
 
     private const string TestDbName = "wg_test";
@@ -38,9 +38,9 @@ public static class TestDatabaseManager
             cmd.ExecuteNonQuery();
         }
 
-        var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "Api","wg-init-db-seeder.sql"); // hehe fuszera drut
+        var path = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "Api", "wg-init-db-seeder.sql"); // hehe fuszera drut
         string script = File.ReadAllText(path);
-        
+
         script = Regex.Replace(script, @"^\\.*$", "", RegexOptions.Multiline);
 
         using var connection = new NpgsqlConnection(TestDbConnection);

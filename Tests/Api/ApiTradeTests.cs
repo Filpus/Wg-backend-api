@@ -23,7 +23,7 @@ public class ApiTradeTests
         mockSession.Setup(s => s.GetSchema()).Returns("game_1");
         mockSession.Setup(s => s.GetRole()).Returns("Player");
 
-        var _factory = new TestingWebAppFactory(db.ConnectionString, schema: "game_1", nation: "1",mockSession);
+        var _factory = new TestingWebAppFactory(db.ConnectionString, schema: "game_1", nation: "1", mockSession);
         _client = _factory.CreateClient();
     }
 
@@ -115,8 +115,8 @@ public class ApiTradeTests
             Duration = 2,
             Description = "Im description",
             TradeStatus = TradeStatus.Pending,
-            OfferedResources = new List<ResourceAmountDto>{},
-            RequestedResources = new List<ResourceAmountDto>{}
+            OfferedResources = new List<ResourceAmountDto> { },
+            RequestedResources = new List<ResourceAmountDto> { }
         };
 
         var json = JsonConvert.SerializeObject(dto);

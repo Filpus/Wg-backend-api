@@ -189,11 +189,11 @@ namespace Tests.Procesors
 
             // Assert
             Assert.That(result.Success, Is.True);
-            
+
             // The processor uses dynamic keys with timestamps, so we need to find the affected entities
             var affectedEntitiesKey = result.AffectedEntities.Keys.FirstOrDefault(k => k.StartsWith("affected_Population_"));
             Assert.That(affectedEntitiesKey, Is.Not.Null, "Expected to find an affected_Population key in results");
-            
+
             var changeRecord = result.AffectedEntities[affectedEntitiesKey] as ModifierChangeRecord;
             Assert.That(changeRecord, Is.Not.Null);
             Assert.That(changeRecord.Change, Is.EqualTo(100));
