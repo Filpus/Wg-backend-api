@@ -6,7 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Wg_backend_api.Data;
+using Wg_backend_api.Enums;
 using Wg_backend_api.Logic.Modifiers.Processors;
+using Wg_backend_api.Logic.Modifiers.ModifierConditions;
 using Wg_backend_api.Models;
 
 namespace Tests.Procesors
@@ -25,7 +27,7 @@ namespace Tests.Procesors
                 .Options;
 
             _context = new GameDbContext(options, "Test");
-            _processor = new PopulationHappinessProcessor(_context, NullLogger<PopulationHappinessProcessor>.Instance);
+            _processor = new PopulationHappinessProcessor(_context);
 
             SeedTestData();
         }
@@ -92,9 +94,9 @@ namespace Tests.Procesors
         {
             new()
             {
-                Operation = "Add",
+                Operation = ModifierOperation.Add,
                 Value = 10,
-                Conditions = new Dictionary<string, object> { ["SocialGroupId"] = 1 }
+                Conditions = new PopulationConditions { SocialGroupId = 1 }
             }
         };
 
@@ -114,14 +116,14 @@ namespace Tests.Procesors
         {
             // Arrange
             var effects = new List<ModifierEffect>
-        {
-            new()
             {
-                Operation = "Add",
-                Value = 10,
-                Conditions = new Dictionary<string, object> { ["SocialGroupId"] = 999 }
-            }
-        };
+                new()
+                {
+                    Operation = ModifierOperation.Add,
+                    Value = 10,
+                    Conditions = new PopulationConditions { SocialGroupId = 999 }
+                }
+            };
 
             // Act
             var result = await _processor.ProcessAsync(1, effects, _context);
@@ -145,9 +147,9 @@ namespace Tests.Procesors
         {
             new()
             {
-                Operation = "Add",
+                Operation = ModifierOperation.Add,
                 Value = change,
-                Conditions = new Dictionary<string, object> { ["SocialGroupId"] = 1 }
+                Conditions = new PopulationConditions { SocialGroupId = 1 }
             }
         };
 
@@ -182,9 +184,9 @@ namespace Tests.Procesors
         {
             new()
             {
-                Operation = "Add",
+                Operation = ModifierOperation.Add,
                 Value = 5,
-                Conditions = new Dictionary<string, object> { ["SocialGroupId"] = 1 }
+                Conditions = new PopulationConditions { SocialGroupId = 1 }
             }
         };
 
@@ -193,7 +195,14 @@ namespace Tests.Procesors
 
             // Assert
             Assert.That(result.Success, Is.True);
-            Assert.That((int)result.AffectedEntities["affected_Population_count"], Is.EqualTo(100));
+            
+            // The processor uses dynamic keys with timestamps, so we need to find the affected entities
+            var affectedEntitiesKey = result.AffectedEntities.Keys.FirstOrDefault(k => k.StartsWith("affected_Population_"));
+            Assert.That(affectedEntitiesKey, Is.Not.Null, "Expected to find an affected_Population key in results");
+            
+            var changeRecord = result.AffectedEntities[affectedEntitiesKey] as ModifierChangeRecord;
+            Assert.That(changeRecord, Is.Not.Null);
+            Assert.That(changeRecord.Change, Is.EqualTo(100));
         }
     }
 

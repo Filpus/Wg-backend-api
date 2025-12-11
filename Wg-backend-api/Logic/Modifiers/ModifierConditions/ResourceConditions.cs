@@ -12,5 +12,4 @@ namespace Wg_backend_api.Logic.Modifiers.ModifierConditions
             return dict;
         }
     }
-
 }

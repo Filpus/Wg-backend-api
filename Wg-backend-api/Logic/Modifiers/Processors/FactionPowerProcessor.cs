@@ -16,7 +16,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
         {
             var oldValue = entity.Power;
             entity.Power = (int)OperationProcessor.ApplyOperation(entity.Power, value, operation);
-
         }
 
         protected override void RevertFromEntity(Faction entity, ModifierOperation operation, float value)
@@ -24,7 +23,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             var oldValue = entity.Power;
             entity.Power = (int)OperationProcessor.ReverseOperation(entity.Power, (float)value, operation);
             entity.Power = Math.Max(0, Math.Min(100, entity.Power));
-
         }
     }
 
@@ -39,7 +37,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
         {
             var oldValue = entity.Contentment;
             entity.Contentment = (int)OperationProcessor.ApplyOperation(entity.Contentment, (float)value, operation);
-
         }
 
         protected override void RevertFromEntity(Faction entity, ModifierOperation operation, float value)
@@ -47,7 +44,6 @@ namespace Wg_backend_api.Logic.Modifiers.Processors
             var oldValue = entity.Contentment;
             entity.Contentment = (int)OperationProcessor.ReverseOperation(entity.Contentment, value, operation);
             entity.Contentment = Math.Max(0, Math.Min(100, entity.Contentment));
-
         }
     }
 }
