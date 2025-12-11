@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
 
+namespace Tests.Api;
+
 public class TestGameDbContextFactory : IGameDbContextFactory
 {
     private readonly string _connectionString;

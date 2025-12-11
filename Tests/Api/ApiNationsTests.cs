@@ -2,8 +2,9 @@ using Xunit;
 using System.Net;
 using Moq;
 using Wg_backend_api.Services;
-using Tests;
 using XAssert = Xunit.Assert;
+
+namespace Tests.Api;
 
 [Collection("Database collection")]
 public class ApiNationsTests
@@ -22,7 +23,7 @@ public class ApiNationsTests
     }
 
     [Fact]
-    public async Task GetNations_WithoutId_ReturnsOkWithList()
+    public async Task GetNation()
     {
         var response = await _client.GetAsync("/api/nations");
 
@@ -34,7 +35,7 @@ public class ApiNationsTests
     }
 
     [Fact]
-    public async Task GetNations_WithValidId_ReturnsOk()
+    public async Task GetNation_ValidId()
     {
         var response = await _client.GetAsync("/api/nations/1");
 
@@ -42,7 +43,7 @@ public class ApiNationsTests
     }
 
     [Fact]
-    public async Task GetNations_WithInvalidId_ReturnsNotFound()
+    public async Task GetNation_InvalidId()
     {
         var response = await _client.GetAsync("/api/nations/99999");
 
@@ -50,17 +51,7 @@ public class ApiNationsTests
     }
 
     [Fact]
-    public async Task GetNations_IsAuthenticated_ReturnsData()
-    {
-        var authResponse = await _client.GetAsync("/api/auth/status");
-        authResponse.EnsureSuccessStatusCode();
-
-        var response = await _client.GetAsync("/api/nations");
-        response.EnsureSuccessStatusCode();
-    }
-
-    [Fact]
-    public async Task GetNations_ReturnsValidNationStructure()
+    public async Task GetNation_ValidNationStructure()
     {
         var response = await _client.GetAsync("/api/nations");
         response.EnsureSuccessStatusCode();
@@ -72,7 +63,7 @@ public class ApiNationsTests
     }
 
     [Fact]
-    public async Task GetNationById_ReturnsValidNationData()
+    public async Task GetNation_ValidNationData()
     {
         var response = await _client.GetAsync("/api/nations/1");
         response.EnsureSuccessStatusCode();
@@ -81,5 +72,51 @@ public class ApiNationsTests
 
         XAssert.NotEmpty(json);
         XAssert.Contains("id", json.ToLower());
-    }    
+    }
+
+    [Fact]
+    public async Task PostNation_ValidData()
+    {
+        var content = new MultipartFormDataContent
+        {
+            { new StringContent("Isengard"), "Name" },
+            { new StringContent("1"), "ReligionId" }, 
+            { new StringContent("1"), "CultureId" },
+            { new StringContent(""), "Flag" },
+            { new StringContent("#FF0000"), "Color" },
+        };
+
+        var response = await _client.PostAsync("/api/Nations", content);
+
+        response.EnsureSuccessStatusCode();
+
+        XAssert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+        XAssert.Contains("Isengard", responseBody);
+
+        var nationResponse = await _client.GetAsync("/api/Nations");
+        response.EnsureSuccessStatusCode();
+
+        var nationsJson = await response.Content.ReadAsStringAsync();
+
+        XAssert.Contains("Isengard", nationsJson);
+    }
+
+    [Fact]
+    public async Task PostNation_InvalidData()
+    {
+        var content = new MultipartFormDataContent
+        {
+            { new StringContent("Isengard"), "Name" },
+            { new StringContent(""), "ReligionId" }, 
+            { new StringContent(""), "CultureId" },
+            { new StringContent(""), "Flag" },
+            { new StringContent("#FF0000"), "Color" },
+        };
+
+        var response = await _client.PostAsync("/api/Nations", content);
+
+        XAssert.Equal(HttpStatusCode.BadRequest, response.StatusCode);       
+    }
 }

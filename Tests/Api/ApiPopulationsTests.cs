@@ -4,6 +4,11 @@ using Wg_backend_api.Services;
 using Moq;
 using System.Net;
 using XAssert = Xunit.Assert;
+using Newtonsoft.Json;
+using System.Text;
+using Wg_backend_api.DTO;
+
+namespace Tests.Api;
 
 [Collection("Database collection")]
 public class ApiControllersTests
@@ -22,21 +27,7 @@ public class ApiControllersTests
     }
 
     [Fact]
-    public async Task GetAll_ReturnsOkAndData()
-    {
-        var response = await _client.GetAsync("/api/auth/status");
-        response.EnsureSuccessStatusCode();
-
-        string json = await response.Content.ReadAsStringAsync();
-
-        var responsepop = await _client.GetAsync("/api/populations");
-        responsepop.EnsureSuccessStatusCode();
-
-        string jsonpop = await responsepop.Content.ReadAsStringAsync();
-    }
-
-    [Fact]
-    public async Task GetPopulations_ReturnsOkWithList()
+    public async Task GetPopulations_OkList()
     {
         var response = await _client.GetAsync("/api/populations");
 
@@ -48,7 +39,7 @@ public class ApiControllersTests
     }
 
     [Fact]
-    public async Task GetPopulationById_WithValidId_ReturnsOk()
+    public async Task GetPopulation_ValidId()
     {
         var response = await _client.GetAsync("/api/populations/1");
 
@@ -56,21 +47,57 @@ public class ApiControllersTests
     }
 
     [Fact]
-    public async Task GetPopulationById_WithInvalidId_ReturnsNotFound()
+    public async Task GetPopulation_InvalidId()
     {
-        var response = await _client.GetAsync("/api/populations/99999");
+        var response = await _client.GetAsync("/api/populations/2137");
 
         XAssert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
-    public async Task GetPopulations_IsAuthenticated_ReturnsData()
+    public async Task PostPopulation_ValidData()
     {
-        var authResponse = await _client.GetAsync("/api/auth/status");
-        authResponse.EnsureSuccessStatusCode();
+        var dto = new List<PopulationDTO>()
+        { new PopulationDTO{ 
+            ReligionId = 1,
+            CultureId = 1,
+            SocialGroupId = 1,
+            LocationId = 1,
+            Happiness = 75.5f,
+            Volonteers = 1000
+        }
+        };
 
-        var response = await _client.GetAsync("/api/populations");
+        var json = JsonConvert.SerializeObject(dto);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _client.PostAsync("/api/populations", content);
+
         response.EnsureSuccessStatusCode();
+
+        XAssert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostPopulation_InvalidData()
+    {
+        var dto = new List<PopulationDTO>()
+            { new PopulationDTO {
+                ReligionId = 1,
+                CultureId = 1,
+                SocialGroupId = 2137,
+                LocationId = 1,
+                Happiness = 69f,
+                Volonteers = 2137
+            }
+        };
+
+        var json = JsonConvert.SerializeObject(dto);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _client.PostAsync("/api/populations", content);
+
+        XAssert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 }
 

@@ -4,6 +4,11 @@ using Wg_backend_api.Services;
 using Moq;
 using System.Net;
 using XAssert = Xunit.Assert;
+using Wg_backend_api.DTO;
+using Newtonsoft.Json;
+using System.Text;
+
+namespace Tests.Api;
 
 [Collection("Database collection")]
 public class ApiArmyTests
@@ -22,7 +27,7 @@ public class ApiArmyTests
     }
 
     [Fact]
-    public async Task GetArmies_WithoutId_ReturnsOkWithList()
+    public async Task GetArmies()
     {
         var response = await _client.GetAsync("/api/armies");
 
@@ -34,7 +39,7 @@ public class ApiArmyTests
     }
 
     [Fact]
-    public async Task GetArmies_WithValidId_ReturnsOk()
+    public async Task GetArmies_ValidId()
     {
         var response = await _client.GetAsync("/api/armies/1");
 
@@ -42,7 +47,7 @@ public class ApiArmyTests
     }
 
     [Fact]
-    public async Task GetArmies_WithInvalidId_ReturnsNotFound()
+    public async Task GetArmy_InvalidId()
     {
         var response = await _client.GetAsync("/api/armies/99999");
 
@@ -50,24 +55,64 @@ public class ApiArmyTests
     }
 
     [Fact]
-    public async Task GetArmies_IsAuthenticated_ReturnsData()
+    public async Task PostArmy_ValidData()
     {
-        var authResponse = await _client.GetAsync("/api/auth/status");
-        authResponse.EnsureSuccessStatusCode();
+        var dto = new CreateArmyDTO
+        {
+            Name = "303rd Squadron",
+            LocationId = 1,
+            NationId = null,
+            IsNaval = false
+        };
 
-        var response = await _client.GetAsync("/api/armies");
+        var json = JsonConvert.SerializeObject(dto);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _client.PostAsync("/api/armies", content);
+
         response.EnsureSuccessStatusCode();
+
+        XAssert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+        XAssert.Contains("303rd Squadron", responseBody);        
     }
 
     [Fact]
-    public async Task GetArmies_ReturnsValidArmyStructure()
+    public async Task PostArmy_InvalidLocationData()
     {
-        var response = await _client.GetAsync("/api/armies");
-        response.EnsureSuccessStatusCode();
+        var dto = new CreateArmyDTO
+        {
+            Name = "303rd Squadron",
+            LocationId = null,
+            NationId = null,
+            IsNaval = false
+        };
 
-        var json = await response.Content.ReadAsStringAsync();
-        
-        XAssert.Contains("armyId", json);
-        // XAssert.Contains("ArmyId", json);
+        var json = JsonConvert.SerializeObject(dto);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _client.PostAsync("/api/armies", content);
+
+        XAssert.Equal(HttpStatusCode.BadRequest, response.StatusCode);       
     }
+
+    [Fact]
+    public async Task PostArmy_InvalidDataName()
+    {
+        var dto = new CreateArmyDTO
+        {
+            Name = "303rd Squadron",
+            LocationId = 1,
+            NationId = null,
+            IsNaval = false
+        };
+
+        var json = JsonConvert.SerializeObject(dto);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _client.PostAsync("/api/armies", content);
+
+        XAssert.Equal(HttpStatusCode.BadRequest, response.StatusCode);       
+    } 
 }

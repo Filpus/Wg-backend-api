@@ -1,5 +1,6 @@
 using Xunit;
 
+namespace Tests.Api;
 public class DatabaseFixture : IDisposable
 {
     public string ConnectionString { get; }

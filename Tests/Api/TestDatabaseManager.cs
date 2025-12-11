@@ -1,6 +1,8 @@
 using Npgsql;
 using System.Text.RegularExpressions;
 
+namespace Tests.Api;
+
 public static class TestDatabaseManager
 {
     private const string AdminConnection 

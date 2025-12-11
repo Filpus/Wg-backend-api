@@ -8,7 +8,7 @@ using Moq;
 using Wg_backend_api.Data;
 using Wg_backend_api.Services;
 
-namespace Tests
+namespace Tests.Api
 {
 internal class TestingWebAppFactory : WebApplicationFactory<Program>
 {
