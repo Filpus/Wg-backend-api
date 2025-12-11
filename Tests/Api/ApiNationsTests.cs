@@ -57,7 +57,7 @@ public class ApiNationsTests
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync();
-        
+
         XAssert.Contains("id", json.ToLower());
         XAssert.Contains("name", json.ToLower());
     }
@@ -80,7 +80,7 @@ public class ApiNationsTests
         var content = new MultipartFormDataContent
         {
             { new StringContent("Isengard"), "Name" },
-            { new StringContent("1"), "ReligionId" }, 
+            { new StringContent("1"), "ReligionId" },
             { new StringContent("1"), "CultureId" },
             { new StringContent(""), "Flag" },
             { new StringContent("#FF0000"), "Color" },
@@ -109,7 +109,7 @@ public class ApiNationsTests
         var content = new MultipartFormDataContent
         {
             { new StringContent("Isengard"), "Name" },
-            { new StringContent(""), "ReligionId" }, 
+            { new StringContent(""), "ReligionId" },
             { new StringContent(""), "CultureId" },
             { new StringContent(""), "Flag" },
             { new StringContent("#FF0000"), "Color" },
@@ -117,6 +117,6 @@ public class ApiNationsTests
 
         var response = await _client.PostAsync("/api/Nations", content);
 
-        XAssert.Equal(HttpStatusCode.BadRequest, response.StatusCode);       
+        XAssert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 }

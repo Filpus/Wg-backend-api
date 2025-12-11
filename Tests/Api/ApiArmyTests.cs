@@ -22,7 +22,7 @@ public class ApiArmyTests
         mockSession.Setup(s => s.GetSchema()).Returns("game_1");
         mockSession.Setup(s => s.GetRole()).Returns("Player");
 
-        var _factory = new TestingWebAppFactory(db.ConnectionString, schema: "game_1", nation: "1",mockSession);
+        var _factory = new TestingWebAppFactory(db.ConnectionString, schema: "game_1", nation: "1", mockSession);
         _client = _factory.CreateClient();
     }
 
@@ -75,7 +75,7 @@ public class ApiArmyTests
         XAssert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         var responseBody = await response.Content.ReadAsStringAsync();
-        XAssert.Contains("303rd Squadron", responseBody);        
+        XAssert.Contains("303rd Squadron", responseBody);
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class ApiArmyTests
 
         var response = await _client.PostAsync("/api/armies", content);
 
-        XAssert.Equal(HttpStatusCode.BadRequest, response.StatusCode);       
+        XAssert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
@@ -113,6 +113,6 @@ public class ApiArmyTests
 
         var response = await _client.PostAsync("/api/armies", content);
 
-        XAssert.Equal(HttpStatusCode.BadRequest, response.StatusCode);       
-    } 
+        XAssert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }
