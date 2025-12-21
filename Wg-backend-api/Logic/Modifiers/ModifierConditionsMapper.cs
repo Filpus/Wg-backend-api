@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Wg_backend_api.Enums;
 using Wg_backend_api.Logic.Modifiers.Interfaces;
 using Wg_backend_api.Logic.Modifiers.ModifierConditions;
@@ -50,50 +48,73 @@ namespace Wg_backend_api.Logic.Modifiers
         private static PopulationConditions CreatePopulationConditions(Dictionary<string, object> data)
         {
             var conditions = new PopulationConditions();
-            
+
             if (data.TryGetValue("CultureId", out var cultureId))
+            {
                 conditions.CultureId = Convert.ToInt32(cultureId);
+            }
+
             if (data.TryGetValue("SocialGroupId", out var socialGroupId))
+            {
                 conditions.SocialGroupId = Convert.ToInt32(socialGroupId);
+            }
+
             if (data.TryGetValue("ReligionId", out var religionId))
+            {
                 conditions.ReligionId = Convert.ToInt32(religionId);
-                
+            }
+
             return conditions;
         }
 
         private static PopulationResourceConditions CreatePopulationResourceConditions(Dictionary<string, object> data)
         {
             var conditions = new PopulationResourceConditions();
-            
+
             if (data.TryGetValue("CultureId", out var cultureId))
+            {
                 conditions.CultureId = Convert.ToInt32(cultureId);
+            }
+
             if (data.TryGetValue("SocialGroupId", out var socialGroupId))
+            {
                 conditions.SocialGroupId = Convert.ToInt32(socialGroupId);
+            }
+
             if (data.TryGetValue("ReligionId", out var religionId))
+            {
                 conditions.ReligionId = Convert.ToInt32(religionId);
+            }
+
             if (data.TryGetValue("ResourceId", out var resourceId))
+            {
                 conditions.ResourceId = Convert.ToInt32(resourceId);
-                
+            }
+
             return conditions;
         }
 
         private static ResourceConditions CreateResourceConditions(Dictionary<string, object> data)
         {
             var conditions = new ResourceConditions();
-            
+
             if (data.TryGetValue("ResourceId", out var resourceId))
+            {
                 conditions.ResourceId = Convert.ToInt32(resourceId);
-                
+            }
+
             return conditions;
         }
 
         private static FactionConditions CreateFactionConditions(Dictionary<string, object> data)
         {
             var conditions = new FactionConditions();
-            
+
             if (data.TryGetValue("FactionId", out var factionId))
+            {
                 conditions.FactionId = Convert.ToInt32(factionId);
-                
+            }
+
             return conditions;
         }
     }

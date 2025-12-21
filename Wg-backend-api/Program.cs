@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization.Metadata;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -18,10 +19,12 @@ using Wg_backend_api.Services;
 var googleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
 var googleClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = string.Empty;
+var connectionString = builder.Configuration.GetConnectionString("DevConection");
 
-connectionString = builder.Configuration.GetConnectionString("DeploymentDatabaseConection");
-
+if (Environment.GetEnvironmentVariable("FRONTEND_URL") != null)
+{
+    connectionString = builder.Configuration.GetConnectionString("DeploymentDatabaseConection");
+}
 
 builder.Services.AddSingleton(new GameService(connectionString));
 
@@ -46,7 +49,6 @@ builder.Services.AddSession(options =>
 });
 
 // Authentication and Authorization setup
-
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -69,7 +71,6 @@ builder.Services.AddAuthentication(options =>
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
-
         {
             var accessToken = context.Request.Cookies["access_token"];
             if (!string.IsNullOrEmpty(accessToken))
@@ -82,13 +83,8 @@ builder.Services.AddAuthentication(options =>
     };
 })
 
-
-
-
 .AddGoogle("Google", options =>
 {
-
-
     options.ClientId = !string.IsNullOrEmpty(googleClientId)
         ? googleClientId
         : builder.Configuration["Authentication:Google:ClientId"];
@@ -107,9 +103,9 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization(options => options.DefaultPolicy = new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .RequireClaim(ClaimTypes.NameIdentifier)
-        .Build());
+    .RequireAuthenticatedUser()
+    .RequireClaim(ClaimTypes.NameIdentifier)
+    .Build());
 
 // CORS setup to allow access from Angular frontend
 builder.Services.AddCors(options => options.AddPolicy("AllowAngular", builder => builder.WithOrigins("https://localhost:4200", "http://localhost:4200", "https://localhost", "https://wargameshub.pl")
@@ -121,56 +117,65 @@ builder.Services.AddHostedService<RefreshTokenCleanupService>();
 
 builder.Services.AddScoped<UserIdActionFilter>();
 
-            // Add Controllers (API endpoints)
-            builder.Services.AddControllers(config => 
-            {
-                config.Filters.Add<UserIdActionFilter>();
-            })
-            .AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-                options.JsonSerializerOptions.WriteIndented = true;
-                options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
-                options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
-            });
+// Add Controllers (API endpoints)
+builder.Services.AddControllers(config => config.Filters.Add<UserIdActionFilter>())
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.WriteIndented = true;
+        options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
+        options.JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true;
+    });
 
-            // Add Swagger configuration
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddHttpContextAccessor();
-            builder.Services.AddScoped<ISessionDataService, SessionDataService>();
-            builder.Services.AddScoped<ResourceChangeProcessor>();
-            builder.Services.AddScoped<PopulationHappinessProcessor>();
-            builder.Services.AddScoped<PopulationResourceProductionProcessor>();
-            builder.Services.AddScoped<PopulationResourceUsageProcessor>();
-            builder.Services.AddScoped<PopulationVolunteerProcessor>();
-            builder.Services.AddScoped<FactionPowerProcessor>();
-            builder.Services.AddScoped<FactionContentmentProcessor>();
+builder.Services.AddRateLimiter(options => options.AddPolicy("LoginRateLimit", context =>
+    RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "default",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromSeconds(300),
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = 2,
+        })).OnRejected = async (context, cancellationToken) =>
+        {
+            context.HttpContext.Response.StatusCode = 429;
+            await context.HttpContext.Response.WriteAsync("Too many requests. Please try again later.", cancellationToken);
+        });
 
-            // rejestracja factory
-            builder.Services.AddScoped<ModifierProcessorFactory>();
+// Add Swagger configuration
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ISessionDataService, SessionDataService>();
+builder.Services.AddScoped<ResourceChangeProcessor>();
+builder.Services.AddScoped<PopulationHappinessProcessor>();
+builder.Services.AddScoped<PopulationResourceProductionProcessor>();
+builder.Services.AddScoped<PopulationResourceUsageProcessor>();
+builder.Services.AddScoped<PopulationVolunteerProcessor>();
+builder.Services.AddScoped<FactionPowerProcessor>();
+builder.Services.AddScoped<FactionContentmentProcessor>();
 
-            builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
+// rejestracja factory
+builder.Services.AddScoped<ModifierProcessorFactory>();
 
-            builder.Services.Configure<ForwardedHeadersOptions>(options =>
-            {
-                options.ForwardedHeaders =
-                    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-            });
+builder.Services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
-            var app = builder.Build();
+builder.Services.Configure<ForwardedHeadersOptions>(options => options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto);
 
-            // Configure the HTTP request pipeline
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+var app = builder.Build();
 
-            app.UseForwardedHeaders();
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-            var corsService = app.Services.GetRequiredService<ICorsService>();
-            var corsPolicyProvider = app.Services.GetRequiredService<ICorsPolicyProvider>();
+app.UseForwardedHeaders();
+
+var corsService = app.Services.GetRequiredService<ICorsService>();
+var corsPolicyProvider = app.Services.GetRequiredService<ICorsPolicyProvider>();
 
 // Konfiguracja plik�w statycznych z CORS
 app.UseStaticFiles(new StaticFileOptions
@@ -186,12 +191,12 @@ app.UseStaticFiles(new StaticFileOptions
 
         var corsResult = corsService.EvaluatePolicy(ctx.Context, policy);
         corsService.ApplyResult(corsResult, ctx.Context.Response);
-    }
+    },
 });
 
 // app.UseHttpsRedirection();
 
-//app.UseStaticFiles(); // Teraz z obs�ug� CORS
+// app.UseStaticFiles(); // Teraz z obs�ug� CORS
 
 app.UseRouting(); // Jawnie dodane
 app.UseSession(); // Tutaj dodajemy middleware sesji
@@ -207,7 +212,7 @@ if (!args.Contains("--no-login"))
 
 app.UseMiddleware<GameAccessMiddleware>();
 app.UseAuthorization();
-
+app.UseRateLimiter();
 app.MapControllers(); // Map controller routes
 
 app.Run();

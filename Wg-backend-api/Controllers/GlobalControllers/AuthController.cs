@@ -1,11 +1,11 @@
-﻿using System.Configuration;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Wg_backend_api.Auth;
@@ -32,6 +32,7 @@ namespace Wg_backend_api.Controllers.GlobalControllers
 
         [AllowAnonymous]
         [HttpPost("login")]
+        [EnableRateLimiting("LoginRateLimit")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = this._context.Users.FirstOrDefault(p => p.Email == request.Email || p.Name == request.Email);
@@ -235,6 +236,8 @@ namespace Wg_backend_api.Controllers.GlobalControllers
         [HttpGet("google-login")]
         public IActionResult GoogleLogin(string returnUrl = "https://localhost:4200/loggedin")
         {
+            returnUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://localhost:4200";
+            returnUrl += "/loggedin";
             var props = new AuthenticationProperties
             {
                 RedirectUri = this.Url.Action(nameof(GoogleCallback), new { returnUrl })
