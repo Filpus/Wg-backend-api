@@ -55,6 +55,7 @@ namespace Wg_backend_api.Data
         public DbSet<PopulationUsedResource> populationUsedResources { get; set; }
         public DbSet<PopulationProductionShare> PopulationProductionShares { get; set; }
         public DbSet<OwnedResources> OwnedResources { get; set; }
+        public DbSet<ArmySettings> ArmySettings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

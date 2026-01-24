@@ -29,15 +29,17 @@ namespace Wg_backend_api.Logic.Resources
 
             var processor = new ResourceChangeProcessor(_context);
 
+            ArmySettings armySettings = await ArmySettings.GetRowAsync(_context);
+
             foreach (var resource in resources)
             {
                 var balance = new ResourceBalanceDto
                 {
                     ResourceId = resource.Id,
                     CurrentAmount = GetCurrentResourceAmount(nation, resource.Id),
-                    ArmyMaintenanceExpenses = GetArmyMaintenanceExpenses(nation, resource.Id),
+                    ArmyMaintenanceExpenses = armySettings.UseMaintanace ? GetArmyMaintenanceExpenses(nation, resource.Id) : 0,
                     PopulationExpenses = GetPopulationExpenses(nation, resource.Id),
-                    PopulationProduction = GetPopulationProduction(nation, resource.Id),
+                    PopulationProduction = GetPopulationProduction(nation, resource.Id, _context),
                     TradeIncome = GetTradeIncome(tradeAgreements, nationId, resource.Id),
                     TradeExpenses = GetTradeExpenses(tradeAgreements, nationId, resource.Id)
 
@@ -130,12 +132,12 @@ namespace Wg_backend_api.Logic.Resources
                     .Select(pur => pur.Amount))
                 .Sum();
         }
-        public static float GetPopulationProduction(Nation nation, int resourceId)
+        public static float GetPopulationProduction(Nation nation, int resourceId, GameDbContext _gameDbContext)
         {
             return nation.Localisations
-                .Sum(location => GetPopulationProductionByLocation(location, resourceId));
+                .Sum(location => GetPopulationProductionByLocation(location, resourceId, _gameDbContext));
         }
-        public static float GetPopulationProductionByLocation(Localisation location, int resourceId)
+        public static float GetPopulationProductionByLocation(Localisation location, int resourceId, GameDbContext _gameDbContext)
         {
             if (location == null || location.LocalisationResources == null || !location.LocalisationResources.Any())
             {
@@ -144,21 +146,45 @@ namespace Wg_backend_api.Logic.Resources
 
             float totalProduction = 0;
 
-            foreach (var population in location.Populations)
+            Resource resource = _gameDbContext.Resources
+                .AsNoTracking()
+                .FirstOrDefault(r => r.Id == resourceId);
+
+            if (resource.ConstProduction)
             {
 
-                var productionShare = population.PopulationProductionShares
-                     .FirstOrDefault(ps => ps.ResourcesId == resourceId);
 
                 var localisationResource = location.LocalisationResources
                      .FirstOrDefault(lr => lr.ResourceId == resourceId);
 
-                if (localisationResource == null || productionShare == null)
+
+
+                if (localisationResource == null)
                 {
-                    continue;
+                    return 0;
                 }
 
-                totalProduction += productionShare.Coefficient * localisationResource.Amount;
+                return localisationResource.Amount;
+            }
+            else
+            {
+                foreach (var population in location.Populations)
+                {
+
+                    var productionShare = population.PopulationProductionShares
+                         .FirstOrDefault(ps => ps.ResourcesId == resourceId);
+
+                    var localisationResource = location.LocalisationResources
+                         .FirstOrDefault(lr => lr.ResourceId == resourceId);
+
+                    if (localisationResource == null || productionShare == null)
+                    {
+                        continue;
+                    }
+
+
+                    totalProduction += productionShare.Coefficient * localisationResource.Amount;
+                }
             }
 
             return totalProduction;
