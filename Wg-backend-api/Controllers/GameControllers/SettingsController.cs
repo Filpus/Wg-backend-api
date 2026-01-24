@@ -35,23 +35,10 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         [HttpGet("{id?}")]
-        public async Task<ActionResult<IEnumerable<ArmySettings>>> GetArmySettings(int? id)
+        public async Task<ActionResult<IEnumerable<ArmySettings>>> GetArmySettings()
         {
-            if (id.HasValue)
-            {
-                var setting = await this._context.ArmySettings.FindAsync(id.Value);
-                if (setting == null)
-                {
-                    return this.NotFound();
-                }
-
-                return this.Ok(new List<ArmySettings> { setting });
-            }
-            else
-            {
-                var settings = await this._context.ArmySettings.ToListAsync();
-                return this.Ok(settings);
-            }
+            ArmySettings settings = ArmySettings.GetRowAsync(this._context).Result;
+            return this.Ok(new List<ArmySettings> { settings });
         }
 
         // PUT: api/ArmySettings
