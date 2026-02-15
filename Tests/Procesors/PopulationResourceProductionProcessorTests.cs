@@ -41,11 +41,9 @@ namespace Tests.Procesors
 
         private void SeedTestData()
         {
-            // 1. Wymagane dla Nation
             var religion = new Religion { Id = 1, Name = "TestReligion" };
             var culture = new Culture { Id = 1, Name = "TestCulture" };
 
-            // 2. Nation
             var nation = new Nation
             {
                 Id = 1,
@@ -55,19 +53,16 @@ namespace Tests.Procesors
                 CultureId = 1
             };
 
-            // 3. Localisation (KLUCZOWE!)
             var location = new Localisation
             {
                 Id = 1,
                 Name = "TestLocation",
-                NationId = 1  // ← Bez tego nie znajdzie populacji!
+                NationId = 1  
             };
 
-            // 4. SocialGroup i Resource
             var socialGroup = new SocialGroup { Id = 1, Name = "Szlachta" };
             var resource = new Resource { Id = 1, Name = "Food" };
 
-            // 5. Population
             var population = new Population
             {
                 Id = 1,
@@ -75,12 +70,11 @@ namespace Tests.Procesors
                 SocialGroupId = 1
             };
 
-            // 6. ProductionShare
             var productionShare = new PopulationProductionShare
             {
                 Id = 1,
                 PopulationId = 1,
-                ResourcesId = 1,  // Lub ResourceId - sprawdź model!
+                ResourcesId = 1,  
                 Coefficient = 0.5f
             };
 

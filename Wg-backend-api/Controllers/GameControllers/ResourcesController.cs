@@ -55,6 +55,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Name = resource.Name,
                     IsMain = resource.IsMain,
                     Icon = resource.Icon,
+                    ConstProduction = resource.ConstProduction
                 };
                 return this.Ok(new List<ResourceDto> { resourceDto }); // Zwraca pojedynczy zasób w liście
             }
@@ -67,6 +68,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Name = r.Name,
                     IsMain = r.IsMain,
                     Icon = r.Icon,
+                    ConstProduction = r.ConstProduction,
                 }).ToList();
                 return this.Ok(resourceDtos); // Zwraca wszystkie zasoby
             }
@@ -101,6 +103,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 resource.Name = resourceDto.Name;
                 resource.IsMain = resourceDto.IsMain;
                 resource.Icon = resourceDto.Icon;
+                resource.ConstProduction = resourceDto.ConstProduction;
 
                 this._context.Entry(resource).State = EntityState.Modified;
             }
@@ -179,7 +182,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     Name = dto.Name,
                     IsMain = dto.IsMain,
-                    Icon = iconPath
+                    Icon = iconPath,
+                    ConstProduction = dto.ConstProduction,
                 });
             }
 
@@ -192,6 +196,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Name = r.Name,
                 IsMain = r.IsMain,
                 Icon = r.Icon != null ? $"{this.Request.Scheme}://{this.Request.Host}/{r.Icon}" : null,
+                ConstProduction = r.ConstProduction,
             }).ToList();
 
             return this.CreatedAtAction(nameof(this.PostResources), null, response);

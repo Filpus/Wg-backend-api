@@ -23,6 +23,9 @@ namespace Wg_backend_api.Models
         [Column("icon")]
         public string? Icon { get; set; }
 
+        [Column("constProduction")]
+        public bool ConstProduction { get; set; }
+
         public ICollection<ProductionCost> ProductionCosts { get; set; }
 
         public ICollection<MaintenaceCosts> MaintenaceCosts { get; set; }

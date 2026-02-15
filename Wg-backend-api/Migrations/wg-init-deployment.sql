@@ -183,6 +183,62 @@ BEGIN
 END;
 $$;
 
+CREATE TABLE game_1."armySettings" (
+    id integer NOT NULL,
+    "nameOfSettingsSet" text,
+    "useMeleeAtack" boolean DEFAULT true NOT NULL,
+    "useRangeAtack" boolean DEFAULT true NOT NULL,
+    "useDefense" boolean DEFAULT true NOT NULL,
+    "useSpeed" boolean DEFAULT true NOT NULL,
+    "useMorale" boolean DEFAULT true NOT NULL,
+    "useMaintanace" boolean DEFAULT true NOT NULL
+);
+
+
+ALTER TABLE game_1."armySettings" OWNER TO postgres;
+
+--
+-- TOC entry 290 (class 1259 OID 96643)
+-- Name: army_settings_id_seq; Type: SEQUENCE; Schema: game_1; Owner: postgres
+--
+
+ALTER TABLE game_1."armySettings" ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME game_1.army_settings_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 10000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 5044 (class 0 OID 96636)
+-- Dependencies: 289
+-- Data for Name: armySettings; Type: TABLE DATA; Schema: game_1; Owner: postgres
+--
+
+COPY game_1."armySettings" (id, "nameOfSettingsSet", "useMeleeAtack", "useRangeAtack", "useDefense", "useSpeed", "useMorale", "useMaintanace") FROM stdin;
+1	Default	t	t	t	t	t	t
+\.
+
+
+--
+-- TOC entry 5051 (class 0 OID 0)
+-- Dependencies: 290
+-- Name: army_settings_id_seq; Type: SEQUENCE SET; Schema: game_1; Owner: postgres
+--
+
+SELECT pg_catalog.setval('game_1.army_settings_id_seq', 1, true);
+
+
+--
+-- TOC entry 4898 (class 2606 OID 96642)
+-- Name: armySettings army_settings_pkey; Type: CONSTRAINT; Schema: game_1; Owner: postgres
+--
+
+ALTER TABLE ONLY game_1."armySettings"
+    ADD CONSTRAINT army_settings_pkey PRIMARY KEY (id);
 
 ALTER FUNCTION game_1.create_default_armies() OWNER TO postgres;
 

@@ -7,7 +7,7 @@ using Wg_backend_api.Logic.Modifiers;
 using Wg_backend_api.Logic.Modifiers.ModifierConditions;
 using Wg_backend_api.Models;
 
-namespace Tests
+namespace Conditions
 {
     [TestFixture]
     public class ConditionBuilderTests

@@ -6,12 +6,15 @@
         public string Name { get; set; }
         public bool IsMain { get; set; }
         public string? Icon { get; set; }
+        public bool ConstProduction { get; set; }
     }
 
     public class CreateResourceDto
     {
         public string Name { get; set; }
         public bool IsMain { get; set; }
+        public bool ConstProduction { get; set; }
+
         public IFormFile? IconFile { get; set; }
     }
 
