@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Data;
 
@@ -7,8 +6,8 @@ namespace Wg_backend_api.Models
 {
     public interface Settings<T>
     {
-        static abstract Task<T> GetRowAsync(int id, GameDbContext context);
-        static abstract Task<T> GetRowAsync(GameDbContext context);
+        public static abstract Task<T> GetRowAsync(int id, GameDbContext context);
+        public static abstract Task<T> GetRowAsync(GameDbContext context);
 
     }
 
@@ -40,7 +39,6 @@ namespace Wg_backend_api.Models
         [Column("useMaintanace")]
         public bool UseMaintanace { get; set; }
 
-
         public static async Task<ArmySettings> GetRowAsync(int id, GameDbContext context)
         {
 
@@ -49,11 +47,17 @@ namespace Wg_backend_api.Models
             if (id > 0)
             {
                 entity = await context.Set<ArmySettings>().FindAsync(id);
-                if (entity != null) return entity;
+                if (entity != null)
+                {
+                    return entity;
+                }
             }
 
             entity = await context.Set<ArmySettings>().FirstOrDefaultAsync();
-            if (entity != null) return entity;
+            if (entity != null)
+            {
+                return entity;
+            }
 
             var newEntity = new ArmySettings
             {
@@ -77,7 +81,9 @@ namespace Wg_backend_api.Models
             ArmySettings? entity = null;
             entity = await context.Set<ArmySettings>().FirstOrDefaultAsync();
             if (entity != null)
+            {
                 return entity;
+            }
 
             var newEntity = new ArmySettings
             {

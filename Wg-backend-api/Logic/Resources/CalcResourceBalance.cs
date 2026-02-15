@@ -153,11 +153,8 @@ namespace Wg_backend_api.Logic.Resources
             if (resource.ConstProduction)
             {
 
-
                 var localisationResource = location.LocalisationResources
                      .FirstOrDefault(lr => lr.ResourceId == resourceId);
-
-
 
                 if (localisationResource == null)
                 {
@@ -181,7 +178,6 @@ namespace Wg_backend_api.Logic.Resources
                     {
                         continue;
                     }
-
 
                     totalProduction += productionShare.Coefficient * localisationResource.Amount;
                 }

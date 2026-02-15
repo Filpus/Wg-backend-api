@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
@@ -65,14 +61,14 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var s in settings)
             {
-                if (s.Id == null || s.Id <= 0)
+                if (s.Id is null or <= 0)
                 {
-                    return this.BadRequest("Brak lub nieprawid³owe ID ustawienia do edycji.");
+                    return this.BadRequest("Brak lub nieprawidï¿½owe ID ustawienia do edycji.");
                 }
 
                 if (string.IsNullOrWhiteSpace(s.NameOfSettingsSet) || s.NameOfSettingsSet.Length > 50)
                 {
-                    return this.BadRequest("Nazwa zestawu ustawieñ jest niepoprawnej d³ugoœci.");
+                    return this.BadRequest("Nazwa zestawu ustawieï¿½ jest niepoprawnej dï¿½ugoï¿½ci.");
                 }
             }
 
@@ -84,7 +80,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     return this.NotFound($"Ustawienie o ID {s.Id} nie istnieje.");
                 }
 
-                // Map wszystkie pola z przes³anego obiektu na encjê
+                // Map wszystkie pola z przesï¿½anego obiektu na encjï¿½
                 entity.NameOfSettingsSet = s.NameOfSettingsSet;
                 entity.UseMeleeAtack = s.UseMeleeAtack;
                 entity.UseRangeAtack = s.UseRangeAtack;
@@ -102,7 +98,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                return this.StatusCode(500, "B³¹d podczas aktualizacji.");
+                return this.StatusCode(500, "Bï¿½ï¿½d podczas aktualizacji.");
             }
 
             return this.NoContent();
@@ -123,7 +119,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 if (string.IsNullOrWhiteSpace(s.NameOfSettingsSet) || s.NameOfSettingsSet.Length > 50)
                 {
-                    return this.BadRequest("Nazwa zestawu ustawieñ jest niepoprawnej d³ugoœci.");
+                    return this.BadRequest("Nazwa zestawu ustawieï¿½ jest niepoprawnej dï¿½ugoï¿½ci.");
                 }
 
                 var entity = new ArmySettings
@@ -152,14 +148,14 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (ids == null || ids.Count == 0)
             {
-                return this.BadRequest("Brak ID do usuniêcia.");
+                return this.BadRequest("Brak ID do usuniï¿½cia.");
             }
 
             var settings = await this._context.ArmySettings.Where(s => ids.Contains(s.Id)).ToListAsync();
 
             if (settings.Count == 0)
             {
-                return this.NotFound("Nie znaleziono ustawieñ do usuniêcia.");
+                return this.NotFound("Nie znaleziono ustawieï¿½ do usuniï¿½cia.");
             }
 
             this._context.ArmySettings.RemoveRange(settings);
