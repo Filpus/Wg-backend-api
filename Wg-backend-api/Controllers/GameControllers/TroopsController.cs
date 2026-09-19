@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -8,26 +8,12 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/Troops")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class TroopsController : Controller
+    public class TroopsController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-
         public TroopsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
         }
 
         // GET: api/Troops/5
@@ -36,7 +22,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var troop = await this._context.Troops.FindAsync(id);
+                var troop = await this.Context.Troops.FindAsync(id);
                 if (troop == null)
                 {
                     return NotFound();
@@ -53,7 +39,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var troops = await this._context.Troops.ToListAsync();
+                var troops = await this.Context.Troops.ToListAsync();
                 var troopDTOs = troops.Select(t => new TroopDTO
                 {
                     Id = t.Id,
@@ -74,7 +60,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            var nationId = int.Parse(this._sessionDataService.GetNation());
+            var nationId = this.NationId.Value;
             if (nationId == -1)
             {
                 return BadRequest("Brak ID nacji w sesji.");
@@ -84,18 +70,18 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var dto in troopDTOs)
             {
-                var unitType = await this._context.UnitTypes.FindAsync(dto.UnitTypeId);
+                var unitType = await this.Context.UnitTypes.FindAsync(dto.UnitTypeId);
 
                 if (unitType == null)
                 {
                     return BadRequest($"Unit Type ID {dto.UnitTypeId} does not exist.");
                 }
 
-                var army = await this._context.Armies.FindAsync(dto.ArmyId);
+                var army = await this.Context.Armies.FindAsync(dto.ArmyId);
 
                 if (dto.ArmyId == null)
                 {
-                    var barracks_or_docks = await this._context.Armies
+                    var barracks_or_docks = await this.Context.Armies
                         .Where(a => a.NationId == nationId && a.IsNaval == unitType.IsNaval && a.LocationId == null)
                         .FirstOrDefaultAsync();
                     army = barracks_or_docks;
@@ -124,8 +110,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 });
             }
 
-            this._context.Troops.AddRange(troopsToInsert);
-            await this._context.SaveChangesAsync();
+            this.Context.Troops.AddRange(troopsToInsert);
+            await this.Context.SaveChangesAsync();
 
             var result = troopsToInsert.Select(t => new TroopDTO
             {
@@ -147,24 +133,24 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak danych do edycji.");
             }
 
-            var nationId = int.Parse(this._sessionDataService.GetNation());
+            var nationId = this.NationId.Value;
             if (nationId == -1)
             {
                 return BadRequest("Brak ID nacji w sesji.");
             }
 
-            using var transaction = await this._context.Database.BeginTransactionAsync();
+            using var transaction = await this.Context.Database.BeginTransactionAsync();
             try
             {
                 foreach (var dto in troopDTOs)
                 {
-                    var currentTroop = await this._context.Troops
+                    var currentTroop = await this.Context.Troops
                         .FirstOrDefaultAsync(t => t.ArmyId == dto.CurrentArmyId && t.UnitTypeId == dto.UnitTypeId);
-                    var currentArmy = await this._context.Armies.FindAsync(dto.CurrentArmyId);
-                    var destinationArmy = await this._context.Armies.FindAsync(dto.ArmyId);
-                    var troopInDestinationArmy = await this._context.Troops
+                    var currentArmy = await this.Context.Armies.FindAsync(dto.CurrentArmyId);
+                    var destinationArmy = await this.Context.Armies.FindAsync(dto.ArmyId);
+                    var troopInDestinationArmy = await this.Context.Troops
                         .FirstOrDefaultAsync(t => t.ArmyId == dto.ArmyId && t.UnitTypeId == dto.UnitTypeId);
-                    var unitType = await this._context.UnitTypes.FindAsync(dto.UnitTypeId);
+                    var unitType = await this.Context.UnitTypes.FindAsync(dto.UnitTypeId);
 
                     if (currentTroop == null || currentArmy == null || destinationArmy == null || unitType == null)
                     {
@@ -186,7 +172,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                         return BadRequest("Quantity cannot be negative.");
                     }
 
-                    var barracks_or_docks = await this._context.Armies
+                    var barracks_or_docks = await this.Context.Armies
                         .Where(a => a.NationId == nationId && a.IsNaval == unitType.IsNaval && a.LocationId == null)
                         .FirstOrDefaultAsync();
 
@@ -195,7 +181,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                         return BadRequest("No barracks/docks found.");
                     }
 
-                    var existingTroopInBarracksOrDocks = await this._context.Troops
+                    var existingTroopInBarracksOrDocks = await this.Context.Troops
                         .FirstOrDefaultAsync(t => t.ArmyId == barracks_or_docks.Id && t.UnitTypeId == dto.UnitTypeId);
 
                     // same army
@@ -217,7 +203,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                             }
                             else
                             {
-                                this._context.Troops.Add(new Troop
+                                this.Context.Troops.Add(new Troop
                                 {
                                     ArmyId = (int)barracks_or_docks.Id,
                                     UnitTypeId = dto.UnitTypeId,
@@ -227,7 +213,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
                             if (dto.Quantity == 0)
                             {
-                                this._context.Troops.Remove(currentTroop);
+                                this.Context.Troops.Remove(currentTroop);
                             }
                             else
                             {
@@ -250,7 +236,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                                 if (troopInDestinationArmy != null)
                                 {
                                     troopInDestinationArmy.Quantity += currentTroop.Quantity;
-                                    this._context.Troops.Remove(currentTroop);
+                                    this.Context.Troops.Remove(currentTroop);
                                     continue;
                                 }
                                 else
@@ -270,7 +256,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                                 }
                                 else
                                 {
-                                    this._context.Troops.Add(new Troop
+                                    this.Context.Troops.Add(new Troop
                                     {
                                         ArmyId = (int)barracks_or_docks.Id,
                                         UnitTypeId = dto.UnitTypeId,
@@ -282,7 +268,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                                 if (troopInDestinationArmy != null)
                                 {
                                     troopInDestinationArmy.Quantity += dto.Quantity;
-                                    this._context.Troops.Remove(currentTroop);
+                                    this.Context.Troops.Remove(currentTroop);
                                     continue;
                                 }
                                 else
@@ -304,7 +290,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                             if (existingTroopInBarracksOrDocks != null)
                             {
                                 existingTroopInBarracksOrDocks.Quantity += currentTroop.Quantity;
-                                this._context.Troops.Remove(currentTroop);
+                                this.Context.Troops.Remove(currentTroop);
                                 continue;
                             }
                             else
@@ -316,7 +302,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     }
                 }
 
-                await this._context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
             catch
@@ -325,7 +311,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 throw;
             }
 
-            await this._context.SaveChangesAsync();
+            await this.Context.SaveChangesAsync();
             return Ok();
         }
 
@@ -340,20 +326,20 @@ namespace Wg_backend_api.Controllers.GameControllers
             foreach (var dto in data)
             {
 
-                var army = await this._context.Armies.FindAsync(dto.NewArmyId);
+                var army = await this.Context.Armies.FindAsync(dto.NewArmyId);
                 if (army == null)
                 {
                     return BadRequest($"Army ID {dto.NewArmyId} does not exist.");
                 }
 
-                var troop = await this._context.Troops.Where(t => t.UnitTypeId == dto.UnitId && t.ArmyId == army.Id).FirstOrDefaultAsync();
+                var troop = await this.Context.Troops.Where(t => t.UnitTypeId == dto.UnitId && t.ArmyId == army.Id).FirstOrDefaultAsync();
 
                 if (troop == null)
                 {
                     return NotFound($"Troop with Unit ID {dto.UnitId} does not exsit.");
                 }
 
-                var unitType = await this._context.UnitTypes.FindAsync(troop.UnitTypeId);
+                var unitType = await this.Context.UnitTypes.FindAsync(troop.UnitTypeId);
                 if (unitType == null)
                 {
                     return BadRequest($"Unit Type ID {troop.UnitTypeId} does not exist.");
@@ -364,7 +350,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     return BadRequest("Cannot assign naval unit to land army or vice versa.");
                 }
 
-                var accesToUnit = await this._context.AccessToUnits
+                var accesToUnit = await this.Context.AccessToUnits
                     .FirstOrDefaultAsync(a => a.NationId == army.NationId && a.UnitTypeId == troop.UnitTypeId);
 
                 if (accesToUnit == null || accesToUnit.NationId != army.NationId)
@@ -375,7 +361,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 troop.ArmyId = dto.NewArmyId;
             }
 
-            await this._context.SaveChangesAsync();
+            await this.Context.SaveChangesAsync();
             return Ok();
         }
 
@@ -388,15 +374,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var troops = await this._context.Troops.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var troops = await this.Context.Troops.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (troops.Count == 0)
             {
                 return NotFound("Nie znaleziono jednostek do usunięcia.");
             }
 
-            this._context.Troops.RemoveRange(troops);
-            await this._context.SaveChangesAsync();
+            this.Context.Troops.RemoveRange(troops);
+            await this.Context.SaveChangesAsync();
 
             return Ok();
         }

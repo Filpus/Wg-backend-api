@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -10,40 +10,23 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/Events")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class EventsController : Controller
+    public class EventsController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
         private readonly ModifierProcessorFactory _processorFactory;
-        private GameDbContext _context;
-        private readonly int? _nationId;
 
         public EventsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService, ModifierProcessorFactory processorFactory)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
             this._processorFactory = processorFactory;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
-
-            string nationIdStr = this._sessionDataService.GetNation();
-            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         [HttpPost]
         public async Task<ActionResult> CreateEvent([FromBody] EventDto dto)
         {
             var ev = new Event { Name = dto.Name, Description = dto.Description, IsActive = (bool)dto.IsActive };
-            this._context.Add(ev);
-            await this._context.SaveChangesAsync();
+            this.Context.Add(ev);
+            await this.Context.SaveChangesAsync();
 
             foreach (var m in dto.Modifiers)
             {
@@ -59,17 +42,17 @@ namespace Wg_backend_api.Controllers.GameControllers
                         Conditions = m.Effect.Conditions
                     }
                 };
-                this._context.Add(mod);
+                this.Context.Add(mod);
             }
 
-            await this._context.SaveChangesAsync();
+            await this.Context.SaveChangesAsync();
             return CreatedAtAction(null, new { ev.Id });
         }
 
         [HttpDelete("{eventId}")]
         public async Task<ActionResult> DeleteEvent(int eventId)
         {
-            var ev = await this._context.Events
+            var ev = await this.Context.Events
                 .Include(e => e.Modifiers)
                 .FirstOrDefaultAsync(e => e.Id == eventId);
 
@@ -78,7 +61,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return NotFound();
             }
 
-            var related = await this._context.RelatedEvents
+            var related = await this.Context.RelatedEvents
                 .Where(re => re.EventId == eventId)
                 .ToListAsync();
 
@@ -91,14 +74,14 @@ namespace Wg_backend_api.Controllers.GameControllers
                 {
                     var processor = this._processorFactory.GetProcessor(group.Key);
                     var effects = group.Select(m => m.Effects).ToList();
-                    await processor.RevertAsync(nationId, effects, this._context);
+                    await processor.RevertAsync(nationId, effects, this.Context);
                 }
             }
 
-            this._context.RemoveRange(related);
-            this._context.RemoveRange(ev.Modifiers);
-            this._context.Remove(ev);
-            await this._context.SaveChangesAsync();
+            this.Context.RemoveRange(related);
+            this.Context.RemoveRange(ev.Modifiers);
+            this.Context.Remove(ev);
+            await this.Context.SaveChangesAsync();
 
             return Ok();
         }
@@ -106,7 +89,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpPut("{eventId}")]
         public async Task<ActionResult> UpdateEvent(int eventId, [FromBody] EventDto dto)
         {
-            var ev = await this._context.Events
+            var ev = await this.Context.Events
                 .Include(e => e.Modifiers)
                 .FirstOrDefaultAsync(e => e.Id == eventId);
 
@@ -118,11 +101,11 @@ namespace Wg_backend_api.Controllers.GameControllers
             ev.Name = dto.Name;
             ev.Description = dto.Description;
             ev.IsActive = (bool)dto.IsActive;
-            this._context.Modifiers.RemoveRange(ev.Modifiers);
+            this.Context.Modifiers.RemoveRange(ev.Modifiers);
 
             foreach (var m in dto.Modifiers)
             {
-                this._context.Add(new Modifiers
+                this.Context.Add(new Modifiers
                 {
                     EventId = eventId,
                     ModifierType = m.ModifierType,
@@ -136,7 +119,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 });
             }
 
-            await this._context.SaveChangesAsync();
+            await this.Context.SaveChangesAsync();
             return Ok();
         }
 
@@ -148,24 +131,24 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var mods = await this._context.Modifiers.Where(m => ids.Contains(m.Id.Value)).ToListAsync();
+            var mods = await this.Context.Modifiers.Where(m => ids.Contains(m.Id.Value)).ToListAsync();
             if (!mods.Any())
             {
                 return NotFound();
             }
 
-            this._context.Modifiers.RemoveRange(mods);
-            await this._context.SaveChangesAsync();
+            this.Context.Modifiers.RemoveRange(mods);
+            await this.Context.SaveChangesAsync();
             return Ok();
         }
 
         [HttpPost("assign")]
         public async Task<ActionResult> AssignEvent([FromBody] AssignEventDto dto)
         {
-            this._context.Add(new RelatedEvents { EventId = dto.EventId, NationId = (int)(dto.NationId == null ? this._nationId.Value : dto.NationId) });
-            await this._context.SaveChangesAsync();
+            this.Context.Add(new RelatedEvents { EventId = dto.EventId, NationId = (int)(dto.NationId == null ? this.NationId.Value : dto.NationId) });
+            await this.Context.SaveChangesAsync();
 
-            var modifiers = await this._context.Modifiers
+            var modifiers = await this.Context.Modifiers
                 .Where(m => m.EventId == dto.EventId)
                 .ToListAsync();
 
@@ -173,7 +156,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 var processor = this._processorFactory.GetProcessor(group.Key);
                 var effects = group.Select(m => m.Effects).ToList();
-                await processor.ProcessAsync((int)(dto.NationId == null ? this._nationId.Value : dto.NationId), effects, this._context);
+                await processor.ProcessAsync((int)(dto.NationId == null ? this.NationId.Value : dto.NationId), effects, this.Context);
             }
 
             return Ok();
@@ -183,18 +166,18 @@ namespace Wg_backend_api.Controllers.GameControllers
         public async Task<ActionResult> UnassignEvent([FromBody] AssignEventDto dto)
         {
 
-            var rel = await this._context.RelatedEvents
-                .FirstOrDefaultAsync(r => r.EventId == dto.EventId && r.NationId == (dto.NationId ?? this._nationId));
+            var rel = await this.Context.RelatedEvents
+                .FirstOrDefaultAsync(r => r.EventId == dto.EventId && r.NationId == (dto.NationId ?? this.NationId));
 
             if (rel == null)
             {
                 return NotFound();
             }
 
-            this._context.Remove(rel);
-            await this._context.SaveChangesAsync();
+            this.Context.Remove(rel);
+            await this.Context.SaveChangesAsync();
 
-            var modifiers = await this._context.Modifiers
+            var modifiers = await this.Context.Modifiers
                 .Where(m => m.EventId == dto.EventId)
                 .ToListAsync();
 
@@ -202,7 +185,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 var processor = this._processorFactory.GetProcessor(group.Key);
                 var effects = group.Select(m => m.Effects).ToList();
-                await processor.RevertAsync((int)(dto.NationId == null ? this._nationId.Value : dto.NationId), effects, this._context);
+                await processor.RevertAsync((int)(dto.NationId == null ? this.NationId.Value : dto.NationId), effects, this.Context);
             }
 
             return Ok();
@@ -211,9 +194,9 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("assigned/{nationId?}")]
         public async Task<ActionResult<List<AssignEventInfoDto>>> GetAssignedEvents(int? nationId)
         {
-            nationId ??= this._nationId;
+            nationId ??= this.NationId;
 
-            var assignedEvents = await this._context.RelatedEvents
+            var assignedEvents = await this.Context.RelatedEvents
                 .Where(re => re.NationId == nationId)
                 .Include(re => re.Event)
                 .Include(re => re.Nation)
@@ -235,7 +218,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (!nationId.HasValue)
             {
-                nationId = this._nationId;
+                nationId = this.NationId;
             }
 
             if (!nationId.HasValue)
@@ -243,7 +226,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Nation ID is required");
             }
 
-            var events = await this._context.Events
+            var events = await this.Context.Events
                 .Include(e => e.Modifiers)
                 .Include(e => e.RelatedEvents)
                 .Where(e => e.RelatedEvents.Any(re => re.NationId == nationId.Value))
@@ -278,7 +261,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("allevents")]
         public async Task<ActionResult<List<EventDto>>> GetAllEvents()
         {
-            var events = await this._context.Events
+            var events = await this.Context.Events
                 .Include(e => e.Modifiers)
                 .Include(e => e.RelatedEvents)
                 .ToListAsync();
@@ -313,12 +296,12 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("unassigned-nations/{eventId}")]
         public async Task<ActionResult<List<NationBaseInfoDTO>>> GetUnassignedNations(int eventId)
         {
-            var assignedNationIds = await this._context.RelatedEvents
+            var assignedNationIds = await this.Context.RelatedEvents
                 .Where(re => re.EventId == eventId)
                 .Select(re => re.NationId)
                 .ToListAsync();
 
-            var unassignedNations = await this._context.Nations
+            var unassignedNations = await this.Context.Nations
                 .Where(n => !assignedNationIds.Contains(n.Id.Value))
                 .Select(n => new NationBaseInfoDTO
                 {
@@ -333,7 +316,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("assigned-nations/{eventId}")]
         public async Task<ActionResult<List<NationBaseInfoDTO>>> GetAssignedNations(int eventId)
         {
-            var assignedNations = await this._context.RelatedEvents
+            var assignedNations = await this.Context.RelatedEvents
                 .Where(re => re.EventId == eventId)
                 .Include(re => re.Nation)
                 .Select(re => new NationBaseInfoDTO
@@ -349,19 +332,19 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("option-pack")]
         public async Task<ActionResult<OptionPackDTO>> GetOptionPack()
         {
-            var resources = await this._context.Resources
+            var resources = await this.Context.Resources
                 .Select(r => new ResourceDto { Id = (int)r.Id, Name = r.Name })
                 .ToListAsync();
 
-            var religions = await this._context.Religions
+            var religions = await this.Context.Religions
                 .Select(r => new ReligionDTO { Id = r.Id, Name = r.Name })
                 .ToListAsync();
 
-            var cultures = await this._context.Cultures
+            var cultures = await this.Context.Cultures
                 .Select(c => new CultureDTO { Id = c.Id, Name = c.Name })
                 .ToListAsync();
 
-            var socialGroups = await this._context.SocialGroups
+            var socialGroups = await this.Context.SocialGroups
                 .Select(sg => new SocialGroupInfoDTO
                 {
                     Id = sg.Id,
@@ -373,7 +356,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 })
                 .ToListAsync();
 
-            var factions = await this._context.Factions
+            var factions = await this.Context.Factions
                 .Select(f => new FactionDTO { Id = f.Id, Name = f.Name })
                 .ToListAsync();
 
@@ -392,15 +375,15 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (!nationId.HasValue)
             {
-                nationId = this._nationId;
+                nationId = this.NationId;
             }
 
-            var assignedEventIds = await this._context.RelatedEvents
+            var assignedEventIds = await this.Context.RelatedEvents
                 .Where(re => re.NationId == nationId)
                 .Select(re => re.EventId)
                 .ToListAsync();
 
-            var unassignedEvents = await this._context.Events
+            var unassignedEvents = await this.Context.Events
                 .Where(e => !assignedEventIds.Contains(e.Id.Value))
                 .Include(e => e.Modifiers)
                 .Select(e => new EventDto

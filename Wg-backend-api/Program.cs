@@ -48,6 +48,14 @@ if (string.IsNullOrWhiteSpace(jwtKey))
         "zmienną środowiskową Jwt__Key na serwerze/w kontenerze.");
 }
 
+if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
+{
+    throw new InvalidOperationException(
+        "Jwt:Key jest za krótki (HS256 wymaga co najmniej 256 bitów / 32 bajtów). " +
+        "Wygeneruj dłuższy klucz (np. 32 losowe bajty zakodowane w Base64) i ustaw go ponownie przez " +
+        "dotnet user-secrets (Jwt:Key) lokalnie albo przez zmienną środowiskową Jwt__Key na serwerze/w kontenerze.");
+}
+
 builder.Services.AddSingleton(new GameService(connectionString));
 
 // Add DbContexts

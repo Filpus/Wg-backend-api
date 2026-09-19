@@ -11,16 +11,9 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/Maps")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class MapController : Controller
+    public class MapController : GameControllerBase
     {
-
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-        private int? _nationId;
-
         private class FileUploadResult
         {
             public bool Success { get; set; }
@@ -33,19 +26,8 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         public MapController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
-            string nationIdStr = this._sessionDataService.GetNation();
-            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         [HttpGet("{id?}")]
@@ -53,7 +35,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var map = await this._context.Maps.FindAsync(id);
+                var map = await this.Context.Maps.FindAsync(id);
                 if (map == null)
                 {
                     return this.NotFound();
@@ -63,7 +45,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var maps = await this._context.Maps
+                var maps = await this.Context.Maps
                     .Select(map => new MapDTO { Id = map.Id, Name = map.Name, MapLocation = map.MapLocation, MapIconLocation = map.MapIconLocation })
                     .ToListAsync();
                 return this.Ok(maps);
@@ -78,7 +60,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.BadRequest("Brak danych do edycji.");
             }
 
-            var map = await this._context.Maps.FindAsync(mapDTO.id);
+            var map = await this.Context.Maps.FindAsync(mapDTO.id);
             if (map == null)
             {
                 return this.NotFound($"Mapa o ID {mapDTO.id} nie istnieje.");
@@ -115,11 +97,11 @@ namespace Wg_backend_api.Controllers.GameControllers
                 map.Name = mapDTO.Name;
             }
 
-            this._context.Entry(map).State = EntityState.Modified;
+            this.Context.Entry(map).State = EntityState.Modified;
 
             try
             {
-                await this._context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -153,8 +135,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                     MapIconLocation = result.Result.ThumbnailPath,
                 };
 
-                this._context.Maps.Add(newMap);
-                await this._context.SaveChangesAsync();
+                this.Context.Maps.Add(newMap);
+                await this.Context.SaveChangesAsync();
 
                 var createdMap = new MapDTO
                 {
@@ -183,7 +165,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.BadRequest("Brak ID do usunięcia.");
             }
 
-            var maps = await this._context.Maps.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var maps = await this.Context.Maps.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (maps.Count == 0)
             {
@@ -211,8 +193,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 }
             }
 
-            this._context.Maps.RemoveRange(maps);
-            await this._context.SaveChangesAsync();
+            this.Context.Maps.RemoveRange(maps);
+            await this.Context.SaveChangesAsync();
 
             return this.Ok();
         }
@@ -220,11 +202,11 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("nation/maps/{nationId?}")]
         public async Task<ActionResult<IEnumerable<MapDTO>>> GetNationMaps(int? nationId)
         {
-            nationId ??= this._nationId;
+            nationId ??= this.NationId;
 
-            var nationMaps = await this._context.MapAccesses
+            var nationMaps = await this.Context.MapAccesses
                 .Where(ma => ma.NationId == nationId)
-                .Join(this._context.Maps,
+                .Join(this.Context.Maps,
                     ma => ma.MapId,
                     map => map.Id,
                     (ma, map) => new MapDTO

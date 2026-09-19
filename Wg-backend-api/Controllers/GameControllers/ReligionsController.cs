@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -9,26 +9,12 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/Religions")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class ReligionsControler : Controller
+    public class ReligionsControler : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-
         public ReligionsControler(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
         }
 
         // GET: api/Religions
@@ -38,7 +24,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var religion = await this._context.Religions.FindAsync(id);
+                var religion = await this.Context.Religions.FindAsync(id);
                 if (religion == null)
                 {
                     return this.NotFound();
@@ -51,7 +37,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var religions = await this._context.Religions.ToListAsync();
+                var religions = await this.Context.Religions.ToListAsync();
                 return this.Ok(religions.Select(r => new ReligionDTO { Id = r.Id, Name = r.Name }));
             }
         }
@@ -76,12 +62,12 @@ namespace Wg_backend_api.Controllers.GameControllers
             foreach (var religionDTO in religionDTOs)
             {
                 var religion = new Religion { Id = religionDTO.Id, Name = religionDTO.Name };
-                this._context.Entry(religion).State = EntityState.Modified;
+                this.Context.Entry(religion).State = EntityState.Modified;
             }
 
             try
             {
-                await this._context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -120,8 +106,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 religions.Add(new Religion { Name = religionDTO.Name });
             }
 
-            this._context.Religions.AddRange(religions);
-            await this._context.SaveChangesAsync();
+            this.Context.Religions.AddRange(religions);
+            await this.Context.SaveChangesAsync();
 
             var createdDTOs = religions.Select(r => new ReligionDTO { Id = r.Id, Name = r.Name }).ToList();
             return this.CreatedAtAction("GetReligions", new { id = createdDTOs[0].Id }, createdDTOs);
@@ -136,15 +122,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.BadRequest("Brak ID do usunięcia.");
             }
 
-            var religions = await this._context.Religions.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var religions = await this.Context.Religions.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (religions.Count == 0)
             {
                 return this.NotFound("Nie znaleziono religii do usunięcia.");
             }
 
-            this._context.Religions.RemoveRange(religions);
-            await this._context.SaveChangesAsync();
+            this.Context.Religions.RemoveRange(religions);
+            await this.Context.SaveChangesAsync();
 
             return this.Ok();
         }

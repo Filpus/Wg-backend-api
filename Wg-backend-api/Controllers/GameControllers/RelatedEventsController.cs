@@ -1,29 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
 using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
-    [Route("api/RelatedEvents")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class RelatedEventsController : Controller
+    public class RelatedEventsController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-
         public RelatedEventsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
         }
 
         // DELETE: api/RelatedEvents
@@ -35,15 +22,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var relatedEvents = await this._context.RelatedEvents.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var relatedEvents = await this.Context.RelatedEvents.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (relatedEvents.Count == 0)
             {
                 return NotFound("Nie znaleziono wydarzeń do usunięcia.");
             }
 
-            this._context.RelatedEvents.RemoveRange(relatedEvents);
-            await this._context.SaveChangesAsync();
+            this.Context.RelatedEvents.RemoveRange(relatedEvents);
+            await this.Context.SaveChangesAsync();
 
             return Ok();
         }

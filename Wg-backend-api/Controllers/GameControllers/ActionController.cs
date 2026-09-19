@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -8,29 +8,12 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/Actions")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class ActionController : Controller
+    public class ActionController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-        private int? _nationId;
-
         public ActionController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
-            string nationIdStr = this._sessionDataService.GetNation();
-            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         [HttpGet("{id?}")]
@@ -38,7 +21,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var action = await this._context.Actions.FindAsync(id);
+                var action = await this.Context.Actions.FindAsync(id);
                 if (action == null)
                 {
                     return NotFound();
@@ -48,7 +31,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var actions = await this._context.Actions.ToListAsync();
+                var actions = await this.Context.Actions.ToListAsync();
                 return Ok(actions.Select(MapToDTO));
             }
         }
@@ -63,19 +46,19 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var actionDTO in actionDTOs)
             {
-                var action = await this._context.Actions.FindAsync(actionDTO.Id);
+                var action = await this.Context.Actions.FindAsync(actionDTO.Id);
                 if (action == null)
                 {
                     return NotFound($"Nie znaleziono akcji o ID {actionDTO.Id}.");
                 }
 
                 UpdateModelFromDTO(action, actionDTO);
-                this._context.Entry(action).State = EntityState.Modified;
+                this.Context.Entry(action).State = EntityState.Modified;
             }
 
             try
             {
-                await this._context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -93,9 +76,9 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak danych do zapisania.");
             }
 
-            var actions = actionDTOs.Select(dto => MapFromDTO(new ActionDTO(dto) { NationId = this._nationId ?? dto.NationId })).ToList();
-            this._context.Actions.AddRange(actions);
-            await this._context.SaveChangesAsync();
+            var actions = actionDTOs.Select(dto => MapFromDTO(new ActionDTO(dto) { NationId = this.NationId ?? dto.NationId })).ToList();
+            this.Context.Actions.AddRange(actions);
+            await this.Context.SaveChangesAsync();
 
             return CreatedAtAction("GetActions", new { id = actions[0].Id }, actions.Select(MapToDTO));
         }
@@ -108,15 +91,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var actions = await this._context.Actions.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var actions = await this.Context.Actions.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (actions.Count == 0)
             {
                 return NotFound("Nie znaleziono akcji do usunięcia.");
             }
 
-            this._context.Actions.RemoveRange(actions);
-            await this._context.SaveChangesAsync();
+            this.Context.Actions.RemoveRange(actions);
+            await this.Context.SaveChangesAsync();
 
             return Ok();
         }
@@ -124,11 +107,11 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("settledAndUnsetled")]
         public async Task<ActionResult> GetSettledAndUnsettledActions()
         {
-            var settledActions = await this._context.Actions
+            var settledActions = await this.Context.Actions
                 .Where(a => a.IsSettled)
                 .ToListAsync();
 
-            var unsettledActions = await this._context.Actions
+            var unsettledActions = await this.Context.Actions
                 .Where(a => !a.IsSettled)
                 .ToListAsync();
 
@@ -144,10 +127,10 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (!nationId.HasValue)
             {
-                nationId = this._nationId;
+                nationId = this.NationId;
             }
 
-            var settledActions = await this._context.Actions
+            var settledActions = await this.Context.Actions
                 .Where(a => a.IsSettled && a.NationId == nationId)
                 .ToListAsync();
 
@@ -159,10 +142,10 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (!nationId.HasValue)
             {
-                nationId = this._nationId;
+                nationId = this.NationId;
             }
 
-            var unsettledActions = await this._context.Actions
+            var unsettledActions = await this.Context.Actions
                 .Where(a => !a.IsSettled && a.NationId == nationId)
                 .ToListAsync();
 

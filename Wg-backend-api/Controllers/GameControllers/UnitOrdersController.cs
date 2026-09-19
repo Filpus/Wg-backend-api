@@ -3,35 +3,19 @@ using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
 using Wg_backend_api.DTO;
+using Wg_backend_api.Helpers;
 using Wg_backend_api.Models;
 using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/UnitOrders")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class UnitOrdersController : Controller
+    public class UnitOrdersController : GameControllerBase
     {
-        private readonly IGameDbContextFactory gameDbContextFactory;
-        private readonly ISessionDataService sessionDataService;
-        private readonly GameDbContext context;
-        private readonly int? nationId;
-
         public UnitOrdersController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this.gameDbContextFactory = gameDbFactory;
-            this.sessionDataService = sessionDataService;
-
-            string schema = this.sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this.context = this.gameDbContextFactory.Create(schema);
-            string nationIdStr = this.sessionDataService.GetNation();
-            this.nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         // GET: api/UnitOrders
@@ -41,20 +25,22 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpDelete]
         public async Task<ActionResult> DeleteUnitOrders([FromBody] List<int?> ids)
         {
-            if (ids == null || ids.Count == 0)
+            var missingIds = this.ValidateIdsProvided(ids);
+            if (missingIds != null)
             {
-                return this.BadRequest("Brak ID do usunięcia.");
+                return missingIds;
             }
 
-            var unitOrders = await this.context.UnitOrders.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var unitOrders = await this.Context.UnitOrders.Where(r => ids.Contains(r.Id)).ToListAsync();
 
-            if (unitOrders.Count == 0)
+            var noneFound = this.NotFoundIfNoneFound(unitOrders, "zamówień jednostek");
+            if (noneFound != null)
             {
-                return this.NotFound("Nie znaleziono zamówień jednostek do usunięcia.");
+                return noneFound;
             }
 
-            this.context.UnitOrders.RemoveRange(unitOrders);
-            await this.context.SaveChangesAsync();
+            this.Context.UnitOrders.RemoveRange(unitOrders);
+            await this.Context.SaveChangesAsync();
 
             return this.Ok();
         }
@@ -62,9 +48,9 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("GetUnitOrdersByNationId/{nationId?}")]
         public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetNavUnitOrdersByNationId(int? nationId)
         {
-            nationId ??= this.nationId;
+            nationId ??= this.NationId;
 
-            var unitOrders = await this.context.UnitOrders
+            var unitOrders = await this.Context.UnitOrders
                 .Where(uo => uo.NationId == nationId)
                 .Select(uo => new UnitOrderInfoDTO
                 {
@@ -83,9 +69,9 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("GetNavalUnitOrdersByNationId/{nationId?}")]
         public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetNavalUnitOrdersByNationId(int? nationId)
         {
-            nationId ??= this.nationId;
+            nationId ??= this.NationId;
 
-            var navalUnitOrders = await this.context.UnitOrders
+            var navalUnitOrders = await this.Context.UnitOrders
                 .Where(uo => uo.NationId == nationId && uo.UnitType.IsNaval) // Assuming UnitType has an IsNaval property
                 .Select(uo => new UnitOrderInfoDTO
                 {
@@ -104,9 +90,9 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("GetLandUnitOrdersByNationId/{nationId?}")]
         public async Task<ActionResult<IEnumerable<UnitOrderInfoDTO>>> GetLandUnitOrdersByNationId(int? nationId)
         {
-            nationId ??= this.nationId;
+            nationId ??= this.NationId;
 
-            var landUnitOrders = await this.context.UnitOrders
+            var landUnitOrders = await this.Context.UnitOrders
                 .Where(uo => uo.NationId == nationId && !uo.UnitType.IsNaval) // Assuming UnitType has an IsNaval property
                 .Select(uo => new UnitOrderInfoDTO
                 {
@@ -124,20 +110,20 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpPost("AddRecruitOrder/{nationId?}")]
         public async Task<IActionResult> AddRecruitOrder(int? nationId, [FromBody] RecruitOrderDTO recruitOrder)
         {
-            nationId ??= this.nationId;
+            nationId ??= this.NationId;
 
             if (recruitOrder == null || recruitOrder.Count <= 0)
             {
                 return this.BadRequest("Nieprawidłowe dane zlecenia rekrutacji.");
             }
 
-            var nationExists = await this.context.Nations.AnyAsync(n => n.Id == nationId);
+            var nationExists = await this.Context.Nations.AnyAsync(n => n.Id == nationId);
             if (!nationExists)
             {
                 return this.NotFound("Nie znaleziono państwa o podanym ID.");
             }
 
-            var unitTypeExists = await this.context.UnitTypes.AnyAsync(ut => ut.Id == recruitOrder.TroopTypeId);
+            var unitTypeExists = await this.Context.UnitTypes.AnyAsync(ut => ut.Id == recruitOrder.TroopTypeId);
             if (!unitTypeExists)
             {
                 return this.NotFound("Nie znaleziono typu jednostki o podanym ID.");
@@ -150,8 +136,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Quantity = recruitOrder.Count,
             };
 
-            this.context.UnitOrders.Add(newUnitOrder);
-            await this.context.SaveChangesAsync();
+            this.Context.UnitOrders.Add(newUnitOrder);
+            await this.Context.SaveChangesAsync();
 
             return this.Ok(newUnitOrder);
         }
@@ -164,7 +150,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.BadRequest("Nieprawidłowe dane zlecenia edycji.");
             }
 
-            var unitOrder = await this.context.UnitOrders.FindAsync(editOrder.OrderId);
+            var unitOrder = await this.Context.UnitOrders.FindAsync(editOrder.OrderId);
             if (unitOrder == null)
             {
                 return this.NotFound("Nie znaleziono zamówienia jednostek o podanym ID.");
@@ -172,11 +158,11 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             unitOrder.Quantity = editOrder.NewCount;
 
-            this.context.Entry(unitOrder).State = EntityState.Modified;
+            this.Context.Entry(unitOrder).State = EntityState.Modified;
 
             try
             {
-                await this.context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {

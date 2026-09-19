@@ -8,26 +8,12 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/ArmySettings")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class ArmySettingsController : Controller
+    public class ArmySettingsController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-
         public ArmySettingsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
         }
 
         [HttpGet("{id?}")]
@@ -35,7 +21,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var setting = await this._context.ArmySettings.FindAsync(id.Value);
+                var setting = await this.Context.ArmySettings.FindAsync(id.Value);
                 if (setting == null)
                 {
                     return this.NotFound();
@@ -45,7 +31,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var settings = await this._context.ArmySettings.ToListAsync();
+                var settings = await this.Context.ArmySettings.ToListAsync();
                 return this.Ok(settings);
             }
         }
@@ -74,7 +60,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var s in settings)
             {
-                var entity = await this._context.ArmySettings.FindAsync(s.Id.Value);
+                var entity = await this.Context.ArmySettings.FindAsync(s.Id.Value);
                 if (entity == null)
                 {
                     return this.NotFound($"Ustawienie o ID {s.Id} nie istnieje.");
@@ -89,12 +75,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 entity.UseMorale = s.UseMorale;
                 entity.UseMaintanace = s.UseMaintanace;
 
-                this._context.Entry(entity).State = EntityState.Modified;
+                this.Context.Entry(entity).State = EntityState.Modified;
             }
 
             try
             {
-                await this._context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -136,8 +122,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 entities.Add(entity);
             }
 
-            this._context.ArmySettings.AddRange(entities);
-            await this._context.SaveChangesAsync();
+            this.Context.ArmySettings.AddRange(entities);
+            await this.Context.SaveChangesAsync();
 
             return this.CreatedAtAction("GetArmySettings", new { id = entities.First().Id }, entities);
         }
@@ -151,15 +137,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.BadRequest("Brak ID do usunięcia.");
             }
 
-            var settings = await this._context.ArmySettings.Where(s => ids.Contains(s.Id)).ToListAsync();
+            var settings = await this.Context.ArmySettings.Where(s => ids.Contains(s.Id)).ToListAsync();
 
             if (settings.Count == 0)
             {
                 return this.NotFound("Nie znaleziono ustawień do usunięcia.");
             }
 
-            this._context.ArmySettings.RemoveRange(settings);
-            await this._context.SaveChangesAsync();
+            this.Context.ArmySettings.RemoveRange(settings);
+            await this.Context.SaveChangesAsync();
 
             return this.Ok();
         }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -10,42 +10,29 @@ using static Wg_backend_api.DTO.NationsWithAssignmentsDTO;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/[controller]")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class AssignmentsController : ControllerBase
+    public class AssignmentsController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
         private readonly GlobalDbContext _globalDbContext;
 
         public AssignmentsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService, GlobalDbContext globalDbContext)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
             this._globalDbContext = globalDbContext;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
         }
 
         // GET: api/Assignments
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Assignment>>> GetAssignment()
         {
-            return await this._context.Assignments.ToListAsync();
+            return await this.Context.Assignments.ToListAsync();
         }
 
         // GET: api/Assignments/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Assignment>> GetAssignment(int? id)
         {
-            var assignment = await this._context.Assignments.FindAsync(id);
+            var assignment = await this.Context.Assignments.FindAsync(id);
 
             if (assignment == null)
             {
@@ -59,7 +46,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("nations")]
         public async Task<ActionResult<List<NationsWithAssignmentsDTO>>> GetDetailedAssignments()
         {
-            var nations = await this._context.Nations
+            var nations = await this.Context.Nations
                 .Select(n => new NationsWithAssignmentsDTO
                 {
                     Id = n.Id,
@@ -93,19 +80,19 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var assignment in assignments)
             {
-                var user = await this._context.Players.FindAsync(assignment.UserId);
+                var user = await this.Context.Players.FindAsync(assignment.UserId);
                 if (user == null || user.Role != UserRole.Player)
                 {
                     return BadRequest("Invalid user for assignment.");
                 }
 
-                var nation = await this._context.Nations.FindAsync(assignment.NationId);
+                var nation = await this.Context.Nations.FindAsync(assignment.NationId);
                 if (nation == null)
                 {
                     return BadRequest("Invalid nation for assignment.");
                 }
 
-                this._context.Entry(assignment).State = EntityState.Modified;
+                this.Context.Entry(assignment).State = EntityState.Modified;
                 gameAccess
                     .Where(ga => ga.UserId == user.UserId)
                     .ToList()
@@ -115,7 +102,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 try
                 {
                     await this._globalDbContext.SaveChangesAsync();
-                    await this._context.SaveChangesAsync();
+                    await this.Context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -147,14 +134,14 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var assignment in assignments)
             {
-                var user = await this._context.Players.FindAsync(assignment.UserId);
+                var user = await this.Context.Players.FindAsync(assignment.UserId);
                 if (user == null || user.Role != UserRole.Player)
                 {
                     return BadRequest("Invalid user for assignment.");
                 }
 
                 // TODO Temoprary settings one assignment per nation
-                var existingAssignment = await this._context.Assignments
+                var existingAssignment = await this.Context.Assignments
                     .Where(a => a.NationId == assignment.NationId && a.UserId == assignment.UserId)
                     .FirstOrDefaultAsync();
                 if (existingAssignment != null)
@@ -162,7 +149,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     continue;
                 }
 
-                var existingUserAssignment = await this._context.Assignments
+                var existingUserAssignment = await this.Context.Assignments
                     .Where(a => a.UserId == assignment.UserId)
                     .FirstOrDefaultAsync();
                 if (existingUserAssignment != null)
@@ -170,14 +157,14 @@ namespace Wg_backend_api.Controllers.GameControllers
                     continue;
                 }
 
-                var nationAssigmnet = await this._context.Assignments.Where(a => a.NationId == assignment.NationId).FirstOrDefaultAsync();
+                var nationAssigmnet = await this.Context.Assignments.Where(a => a.NationId == assignment.NationId).FirstOrDefaultAsync();
                 if (nationAssigmnet != null)
                 {
-                    this._context.Assignments.Remove(nationAssigmnet);
-                    await this._context.SaveChangesAsync();
+                    this.Context.Assignments.Remove(nationAssigmnet);
+                    await this.Context.SaveChangesAsync();
                 }
 
-                var nation = await this._context.Nations.FindAsync(assignment.NationId);
+                var nation = await this.Context.Nations.FindAsync(assignment.NationId);
                 if (nation == null)
                 {
                     return BadRequest("Invalid nation for assignment.");
@@ -194,8 +181,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                         DateAcquired = DateTime.UtcNow,
                         IsActive = true,
                     };
-                    this._context.Assignments.Add(newAssignment);
-                    await this._context.SaveChangesAsync();
+                    this.Context.Assignments.Add(newAssignment);
+                    await this.Context.SaveChangesAsync();
                     gameAccess
                         .Where(ga => ga.UserId == user.UserId)
                         .ToList()
@@ -225,13 +212,13 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var id in ids)
             {
-                var assignment = await this._context.Assignments.FindAsync(id);
+                var assignment = await this.Context.Assignments.FindAsync(id);
                 if (assignment == null)
                 {
                     return NotFound();
                 }
 
-                var user = await this._context.Players.FindAsync(assignment.UserId);
+                var user = await this.Context.Players.FindAsync(assignment.UserId);
 
                 gameAccess
                     .Where(ga => ga.UserId == user.UserId)
@@ -240,8 +227,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 this._globalDbContext.GameAccesses.UpdateRange(gameAccess);
                 await this._globalDbContext.SaveChangesAsync();
 
-                this._context.Assignments.Remove(assignment);
-                await this._context.SaveChangesAsync();
+                this.Context.Assignments.Remove(assignment);
+                await this.Context.SaveChangesAsync();
             }
 
             return NoContent();
@@ -259,7 +246,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var assign in assignments)
             {
-                var assignment = await this._context.Assignments
+                var assignment = await this.Context.Assignments
                     .Where(a => a.NationId == assign.NationId && a.UserId == assign.UserId)
                     .FirstOrDefaultAsync();
 
@@ -268,7 +255,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     return NotFound();
                 }
 
-                var user = await this._context.Players.FindAsync(assignment.UserId);
+                var user = await this.Context.Players.FindAsync(assignment.UserId);
 
                 gameAccess
                     .Where(ga => ga.UserId == user.UserId)
@@ -277,8 +264,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 this._globalDbContext.GameAccesses.UpdateRange(gameAccess);
                 await this._globalDbContext.SaveChangesAsync();
 
-                this._context.Assignments.Remove(assignment);
-                await this._context.SaveChangesAsync();
+                this.Context.Assignments.Remove(assignment);
+                await this.Context.SaveChangesAsync();
             }
 
             return NoContent();
@@ -286,13 +273,13 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         private bool AssignmentExists(int? id)
         {
-            return this._context.Assignments.Any(e => e.Id == id);
+            return this.Context.Assignments.Any(e => e.Id == id);
         }
 
         private bool TryGetGameId(out int gameId)
         {
             gameId = -1;
-            var selectedGame = this._sessionDataService.GetSchema();
+            var selectedGame = this.SessionDataService.GetSchema();
             if (string.IsNullOrEmpty(selectedGame) || !selectedGame.StartsWith("game_"))
             {
                 return false;

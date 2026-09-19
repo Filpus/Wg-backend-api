@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -9,26 +9,12 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/[controller]")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class CulturesController : Controller
+    public class CulturesController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-
         public CulturesController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
         }
 
         // GET: api/Cultures
@@ -38,7 +24,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var culture = await this._context.Cultures.FindAsync(id);
+                var culture = await this.Context.Cultures.FindAsync(id);
                 if (culture == null)
                 {
                     return this.NotFound();
@@ -48,7 +34,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var cultures = await this._context.Cultures.ToListAsync();
+                var cultures = await this.Context.Cultures.ToListAsync();
                 return this.Ok(cultures.Select(c => new CultureDTO { Id = c.Id, Name = c.Name }));
             }
         }
@@ -72,19 +58,19 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var cultureDTO in cultureDTOs)
             {
-                var culture = await this._context.Cultures.FindAsync(cultureDTO.Id);
+                var culture = await this.Context.Cultures.FindAsync(cultureDTO.Id);
                 if (culture == null)
                 {
                     return this.NotFound($"Nie znaleziono kultury o ID {cultureDTO.Id}.");
                 }
 
                 culture.Name = cultureDTO.Name;
-                this._context.Entry(culture).State = EntityState.Modified;
+                this.Context.Entry(culture).State = EntityState.Modified;
             }
 
             try
             {
-                await this._context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -112,8 +98,8 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             var cultures = cultureDTOs.Select(dto => new Culture { Name = dto.Name }).ToList();
-            this._context.Cultures.AddRange(cultures);
-            await this._context.SaveChangesAsync();
+            this.Context.Cultures.AddRange(cultures);
+            await this.Context.SaveChangesAsync();
 
             return this.CreatedAtAction("GetCultures", new { id = cultures[0].Id }, cultureDTOs);
         }
@@ -127,15 +113,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.BadRequest("Brak ID do usunięcia.");
             }
 
-            var cultures = await this._context.Cultures.Where(c => ids.Contains(c.Id)).ToListAsync();
+            var cultures = await this.Context.Cultures.Where(c => ids.Contains(c.Id)).ToListAsync();
 
             if (cultures.Count == 0)
             {
                 return this.NotFound("Nie znaleziono kultur do usunięcia.");
             }
 
-            this._context.Cultures.RemoveRange(cultures);
-            await this._context.SaveChangesAsync();
+            this.Context.Cultures.RemoveRange(cultures);
+            await this.Context.SaveChangesAsync();
 
             return this.Ok();
         }

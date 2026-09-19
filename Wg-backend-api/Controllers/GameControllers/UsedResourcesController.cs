@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -6,26 +6,12 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/UsedResources")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class UsedResourcesController : Controller
+    public class UsedResourcesController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-
         public UsedResourcesController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
         }
 
         // DELETE: api/UsedResources
@@ -37,15 +23,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var usedResources = await this._context.UsedResources.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var usedResources = await this.Context.UsedResources.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (usedResources.Count == 0)
             {
                 return NotFound("Nie znaleziono zasobów do usunięcia.");
             }
 
-            this._context.UsedResources.RemoveRange(usedResources);
-            await this._context.SaveChangesAsync();
+            this.Context.UsedResources.RemoveRange(usedResources);
+            await this.Context.SaveChangesAsync();
 
             return Ok();
         }

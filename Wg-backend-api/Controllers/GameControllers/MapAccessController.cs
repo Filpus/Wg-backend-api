@@ -9,29 +9,12 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/MapAccesses")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class MapAccessController : Controller
+    public class MapAccessController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-        private int? _nationId;
-
         public MapAccessController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
-            string nationIdStr = this._sessionDataService.GetNation();
-            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         [HttpGet("{mapId?}")]
@@ -40,7 +23,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             var mapAccesses = new List<MapAccessInfoDTO>();
             if (mapId.HasValue)
             {
-                mapAccesses = await this._context.MapAccesses
+                mapAccesses = await this.Context.MapAccesses
                    .Include(ma => ma.Map)
                    .Include(ma => ma.Nation)
                    .Where(ma => ma.MapId == mapId)
@@ -56,7 +39,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                mapAccesses = await this._context.MapAccesses
+                mapAccesses = await this.Context.MapAccesses
                    .Include(ma => ma.Map)
                    .Include(ma => ma.Nation)
                     .Select(ma => new MapAccessInfoDTO
@@ -87,7 +70,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 int nationId = 0;
                 if (mapaccess.NationId == null)
                 {
-                    nationId = (int)this._nationId;
+                    nationId = (int)this.NationId;
                 }
                 else
                 {
@@ -101,7 +84,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     return this.BadRequest("Inappropriate ID");
                 }
 
-                var existingMapAccess = await this._context.MapAccesses
+                var existingMapAccess = await this.Context.MapAccesses
                     .FirstOrDefaultAsync(ma => ma.NationId == nationId && ma.MapId == mapId);
                 Console.WriteLine(existingMapAccess);
                 if (existingMapAccess != null)
@@ -109,13 +92,13 @@ namespace Wg_backend_api.Controllers.GameControllers
                     return this.BadRequest("Map access already exists");
                 }
 
-                var map = await this._context.Maps.FirstOrDefaultAsync(map => map.Id == mapId);
+                var map = await this.Context.Maps.FirstOrDefaultAsync(map => map.Id == mapId);
                 if (map == null)
                 {
                     return this.BadRequest("Map does not exist");
                 }
 
-                var nation = await this._context.Nations.FirstOrDefaultAsync(map => map.Id == nationId);
+                var nation = await this.Context.Nations.FirstOrDefaultAsync(map => map.Id == nationId);
                 if (nation == null)
                 {
                     return this.BadRequest("Nation does not exist");
@@ -128,10 +111,10 @@ namespace Wg_backend_api.Controllers.GameControllers
                 };
 
                 newMapAccesses.Add(newMapAccess);
-                this._context.MapAccesses.Add(newMapAccess);
+                this.Context.MapAccesses.Add(newMapAccess);
             }
 
-            await this._context.SaveChangesAsync();
+            await this.Context.SaveChangesAsync();
 
             return this.CreatedAtAction(nameof(this.GetAllMapAccesses), new { });
         }
@@ -146,7 +129,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var item in ids)
             {
-                item.NationId ??= this._nationId;
+                item.NationId ??= this.NationId;
 
                 if (item.NationId < 0 || item.MapId < 0)
                 {
@@ -156,32 +139,32 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var id in ids)
             {
-                var mapAccess = await this._context.MapAccesses
+                var mapAccess = await this.Context.MapAccesses
                     .FirstOrDefaultAsync(ma => ma.NationId == id.NationId && ma.MapId == id.MapId);
 
                 if (mapAccess != null)
                 {
-                    this._context.MapAccesses.Remove(mapAccess);
+                    this.Context.MapAccesses.Remove(mapAccess);
                 }
             }
 
-            await this._context.SaveChangesAsync();
+            await this.Context.SaveChangesAsync();
 
             return this.Ok();
         }
         [HttpGet("MissingAccess/{nationId?}")]
         public async Task<ActionResult<IEnumerable<MapAccessInfoDTO>>> GetMissingMapAccess(int? nationId)
         {
-            nationId ??= this._nationId;
+            nationId ??= this.NationId;
 
             if (nationId is null or <= 0)
             {
                 return BadRequest("Nieprawidłowe ID państwa.");
             }
 
-            var allMaps = await this._context.Maps.ToListAsync();
+            var allMaps = await this.Context.Maps.ToListAsync();
 
-            var nationAccess = await this._context.MapAccesses
+            var nationAccess = await this.Context.MapAccesses
                 .Where(ma => ma.NationId == nationId)
                 .Select(ma => ma.MapId)
                 .ToListAsync();
@@ -193,7 +176,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     MapId = (int)map.Id,
                     MapName = map.Name,
                     NationId = nationId.Value,
-                    NationName = this._context.Nations.FirstOrDefault(n => n.Id == nationId)?.Name ?? string.Empty,
+                    NationName = this.Context.Nations.FirstOrDefault(n => n.Id == nationId)?.Name ?? string.Empty,
                 })
                 .ToList();
 

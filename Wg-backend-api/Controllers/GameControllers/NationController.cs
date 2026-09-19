@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
@@ -10,13 +10,9 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/Nations")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class NationController : Controller
+    public class NationController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
         private readonly GlobalDbContext _globalDbContext;
 
         private class FileUploadResult
@@ -29,18 +25,9 @@ namespace Wg_backend_api.Controllers.GameControllers
         }
 
         public NationController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService, GlobalDbContext globalDbContext)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
             this._globalDbContext = globalDbContext;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
         }
 
         [HttpGet("{id?}")]
@@ -48,7 +35,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var nation = await this._context.Nations.FindAsync(id);
+                var nation = await this.Context.Nations.FindAsync(id);
                 if (nation == null)
                 {
                     return NotFound();
@@ -68,7 +55,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var nations = await this._context.Nations.ToListAsync();
+                var nations = await this.Context.Nations.ToListAsync();
                 return Ok(nations.Select(n => new NationDTO
                 {
                     Id = n.Id,
@@ -83,7 +70,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("no-owner")]
         public async Task<List<NationBaseInfoDTO>> GetNationsWithNoOwner()
         {
-            var nations = await this._context.Nations
+            var nations = await this.Context.Nations
                 .Select(na => new
                 {
                     na.Id,
@@ -104,7 +91,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("other-nations")]
         public async Task<List<NationBaseInfoDTO>> GetOtherNations()
         {
-            var nationId = this._sessionDataService.GetNation();
+            var nationId = this.SessionDataService.GetNation();
 
             if (string.IsNullOrEmpty(nationId))
             {
@@ -113,7 +100,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             int id = int.Parse(nationId);
 
-            return await this._context.Nations
+            return await this.Context.Nations
                 .Where(n => n.Id != id)
                 .Select(n => new NationBaseInfoDTO
                 {
@@ -128,9 +115,9 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             // TODO ensure only mg can call this endpoint
 
-            var nationsWithUsers = await this._context.Nations
+            var nationsWithUsers = await this.Context.Nations
                 .GroupJoin(
-                    this._context.Assignments.Where(a => a.IsActive),
+                    this.Context.Assignments.Where(a => a.IsActive),
                     n => n.Id,
                     a => a.NationId,
                     (n, assignments) => new { n, assignments }
@@ -140,7 +127,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     (x, a) => new { x.n, a }
                 )
                 .GroupJoin(
-                    this._context.Players,
+                    this.Context.Players,
                     na => na.a.UserId,
                     p => p.Id,
                     (na, players) => new { na, players }
@@ -168,7 +155,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             if (id == null)
             {
-                var nationIdStr = this._sessionDataService.GetNation();
+                var nationIdStr = this.SessionDataService.GetNation();
 
                 if (string.IsNullOrEmpty(nationIdStr))
                 {
@@ -182,7 +169,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 nationId = id.Value;
             }
 
-            var nation = await this._context.Nations
+            var nation = await this.Context.Nations
                 .Where(n => n.Id == nationId)
                 .Select(n => new NationDetailedDTO
                 {
@@ -203,10 +190,10 @@ namespace Wg_backend_api.Controllers.GameControllers
                         Name = n.Religion.Name,
                     },
 
-                    OwnerName = this._context.Assignments
+                    OwnerName = this.Context.Assignments
                         .Where(a => a.NationId == n.Id && a.IsActive)
                         .Join(
-                            this._context.Players,
+                            this.Context.Players,
                             a => a.UserId,
                             p => p.Id,
                             (a, p) => p.Name)
@@ -225,7 +212,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpPut]
         public async Task<IActionResult> PutNations([FromBody] List<NationDTO> nations)
         {
-            var selectedGame = this._sessionDataService.GetSchema();
+            var selectedGame = this.SessionDataService.GetSchema();
             if (string.IsNullOrEmpty(selectedGame) || !selectedGame.StartsWith("game_"))
             {
                 return BadRequest(new
@@ -246,7 +233,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var nationDto in nations)
             {
-                var nation = await this._context.Nations.FindAsync(nationDto.Id);
+                var nation = await this.Context.Nations.FindAsync(nationDto.Id);
                 if (nation == null)
                 {
                     return NotFound($"Nie znaleziono państwa o ID {nationDto.Id}.");
@@ -266,12 +253,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 nation.ReligionId = nationDto.ReligionId;
                 nation.CultureId = nationDto.CultureId;
 
-                this._context.Entry(nation).State = EntityState.Modified;
+                this.Context.Entry(nation).State = EntityState.Modified;
             }
 
             try
             {
-                await this._context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
                 await this._globalDbContext.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
@@ -295,7 +282,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.BadRequest("Religion, Culture, Color are required.");
             }
 
-            var nationWithSameName = await this._context.Nations
+            var nationWithSameName = await this.Context.Nations
                 .FirstOrDefaultAsync(n => n.Name.ToLower() == nations.Name.ToLower());
 
             if (nationWithSameName != null)
@@ -325,8 +312,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Flag = flagPath,
             };
 
-            this._context.Nations.Add(newNation);
-            await this._context.SaveChangesAsync();
+            this.Context.Nations.Add(newNation);
+            await this.Context.SaveChangesAsync();
 
             return this.CreatedAtAction(nameof(GetNations), new { id = newNation.Id }, new NationDTO
             {
@@ -347,8 +334,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.BadRequest("Brak ID do usunięcia.");
             }
 
-            var nations = await this._context.Nations.Where(r => ids.Contains(r.Id)).ToListAsync();
-            var selectedGame = this._sessionDataService.GetSchema();
+            var nations = await this.Context.Nations.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var selectedGame = this.SessionDataService.GetSchema();
             if (string.IsNullOrEmpty(selectedGame) || !selectedGame.StartsWith("game_"))
             {
                 return BadRequest(new
@@ -385,8 +372,8 @@ namespace Wg_backend_api.Controllers.GameControllers
             // Remember here docks and barracks in armies with location null will be deleted because of cascade delete
             this._globalDbContext.GameAccesses.UpdateRange(globalGameAccesse);
             await this._globalDbContext.SaveChangesAsync();
-            this._context.Nations.RemoveRange(nations);
-            await this._context.SaveChangesAsync();
+            this.Context.Nations.RemoveRange(nations);
+            await this.Context.SaveChangesAsync();
 
             return this.Ok();
         }
@@ -404,7 +391,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.BadRequest("Nation ID is required.");
             }
 
-            var nation = await this._context.Nations.FindAsync(nationDto.Id);
+            var nation = await this.Context.Nations.FindAsync(nationDto.Id);
             if (nation == null)
             {
                 return this.NotFound($"Didn't find nation with ID {nationDto.Id}.");
@@ -412,14 +399,14 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             if (nationDto.Name != null)
             {
-                var nationWithSameName = await this._context.Nations
+                var nationWithSameName = await this.Context.Nations
                     .FirstOrDefaultAsync(n => n.Name.ToLower() == nationDto.Name.ToLower() && n.Id != nationDto.Id);
                 if (nationWithSameName != null)
                 {
                     return this.BadRequest("Nation with the same name already exists.");
                 }
 
-                var selectedGame = this._sessionDataService.GetSchema();
+                var selectedGame = this.SessionDataService.GetSchema();
                 if (string.IsNullOrEmpty(selectedGame) || !selectedGame.StartsWith("game_"))
                 {
                     return BadRequest(new
@@ -443,7 +430,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             if (nationDto.ReligionId != null)
             {
-                var religion = await this._context.Religions.FindAsync(nationDto.ReligionId);
+                var religion = await this.Context.Religions.FindAsync(nationDto.ReligionId);
                 if (religion == null)
                 {
                     return this.NotFound($"Didn't find Religion with ID {nationDto.ReligionId}.");
@@ -454,7 +441,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             if (nationDto.CultureId != null)
             {
-                var culture = await this._context.Cultures.FindAsync(nationDto.CultureId);
+                var culture = await this.Context.Cultures.FindAsync(nationDto.CultureId);
                 if (culture == null)
                 {
                     return this.NotFound($"Didn't find culture with ID {nationDto.CultureId}.");
@@ -486,11 +473,11 @@ namespace Wg_backend_api.Controllers.GameControllers
                 nation.Flag = result.FilePath;
             }
 
-            this._context.Entry(nation).State = EntityState.Modified;
+            this.Context.Entry(nation).State = EntityState.Modified;
 
             try
             {
-                await this._context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
                 await this._globalDbContext.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -564,14 +551,14 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         private bool IsNationDependency(int id)
         {
-            var hasDependencies = this._context.AccessToUnits.Any(e => e.NationId == id) ||
-                                  this._context.Actions.Any(e => e.NationId == id) ||
-                                  this._context.Armies.Any(e => e.NationId == id && e.LocationId != null) ||
-                                  this._context.Factions.Any(e => e.NationId == id) ||
-                                  this._context.Localisations.Any(e => e.NationId == id) ||
-                                  this._context.RelatedEvents.Any(e => e.NationId == id) ||
-                                  this._context.TradeAgreements.Any(e => e.OfferingNationId == id || e.ReceivingNationId == id) ||
-                                  this._context.UnitOrders.Any(e => e.NationId == id);
+            var hasDependencies = this.Context.AccessToUnits.Any(e => e.NationId == id) ||
+                                  this.Context.Actions.Any(e => e.NationId == id) ||
+                                  this.Context.Armies.Any(e => e.NationId == id && e.LocationId != null) ||
+                                  this.Context.Factions.Any(e => e.NationId == id) ||
+                                  this.Context.Localisations.Any(e => e.NationId == id) ||
+                                  this.Context.RelatedEvents.Any(e => e.NationId == id) ||
+                                  this.Context.TradeAgreements.Any(e => e.OfferingNationId == id || e.ReceivingNationId == id) ||
+                                  this.Context.UnitOrders.Any(e => e.NationId == id);
 
             return hasDependencies;
         }

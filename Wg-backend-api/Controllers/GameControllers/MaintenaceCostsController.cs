@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -9,32 +9,18 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/MaintenaceCosts")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class MaintenaceCostsController : Controller
+    public class MaintenaceCostsController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-
         public MaintenaceCostsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
         }
 
         [HttpGet("unitType/{unitTypeId}")]
         public async Task<ActionResult<List<UnitTypeResourceInfoDTO>>> GetMaintenaceCostsForUnitType(int unitTypeId)
         {
-            var list = await this._context.MaintenaceCosts
+            var list = await this.Context.MaintenaceCosts
                 .Where(m => m.UnitTypeId == unitTypeId)
                 .Include(m => m.UnitType)
                 .Include(m => m.Resource)
@@ -67,7 +53,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
                 if (dto.Id.HasValue)
                 {
-                    entity = await this._context.MaintenaceCosts.FindAsync(dto.Id.Value);
+                    entity = await this.Context.MaintenaceCosts.FindAsync(dto.Id.Value);
                 }
 
                 if (entity == null)
@@ -78,18 +64,18 @@ namespace Wg_backend_api.Controllers.GameControllers
                         ResourceId = dto.ResourceId,
                         Amount = dto.Amount
                     };
-                    await this._context.MaintenaceCosts.AddAsync(entity);
+                    await this.Context.MaintenaceCosts.AddAsync(entity);
                 }
                 else
                 {
                     entity.UnitTypeId = dto.UnitTypeId;
                     entity.ResourceId = dto.ResourceId;
                     entity.Amount = dto.Amount;
-                    this._context.MaintenaceCosts.Update(entity);
+                    this.Context.MaintenaceCosts.Update(entity);
                 }
             }
 
-            await this._context.SaveChangesAsync();
+            await this.Context.SaveChangesAsync();
             return Ok();
         }
 
@@ -101,15 +87,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var maintenaceCosts = await this._context.MaintenaceCosts.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var maintenaceCosts = await this.Context.MaintenaceCosts.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (maintenaceCosts.Count == 0)
             {
                 return NotFound("Nie znaleziono kosztów utrzymania do usunięcia.");
             }
 
-            this._context.MaintenaceCosts.RemoveRange(maintenaceCosts);
-            await this._context.SaveChangesAsync();
+            this.Context.MaintenaceCosts.RemoveRange(maintenaceCosts);
+            await this.Context.SaveChangesAsync();
 
             return Ok();
         }
