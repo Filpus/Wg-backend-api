@@ -1,0 +1,40 @@
+# Przykladowy compose do wdrozenia na serwerze.
+# Uzycie:
+#   1) cp .env.example .env
+#   2) uzupelnij prawdziwe wartosci w .env (NIE commituj tego pliku)
+#   3) docker compose --env-file .env up -d --build
+#
+# Baze trzeba zainicjowac osobno wg kroków z README.md (psql -f Migrations/...),
+# tak jak dotychczas - ten plik tylko uruchamia postgresa i api z sekretami z .env,
+# nie zmienia procesu seedowania/migracji.
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?ustaw POSTGRES_PASSWORD w .env}
+      POSTGRES_DB: wg-deployment
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
+    build:
+      context: ./Wg-backend-api
+      dockerfile: dockerfile
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      FRONTEND_URL: ${FRONTEND_URL:?ustaw FRONTEND_URL w .env}
+      ConnectionStrings__DeploymentDatabaseConection: "Server=postgres;Port=5432;Database=wg-deployment;User Id=postgres;Password=${POSTGRES_PASSWORD};"
+      Jwt__Key: ${JWT_KEY:?ustaw JWT_KEY w .env}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    ports:
+      - "7105:7105"
+
+volumes:
+  pgdata:

@@ -63,12 +63,12 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 if (s.Id is null or <= 0)
                 {
-                    return this.BadRequest("Brak lub nieprawid�owe ID ustawienia do edycji.");
+                    return this.BadRequest("Brak lub nieprawidłowe ID ustawienia do edycji.");
                 }
 
                 if (string.IsNullOrWhiteSpace(s.NameOfSettingsSet) || s.NameOfSettingsSet.Length > 50)
                 {
-                    return this.BadRequest("Nazwa zestawu ustawie� jest niepoprawnej d�ugo�ci.");
+                    return this.BadRequest("Nazwa zestawu ustawień jest niepoprawnej długości.");
                 }
             }
 
@@ -80,7 +80,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                     return this.NotFound($"Ustawienie o ID {s.Id} nie istnieje.");
                 }
 
-                // Map wszystkie pola z przes�anego obiektu na encj�
+                // Map wszystkie pola z przesłanego obiektu na encję
                 entity.NameOfSettingsSet = s.NameOfSettingsSet;
                 entity.UseMeleeAtack = s.UseMeleeAtack;
                 entity.UseRangeAtack = s.UseRangeAtack;
@@ -98,7 +98,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                return this.StatusCode(500, "B��d podczas aktualizacji.");
+                return this.StatusCode(500, "Błąd podczas aktualizacji.");
             }
 
             return this.NoContent();
@@ -119,7 +119,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 if (string.IsNullOrWhiteSpace(s.NameOfSettingsSet) || s.NameOfSettingsSet.Length > 50)
                 {
-                    return this.BadRequest("Nazwa zestawu ustawie� jest niepoprawnej d�ugo�ci.");
+                    return this.BadRequest("Nazwa zestawu ustawień jest niepoprawnej długości.");
                 }
 
                 var entity = new ArmySettings
@@ -148,14 +148,14 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (ids == null || ids.Count == 0)
             {
-                return this.BadRequest("Brak ID do usuni�cia.");
+                return this.BadRequest("Brak ID do usunięcia.");
             }
 
             var settings = await this._context.ArmySettings.Where(s => ids.Contains(s.Id)).ToListAsync();
 
             if (settings.Count == 0)
             {
-                return this.NotFound("Nie znaleziono ustawie� do usuni�cia.");
+                return this.NotFound("Nie znaleziono ustawień do usunięcia.");
             }
 
             this._context.ArmySettings.RemoveRange(settings);

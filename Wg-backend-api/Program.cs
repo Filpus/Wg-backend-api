@@ -26,6 +26,28 @@ if (Environment.GetEnvironmentVariable("FRONTEND_URL") != null)
     connectionString = builder.Configuration.GetConnectionString("DeploymentDatabaseConection");
 }
 
+// Fail fast if required secrets are missing instead of crashing later with a cryptic error.
+// Values come from appsettings.json (local dev only, never commit real secrets there),
+// dotnet user-secrets (local dev), or environment variables (Docker/production), e.g.:
+//   ConnectionStrings__DevConection
+//   ConnectionStrings__DeploymentDatabaseConection
+//   Jwt__Key
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Brak connection stringa do bazy danych. Ustaw go przez dotnet user-secrets " +
+        "(ConnectionStrings:DevConection) lokalnie albo przez zmienną środowiskową " +
+        "ConnectionStrings__DeploymentDatabaseConection na serwerze/w kontenerze.");
+}
+
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    throw new InvalidOperationException(
+        "Brak Jwt:Key. Ustaw go przez dotnet user-secrets (Jwt:Key) lokalnie albo przez " +
+        "zmienną środowiskową Jwt__Key na serwerze/w kontenerze.");
+}
+
 builder.Services.AddSingleton(new GameService(connectionString));
 
 // Add DbContexts
@@ -65,7 +87,7 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidAudience = builder.Configuration["Jwt:Audience"],
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ValidateLifetime = true,
     };
     options.Events = new JwtBearerEvents
@@ -177,7 +199,7 @@ app.UseForwardedHeaders();
 var corsService = app.Services.GetRequiredService<ICorsService>();
 var corsPolicyProvider = app.Services.GetRequiredService<ICorsPolicyProvider>();
 
-// Konfiguracja plik�w statycznych z CORS
+// Konfiguracja plików statycznych z CORS
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(
@@ -196,12 +218,12 @@ app.UseStaticFiles(new StaticFileOptions
 
 // app.UseHttpsRedirection();
 
-// app.UseStaticFiles(); // Teraz z obs�ug� CORS
+// app.UseStaticFiles(); // Teraz z obsługą CORS
 
 app.UseRouting(); // Jawnie dodane
 app.UseSession(); // Tutaj dodajemy middleware sesji
 
-app.UseCors("AllowAngular"); // Po routingu, przed autentykacj�
+app.UseCors("AllowAngular"); // Po routingu, przed autentykacją
 
 app.UseAuthentication();
 

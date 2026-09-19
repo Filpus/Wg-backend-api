@@ -123,7 +123,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                return this.StatusCode(500, "B��d podczas aktualizacji.");
+                return this.StatusCode(500, "Błąd podczas aktualizacji.");
             }
 
             return this.NoContent();
@@ -170,7 +170,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             {
                 return this.StatusCode(
                     StatusCodes.Status500InternalServerError,
-                    $"Wyst�pi� b��d podczas przetwarzania pliku: {ex.Message}"
+                    $"Wystąpił błąd podczas przetwarzania pliku: {ex.Message}"
                 );
             }
         }
@@ -187,7 +187,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             if (maps.Count == 0)
             {
-                return this.NotFound("Nie znaleziono map do usuni�cia.");
+                return this.NotFound("Nie znaleziono map do usunięcia.");
             }
 
             foreach (var map in maps)
@@ -238,7 +238,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             if (!nationMaps.Any())
             {
-                return NotFound("Nie znaleziono map dla podanego pa�stwa.");
+                return NotFound("Nie znaleziono map dla podanego państwa.");
             }
 
             return Ok(nationMaps);

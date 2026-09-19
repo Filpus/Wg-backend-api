@@ -366,3 +366,10 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Archives (accidental build-artifact zips)
+*.zip
+*.7z
+*.rar
+
+# Server secrets (real values) - nigdy nie commitowac
+.env
