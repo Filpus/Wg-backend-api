@@ -9,30 +9,12 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/Factions")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class FactionsController : Controller
+    public class FactionsController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-
-        private int? _nationId;
-
         public FactionsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
-            string nationIdStr = this._sessionDataService.GetNation();
-            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
         }
 
         [HttpGet("{id?}")]
@@ -40,7 +22,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var faction = await this._context.Factions
+                var faction = await this.Context.Factions
                     .Where(f => f.Id == id)
                     .Select(f => new FactionDTO
                     {
@@ -65,7 +47,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var factions = await this._context.Factions
+                var factions = await this.Context.Factions
                     .Select(f => new FactionDTO
                     {
                         Id = f.Id,
@@ -93,7 +75,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var dto in factionsDto)
             {
-                var faction = await this._context.Factions.FindAsync(dto.Id);
+                var faction = await this.Context.Factions.FindAsync(dto.Id);
                 if (faction == null)
                 {
                     return this.NotFound($"Nie znaleziono frakcji o ID {dto.Id}.");
@@ -107,12 +89,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 faction.Description = dto.Description;
                 faction.NationId = (int)dto.NationId;
 
-                this._context.Entry(faction).State = EntityState.Modified;
+                this.Context.Entry(faction).State = EntityState.Modified;
             }
 
             try
             {
-                await this._context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -138,11 +120,11 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Contentment = dto.Contentment,
                 Color = dto.Color,
                 Description = dto.Description,
-                NationId = dto.NationId > 0 ? (int)dto.NationId : this._nationId ?? throw new InvalidOperationException("Brak ID państwa w sesji."),
+                NationId = dto.NationId > 0 ? (int)dto.NationId : this.NationId ?? throw new InvalidOperationException("Brak ID państwa w sesji."),
             }).ToList();
 
-            this._context.Factions.AddRange(factions);
-            await this._context.SaveChangesAsync();
+            this.Context.Factions.AddRange(factions);
+            await this.Context.SaveChangesAsync();
 
             return this.CreatedAtAction("GetFactions", new { id = factions[0].Id }, factionsDto);
         }
@@ -155,15 +137,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.BadRequest("Brak ID do usunięcia.");
             }
 
-            var factions = await this._context.Factions.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var factions = await this.Context.Factions.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (factions.Count == 0)
             {
                 return this.NotFound("Nie znaleziono frakcji do usunięcia.");
             }
 
-            this._context.Factions.RemoveRange(factions);
-            await this._context.SaveChangesAsync();
+            this.Context.Factions.RemoveRange(factions);
+            await this.Context.SaveChangesAsync();
 
             return this.Ok();
         }
@@ -171,9 +153,9 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("ByNation/{nationId?}")]
         public async Task<ActionResult<IEnumerable<FactionDTO>>> GetFactionsByNation(int? nationId)
         {
-            nationId ??= this._nationId;
+            nationId ??= this.NationId;
 
-            var factions = await this._context.Factions
+            var factions = await this.Context.Factions
                 .Where(f => f.NationId == nationId)
                 .Select(f => new FactionDTO
                 {

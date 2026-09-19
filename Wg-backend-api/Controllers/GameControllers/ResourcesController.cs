@@ -1,4 +1,4 @@
-﻿// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
@@ -10,30 +10,12 @@ using Wg_backend_api.Services;
 
 namespace Wg_backend_api.Controllers.GameControllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class ResourcesController : ControllerBase
+    public class ResourcesController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-        private int _nationId;
-
         public ResourcesController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
-            string nationIdStr = this._sessionDataService.GetNation();
-            this._nationId = int.Parse(nationIdStr);
         }
 
         // GET: api/Resources
@@ -43,7 +25,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var resource = await this._context.Resources.FindAsync(id);
+                var resource = await this.Context.Resources.FindAsync(id);
                 if (resource == null)
                 {
                     return this.NotFound();
@@ -61,7 +43,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var resources = await this._context.Resources.ToListAsync();
+                var resources = await this.Context.Resources.ToListAsync();
                 var resourceDtos = resources.Select(r => new ResourceDto
                 {
                     Id = r.Id.Value,
@@ -94,7 +76,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var resourceDto in resourceDtos)
             {
-                var resource = await this._context.Resources.FindAsync(resourceDto.Id);
+                var resource = await this.Context.Resources.FindAsync(resourceDto.Id);
                 if (resource == null)
                 {
                     return this.NotFound($"Nie znaleziono zasobu o ID: {resourceDto.Id}");
@@ -105,12 +87,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                 resource.Icon = resourceDto.Icon;
                 resource.ConstProduction = resourceDto.ConstProduction;
 
-                this._context.Entry(resource).State = EntityState.Modified;
+                this.Context.Entry(resource).State = EntityState.Modified;
             }
 
             try
             {
-                await this._context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -187,8 +169,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 });
             }
 
-            this._context.Resources.AddRange(savedResources);
-            await this._context.SaveChangesAsync();
+            this.Context.Resources.AddRange(savedResources);
+            await this.Context.SaveChangesAsync();
 
             var response = savedResources.Select(r => new ResourceDto
             {
@@ -211,15 +193,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.BadRequest("Brak ID do usunięcia.");
             }
 
-            var resources = await this._context.Resources.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var resources = await this.Context.Resources.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (resources.Count == 0)
             {
                 return this.NotFound("Nie znaleziono zasobów do usunięcia.");
             }
 
-            this._context.Resources.RemoveRange(resources);
-            await this._context.SaveChangesAsync();
+            this.Context.Resources.RemoveRange(resources);
+            await this.Context.SaveChangesAsync();
 
             return this.Ok();
         }
@@ -227,8 +209,13 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("nation/resource-balance/{nationId?}")]
         public async Task<ActionResult<NationResourceBalanceDto>> GetNationResourceBalance(int? nationId)
         {
-            nationId ??= this._nationId;
-            var result = await CalcResourceBalance.CalculateNationResourceBalance(nationId.Value, this._context);
+            nationId ??= this.NationId;
+            if (nationId == null)
+            {
+                return this.BadRequest("Brak ID państwa.");
+            }
+
+            var result = await CalcResourceBalance.CalculateNationResourceBalance(nationId.Value, this.Context);
             if (result == null)
             {
                 return NotFound();
@@ -241,14 +228,14 @@ namespace Wg_backend_api.Controllers.GameControllers
         public async Task<ActionResult<List<ResourceAmountDto>>> GetOwnedResources(int? nationId)
         {
 
-            nationId ??= this._nationId;
+            nationId ??= this.NationId;
 
             if (nationId == null)
             {
                 return this.BadRequest("Brak ID państwa.");
             }
 
-            var query = this._context.OwnedResources
+            var query = this.Context.OwnedResources
                 .AsNoTracking()
                 .Include(or => or.Resource)
                 .Where(or => or.NationId == nationId);
@@ -260,7 +247,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.NotFound($"Nie znaleziono zasobów przypisanych do państwa o ID: {nationId}");
             }
 
-            var ownedResources = await this._context.OwnedResources
+            var ownedResources = await this.Context.OwnedResources
                 .Where(or => or.NationId == nationId)
                 .GroupBy(or => new { or.ResourceId, ResourceName = or.Resource.Name })
                 .Select(g => new ResourceAmountDto
@@ -278,7 +265,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         public async Task<IActionResult> PutOwnedResources(int? nationId, [FromBody] List<ResourceAmountDto> resources)
         {
             // Ustal nationId domyślnie
-            nationId ??= this._nationId;
+            nationId ??= this.NationId;
 
             if (nationId == null)
             {
@@ -290,10 +277,10 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return this.BadRequest("Brak danych do zapisania.");
             }
 
-            using var transaction = await this._context.Database.BeginTransactionAsync();
+            using var transaction = await this.Context.Database.BeginTransactionAsync();
             try
             {
-                var existingOwned = await this._context.OwnedResources
+                var existingOwned = await this.Context.OwnedResources
                     .Where(or => or.NationId == nationId)
                     .ToListAsync();
 
@@ -306,12 +293,12 @@ namespace Wg_backend_api.Controllers.GameControllers
                         if (Math.Abs(match.Amount - dto.Amount) > float.Epsilon)
                         {
                             match.Amount = dto.Amount;
-                            this._context.Entry(match).State = EntityState.Modified;
+                            this.Context.Entry(match).State = EntityState.Modified;
                         }
                     }
                 }
 
-                await this._context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return this.NoContent();

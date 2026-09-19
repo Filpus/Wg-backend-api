@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -9,26 +9,12 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/ProductionCosts")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class ProductionCostsController : Controller
+    public class ProductionCostsController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-
         public ProductionCostsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
         }
 
         // DELETE: api/ProductionCosts
@@ -40,15 +26,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var productionCosts = await this._context.ProductionCosts.Where(r => ids.Contains(r.Id)).ToListAsync();
+            var productionCosts = await this.Context.ProductionCosts.Where(r => ids.Contains(r.Id)).ToListAsync();
 
             if (productionCosts.Count == 0)
             {
                 return NotFound("Nie znaleziono kosztów produkcji do usunięcia.");
             }
 
-            this._context.ProductionCosts.RemoveRange(productionCosts);
-            await this._context.SaveChangesAsync();
+            this.Context.ProductionCosts.RemoveRange(productionCosts);
+            await this.Context.SaveChangesAsync();
 
             return Ok();
         }
@@ -56,7 +42,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("unitType/{unitTypeId}")]
         public async Task<ActionResult<List<UnitTypeResourceInfoDTO>>> GeProductionCostsForUnitType(int unitTypeId)
         {
-            var list = await this._context.ProductionCosts
+            var list = await this.Context.ProductionCosts
                 .Where(m => m.UnitTypeId == unitTypeId)
                 .Include(m => m.UnitType)
                 .Include(m => m.Resource)
@@ -89,7 +75,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
                 if (dto.Id.HasValue)
                 {
-                    entity = await this._context.ProductionCosts.FindAsync(dto.Id.Value);
+                    entity = await this.Context.ProductionCosts.FindAsync(dto.Id.Value);
                 }
 
                 if (entity == null)
@@ -100,18 +86,18 @@ namespace Wg_backend_api.Controllers.GameControllers
                         ResourceId = dto.ResourceId,
                         Amount = dto.Amount
                     };
-                    await this._context.ProductionCosts.AddAsync(entity);
+                    await this.Context.ProductionCosts.AddAsync(entity);
                 }
                 else
                 {
                     entity.UnitTypeId = dto.UnitTypeId;
                     entity.ResourceId = dto.ResourceId;
                     entity.Amount = dto.Amount;
-                    this._context.ProductionCosts.Update(entity);
+                    this.Context.ProductionCosts.Update(entity);
                 }
             }
 
-            await this._context.SaveChangesAsync();
+            await this.Context.SaveChangesAsync();
             return Ok();
         }
     }

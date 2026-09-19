@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -9,37 +9,19 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/AccessToUnits")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class AccessToUnitsController : Controller
+    public class AccessToUnitsController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-        private int? _nationId;
-
         public AccessToUnitsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
-            string nationIdStr = this._sessionDataService.GetNation();
-            this._nationId = string.IsNullOrEmpty(nationIdStr) ? null : int.Parse(nationIdStr);
-
         }
 
         [HttpDelete]
         public async Task<ActionResult> DeleteAccessToUnits([FromBody] List<int?> ids)
         {
 
-            if (this._nationId == null)
+            if (this.NationId == null)
             {
                 return BadRequest("Brak ID państwa w sesji.");
             }
@@ -51,8 +33,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                     return BadRequest("Nieprawidłowe ID typu jednostki.");
                 }
 
-                var accessToUnits = await this._context.AccessToUnits
-                    .Where(a => a.NationId == this._nationId && a.UnitTypeId == unitTypeId)
+                var accessToUnits = await this.Context.AccessToUnits
+                    .Where(a => a.NationId == this.NationId && a.UnitTypeId == unitTypeId)
                     .ToListAsync();
 
                 if (accessToUnits.Count == 0)
@@ -60,8 +42,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                     return NotFound("Nie znaleziono dostępu do jednostek do usunięcia.");
                 }
 
-                this._context.AccessToUnits.RemoveRange(accessToUnits);
-                await this._context.SaveChangesAsync();
+                this.Context.AccessToUnits.RemoveRange(accessToUnits);
+                await this.Context.SaveChangesAsync();
             }
 
             return Ok();
@@ -75,7 +57,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Nieprawidłowe ID państwa.");
             }
 
-            var list = await this._context.AccessToUnits
+            var list = await this.Context.AccessToUnits
                 .Where(a => a.NationId == nationId)
                 .Select(a => new UnitTypeAccessInfoDTO
                 {
@@ -97,7 +79,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Nieprawidłowe ID typu jednostki.");
             }
 
-            var list = await this._context.AccessToUnits
+            var list = await this.Context.AccessToUnits
                 .Where(a => a.UnitTypeId == unitTypeId)
                 .Select(a => new UnitTypeAccessInfoDTO
                 {
@@ -122,13 +104,13 @@ namespace Wg_backend_api.Controllers.GameControllers
             var accessToUnits = dtos
                 .Select(dto => new AccessToUnit
                 {
-                    NationId = dto.NationId > 0 ? (int)dto.NationId : this._nationId ?? throw new InvalidOperationException("Brak ID państwa w sesji."),
+                    NationId = dto.NationId > 0 ? (int)dto.NationId : this.NationId ?? throw new InvalidOperationException("Brak ID państwa w sesji."),
                     UnitTypeId = dto.UnitTypeId,
                 })
                 .ToList();
 
-            this._context.AccessToUnits.AddRange(accessToUnits);
-            await this._context.SaveChangesAsync();
+            this.Context.AccessToUnits.AddRange(accessToUnits);
+            await this.Context.SaveChangesAsync();
 
             return Ok();
         }
@@ -136,11 +118,11 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("LandMissingAccess/{nationId?}")]
         public async Task<ActionResult<IEnumerable<UnitTypeDTO>>> GetLandMissingAccess(int? nationId)
         {
-            nationId ??= this._nationId;
+            nationId ??= this.NationId;
 
-            var allUnitTypes = await this._context.UnitTypes.ToListAsync();
+            var allUnitTypes = await this.Context.UnitTypes.ToListAsync();
 
-            var nationAccess = await this._context.AccessToUnits
+            var nationAccess = await this.Context.AccessToUnits
                 .Where(a => a.NationId == nationId)
                 .Select(a => a.UnitTypeId)
                 .ToListAsync();
@@ -169,11 +151,11 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("NavalMissingAccess/{nationId?}")]
         public async Task<ActionResult<IEnumerable<UnitTypeDTO>>> GetNavalMissingAccess(int? nationId)
         {
-            nationId ??= this._nationId;
+            nationId ??= this.NationId;
 
-            var allUnitTypes = await this._context.UnitTypes.ToListAsync();
+            var allUnitTypes = await this.Context.UnitTypes.ToListAsync();
 
-            var nationAccess = await this._context.AccessToUnits
+            var nationAccess = await this.Context.AccessToUnits
                 .Where(a => a.NationId == nationId)
                 .Select(a => a.UnitTypeId)
                 .ToListAsync();

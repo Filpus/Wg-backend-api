@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -9,26 +9,12 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/[controller]")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class SocialGroupsController : Controller
+    public class SocialGroupsController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-
         public SocialGroupsController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
         }
 
         // GET: api/SocialGroups
@@ -38,7 +24,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         {
             if (id.HasValue)
             {
-                var socialGroup = await this._context.SocialGroups.FindAsync(id);
+                var socialGroup = await this.Context.SocialGroups.FindAsync(id);
                 if (socialGroup == null)
                 {
                     return NotFound();
@@ -55,7 +41,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
             else
             {
-                var socialGroups = await this._context.SocialGroups.ToListAsync();
+                var socialGroups = await this.Context.SocialGroups.ToListAsync();
                 var socialGroupDTOs = socialGroups.Select(sg => new SocialGroupDTO
                 {
                     Id = sg.Id,
@@ -78,7 +64,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             foreach (var socialGroupDTO in socialGroupDTOs)
             {
-                var socialGroup = await this._context.SocialGroups
+                var socialGroup = await this.Context.SocialGroups
                     .Include(sg => sg.UsedResources)
                     .Include(sg => sg.ProductionShares)
                     .FirstOrDefaultAsync(sg => sg.Id == (int)socialGroupDTO.Id);
@@ -101,8 +87,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Amount = cr.Sum(r => r.Amount),
                 }).ToList();
 
-                this._context.UsedResources.RemoveRange(socialGroup.UsedResources);
-                this._context.UsedResources.AddRange(updatedUsedResources);
+                this.Context.UsedResources.RemoveRange(socialGroup.UsedResources);
+                this.Context.UsedResources.AddRange(updatedUsedResources);
 
                 // Aktualizacja zasobów produkowanych (ProducedResources)
                 var updatedProductionShares = socialGroupDTO.ProducedResources.GroupBy(pr => pr.ResourceId).Select(pr => new ProductionShare
@@ -112,15 +98,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                     Coefficient = pr.Sum(r => r.Amount),
                 }).ToList();
 
-                this._context.ProductionShares.RemoveRange(socialGroup.ProductionShares);
-                this._context.ProductionShares.AddRange(updatedProductionShares);
+                this.Context.ProductionShares.RemoveRange(socialGroup.ProductionShares);
+                this.Context.ProductionShares.AddRange(updatedProductionShares);
 
-                this._context.Entry(socialGroup).State = EntityState.Modified;
+                this.Context.Entry(socialGroup).State = EntityState.Modified;
             }
 
             try
             {
-                await this._context.SaveChangesAsync();
+                await this.Context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -146,8 +132,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Volunteers = dto.Volunteers
             }).ToList();
 
-            this._context.SocialGroups.AddRange(socialGroups);
-            await this._context.SaveChangesAsync();
+            this.Context.SocialGroups.AddRange(socialGroups);
+            await this.Context.SaveChangesAsync();
 
             foreach (var socialGroup in socialGroups)
             {
@@ -162,7 +148,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                         Amount = cr.Sum(r => r.Amount),
                     }).ToList();
 
-                    this._context.UsedResources.AddRange(usedResources);
+                    this.Context.UsedResources.AddRange(usedResources);
 
                     var productionShares = correspondingDTO.ProducedResources.GroupBy(pr => pr.ResourceId).Select(pr => new ProductionShare
                     {
@@ -171,11 +157,11 @@ namespace Wg_backend_api.Controllers.GameControllers
                         Coefficient = pr.Sum(x => x.Amount),
                     }).ToList();
 
-                    this._context.ProductionShares.AddRange(productionShares);
+                    this.Context.ProductionShares.AddRange(productionShares);
                 }
             }
 
-            await this._context.SaveChangesAsync();
+            await this.Context.SaveChangesAsync();
 
             var createdDTOs = socialGroups.Select(sg => new SocialGroupDTO
             {
@@ -197,15 +183,15 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return BadRequest("Brak ID do usunięcia.");
             }
 
-            var socialGroups = await this._context.SocialGroups.Where(s => ids.Contains(s.Id)).ToListAsync();
+            var socialGroups = await this.Context.SocialGroups.Where(s => ids.Contains(s.Id)).ToListAsync();
 
             if (socialGroups.Count == 0)
             {
                 return NotFound("Nie znaleziono grup społecznych do usunięcia.");
             }
 
-            this._context.SocialGroups.RemoveRange(socialGroups);
-            await this._context.SaveChangesAsync();
+            this.Context.SocialGroups.RemoveRange(socialGroups);
+            await this.Context.SaveChangesAsync();
 
             return Ok();
         }
@@ -213,7 +199,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("info")]
         public async Task<ActionResult<IEnumerable<SocialGroupInfoDTO>>> GetSocialGroupInfo()
         {
-            var socialGroups = await this._context.SocialGroups
+            var socialGroups = await this.Context.SocialGroups
                 .Include(sg => sg.UsedResources)
                     .ThenInclude(ur => ur.Resource)
                 .Include(sg => sg.ProductionShares)

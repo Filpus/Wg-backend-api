@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -11,41 +11,26 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/GameManage")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class GameManageController : Controller
+    public class GameManageController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
         private readonly ModifierProcessorFactory _processorFactory;
 
-        private GameDbContext _context;
-        private int? _nationId;
-
         public GameManageController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService, ModifierProcessorFactory modifierProcessorFactory)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
             this._processorFactory = modifierProcessorFactory;
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
-            this._nationId = this._sessionDataService.GetNation() != null ? int.Parse(this._sessionDataService.GetNation()) : null;
         }
 
         [HttpPost("EndTurn")]
         public async Task<IActionResult> EndTurn()
         {
-
             try
             {
                 await this.ResolveResourceBalance();
                 await this.ResolveArmyRecrutment();
                 await this.ResolveTradeAgreements();
+                await this.Context.SaveChangesAsync();
 
                 return Ok(new { message = "Tura zakończona pomyślnie." });
             }
@@ -57,34 +42,45 @@ namespace Wg_backend_api.Controllers.GameControllers
 
         private async Task ResolveResourceBalance()
         {
-            var nations = await this._context.Nations.ToListAsync();
+            var nations = await this.Context.Nations.ToListAsync();
 
             foreach (var nation in nations)
             {
-                var ownedResources = await this._context.Set<OwnedResources>()
+                var ownedResources = await this.Context.Set<OwnedResources>()
                     .Where(or => or.NationId == nation.Id)
                     .ToListAsync();
 
-                var nationBalance = await CalcResourceBalance.CalculateNationResourceBalance((int)nation.Id, this._context);
+                var nationBalance = await CalcResourceBalance.CalculateNationResourceBalance((int)nation.Id, this.Context);
 
-                foreach (var ownedResource in ownedResources)
+                foreach (var resourceBalance in nationBalance.ResourceBalances)
                 {
-                    var resourceBalance = nationBalance.ResourceBalances
-                        .FirstOrDefault(rb => rb.ResourceId == ownedResource.ResourceId);
+                    if (resourceBalance.TotalBalance == 0)
+                    {
+                        continue;
+                    }
 
-                    if (resourceBalance != null)
+                    var ownedResource = ownedResources.FirstOrDefault(or => or.ResourceId == resourceBalance.ResourceId);
+                    if (ownedResource != null)
                     {
                         ownedResource.Amount += resourceBalance.TotalBalance;
                     }
+                    else
+                    {
+
+                        this.Context.Set<OwnedResources>().Add(new OwnedResources
+                        {
+                            NationId = (int)nation.Id,
+                            ResourceId = resourceBalance.ResourceId,
+                            Amount = resourceBalance.TotalBalance,
+                        });
+                    }
                 }
             }
-
-            await this._context.SaveChangesAsync();
         }
 
         private async Task ResolveTradeAgreements()
         {
-            var tradeAgreements = await this._context.TradeAgreements
+            var tradeAgreements = await this.Context.TradeAgreements
                 .Where(ta => ta.Status == TradeStatus.Accepted && ta.Duration > 0)
                 .ToListAsync();
 
@@ -97,7 +93,6 @@ namespace Wg_backend_api.Controllers.GameControllers
                 }
             }
 
-            await this._context.SaveChangesAsync();
         }
 
         private async Task ResolveArmyRecrutment()
@@ -105,7 +100,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             const string landBarracksName = "Baraki";
             const string navalBarracksName = "Doki";
 
-            var nations = await this._context.Nations
+            var nations = await this.Context.Nations
                 .Include(n => n.Armies)
                     .ThenInclude(a => a.Troops)
                 .Include(n => n.UnitOrders)
@@ -124,7 +119,7 @@ namespace Wg_backend_api.Controllers.GameControllers
 
                 foreach (var order in recruitOrders)
                 {
-                    var unitType = await this._context.Set<UnitType>().FindAsync(order.UnitTypeId);
+                    var unitType = await this.Context.Set<UnitType>().FindAsync(order.UnitTypeId);
                     bool isNaval = unitType != null && unitType.IsNaval;
 
                     Army targetArmy;
@@ -139,7 +134,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                                 IsNaval = true,
                                 Troops = []
                             };
-                            this._context.Armies.Add(navalBarracks);
+                            this.Context.Armies.Add(navalBarracks);
                             nation.Armies.Add(navalBarracks);
                         }
 
@@ -156,31 +151,30 @@ namespace Wg_backend_api.Controllers.GameControllers
                                 IsNaval = false,
                                 Troops = []
                             };
-                            this._context.Armies.Add(landBarracks);
+                            this.Context.Armies.Add(landBarracks);
                             nation.Armies.Add(landBarracks);
                         }
 
                         targetArmy = landBarracks;
                     }
 
-                    int amount = order.Quantity;
-                    for (int i = 0; i < amount; i++)
+
+                    for (int i = 0; i < order.Quantity; i++)
                     {
                         var troop = new Troop
                         {
                             UnitTypeId = order.UnitTypeId,
-                            Army = targetArmy
+                            Army = targetArmy,
+                            Quantity = unitType.VolunteersNeeded,
                         };
 
                         targetArmy.Troops.Add(troop);
-                        this._context.Troops.Add(troop);
+                        this.Context.Troops.Add(troop);
                     }
 
-                    this._context.UnitOrders.Remove(order);
+                    this.Context.UnitOrders.Remove(order);
                 }
             }
-
-            await this._context.SaveChangesAsync();
         }
 
     }

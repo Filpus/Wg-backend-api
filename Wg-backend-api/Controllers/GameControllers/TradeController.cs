@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Wg_backend_api.Auth;
 using Wg_backend_api.Data;
@@ -10,28 +10,12 @@ using Wg_backend_api.Services;
 namespace Wg_backend_api.Controllers.GameControllers
 {
     [Route("api/[controller]")]
-    [ApiController]
     [AuthorizeGameRole("GameMaster", "Player")]
-    public class TradeController : Controller
+    public class TradeController : GameControllerBase
     {
-        private readonly IGameDbContextFactory _gameDbContextFactory;
-        private readonly ISessionDataService _sessionDataService;
-        private GameDbContext _context;
-        private int? _nationId;
-
         public TradeController(IGameDbContextFactory gameDbFactory, ISessionDataService sessionDataService)
+            : base(gameDbFactory, sessionDataService)
         {
-            this._gameDbContextFactory = gameDbFactory;
-            this._sessionDataService = sessionDataService;
-
-            string schema = this._sessionDataService.GetSchema();
-            if (string.IsNullOrEmpty(schema))
-            {
-                throw new InvalidOperationException("Brak schematu w sesji.");
-            }
-
-            this._context = this._gameDbContextFactory.Create(schema);
-            this._nationId = this._sessionDataService.GetNation() != null ? int.Parse(this._sessionDataService.GetNation()) : null;
         }
 
         [HttpPost("TradeAgreement")]
@@ -44,10 +28,10 @@ namespace Wg_backend_api.Controllers.GameControllers
 
             tradeAgreement.Id = null;
             tradeAgreement.Status = TradeStatus.Pending;
-            this._context.TradeAgreements.Add(tradeAgreement);
-            await this._context.SaveChangesAsync();
+            this.Context.TradeAgreements.Add(tradeAgreement);
+            await this.Context.SaveChangesAsync();
 
-            var latestTradeAgreement = await this._context.TradeAgreements
+            var latestTradeAgreement = await this.Context.TradeAgreements
                 .OrderByDescending(t => t.Id)
                 .FirstOrDefaultAsync();
 
@@ -57,27 +41,27 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("OfferedTradeAgreements/{nationId?}")]
         public async Task<ActionResult<IEnumerable<TradeAgreementInfoDTO>>> GetOfferedTradeAgreements(int? nationId)
         {
-            nationId ??= this._nationId;
-            var tradeAgreements = await this._context.TradeAgreements
+            nationId ??= this.NationId;
+            var tradeAgreements = await this.Context.TradeAgreements
                 .Where(t => t.OfferingNationId == nationId)
                 .Select(t => new TradeAgreementInfoDTO
                 {
                     Id = t.Id,
-                    OfferingNationName = this._context.Nations.FirstOrDefault(n => n.Id == t.OfferingNationId).Name,
-                    ReceivingNationName = this._context.Nations.FirstOrDefault(n => n.Id == t.ReceivingNationId).Name,
+                    OfferingNationName = this.Context.Nations.FirstOrDefault(n => n.Id == t.OfferingNationId).Name,
+                    ReceivingNationName = this.Context.Nations.FirstOrDefault(n => n.Id == t.ReceivingNationId).Name,
                     Status = t.Status.ToString(),
                     Duration = t.Duration, // Assuming duration is not stored in the database  
                     Description = t.Description,
                     OfferedResources = t.OfferedResources.Select(r => new ResourceAmountDto
                     {
                         ResourceId = r.ResourceId,
-                        ResourceName = this._context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
+                        ResourceName = this.Context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
                         Amount = r.Quantity
                     }).ToList(),
                     RequestedResources = t.WantedResources.Select(r => new ResourceAmountDto
                     {
                         ResourceId = r.ResourceId,
-                        ResourceName = this._context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
+                        ResourceName = this.Context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
                         Amount = r.Amount
                     }).ToList()
                 })
@@ -89,27 +73,27 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpGet("ReceivedTradeAgreements/{nationId?}")]
         public async Task<ActionResult<IEnumerable<TradeAgreementInfoDTO>>> GetReceivedTradeAgreements(int? nationId)
         {
-            nationId ??= this._nationId;
-            var tradeAgreements = await this._context.TradeAgreements
+            nationId ??= this.NationId;
+            var tradeAgreements = await this.Context.TradeAgreements
                 .Where(t => t.ReceivingNationId == nationId)
                 .Select(t => new TradeAgreementInfoDTO
                 {
                     Id = t.Id,
-                    OfferingNationName = this._context.Nations.FirstOrDefault(n => n.Id == t.OfferingNationId).Name,
-                    ReceivingNationName = this._context.Nations.FirstOrDefault(n => n.Id == t.ReceivingNationId).Name,
+                    OfferingNationName = this.Context.Nations.FirstOrDefault(n => n.Id == t.OfferingNationId).Name,
+                    ReceivingNationName = this.Context.Nations.FirstOrDefault(n => n.Id == t.ReceivingNationId).Name,
                     Status = t.Status.ToString(),
                     Description = t.Description,
                     Duration = t.Duration, // Assuming duration is not stored in the database  
                     OfferedResources = t.OfferedResources.Select(r => new ResourceAmountDto
                     {
                         ResourceId = r.ResourceId,
-                        ResourceName = this._context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
+                        ResourceName = this.Context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
                         Amount = r.Quantity
                     }).ToList(),
                     RequestedResources = t.WantedResources.Select(r => new ResourceAmountDto
                     {
                         ResourceId = r.ResourceId,
-                        ResourceName = this._context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
+                        ResourceName = this.Context.Resources.FirstOrDefault(res => res.Id == r.ResourceId).Name,
                         Amount = r.Amount
                     }).ToList()
                 })
@@ -121,7 +105,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpPost("CreateTradeAgreementWithResources/{offeringNationId?}")]
         public async Task<ActionResult<int>> CreateTradeAgreementWithResources(int? offeringNationId, [FromBody] OfferTradeAgreementDTO offerTradeAgreementDTO)
         {
-            offeringNationId ??= this._nationId;
+            offeringNationId ??= this.NationId;
 
             if (offerTradeAgreementDTO == null || (offerTradeAgreementDTO.OfferedResources.Count == 0 && offerTradeAgreementDTO.RequestedResources.Count == 0))
             {
@@ -139,8 +123,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Description = offerTradeAgreementDTO.Description ?? string.Empty,
             };
 
-            this._context.TradeAgreements.Add(tradeAgreement);
-            await this._context.SaveChangesAsync();
+            this.Context.TradeAgreements.Add(tradeAgreement);
+            await this.Context.SaveChangesAsync();
 
             if (tradeAgreement.Id.HasValue)
             {
@@ -171,9 +155,9 @@ namespace Wg_backend_api.Controllers.GameControllers
                 });
             }
 
-            this._context.OfferedResources.AddRange(tradeAgreement.OfferedResources);
-            this._context.WantedResources.AddRange(tradeAgreement.WantedResources);
-            await this._context.SaveChangesAsync();
+            this.Context.OfferedResources.AddRange(tradeAgreement.OfferedResources);
+            this.Context.WantedResources.AddRange(tradeAgreement.WantedResources);
+            await this.Context.SaveChangesAsync();
 
             return Ok(tradeAgreement.Id);
         }
@@ -181,7 +165,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTradeAgreement(int id)
         {
-            var tradeAgreement = await this._context.TradeAgreements
+            var tradeAgreement = await this.Context.TradeAgreements
                 .Include(t => t.OfferedResources)
                 .Include(t => t.WantedResources)
                 .FirstOrDefaultAsync(t => t.Id == id);
@@ -191,8 +175,8 @@ namespace Wg_backend_api.Controllers.GameControllers
                 return NotFound(new { error = "Umowa handlowa nie została znaleziona." });
             }
 
-            this._context.TradeAgreements.Remove(tradeAgreement);
-            await this._context.SaveChangesAsync();
+            this.Context.TradeAgreements.Remove(tradeAgreement);
+            await this.Context.SaveChangesAsync();
 
             return NoContent();
         }
@@ -200,7 +184,7 @@ namespace Wg_backend_api.Controllers.GameControllers
         [HttpPost("AcceptTrade/{id}")]
         public async Task<IActionResult> AcceptTrade(int id)
         {
-            var tradeAgreement = await this._context.TradeAgreements.FindAsync(id);
+            var tradeAgreement = await this.Context.TradeAgreements.FindAsync(id);
             if (tradeAgreement == null)
             {
                 return NotFound(new { error = "Umowa handlowa nie została znaleziona." });
@@ -212,15 +196,15 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             tradeAgreement.Status = TradeStatus.Accepted;
-            this._context.TradeAgreements.Update(tradeAgreement);
-            await this._context.SaveChangesAsync();
+            this.Context.TradeAgreements.Update(tradeAgreement);
+            await this.Context.SaveChangesAsync();
             return Ok(new { message = "Umowa handlowa została zaakceptowana." });
         }
 
         [HttpPost("CancelTrade/{id}")]
         public async Task<IActionResult> CancelTrade(int id)
         {
-            var tradeAgreement = await this._context.TradeAgreements.FindAsync(id);
+            var tradeAgreement = await this.Context.TradeAgreements.FindAsync(id);
             if (tradeAgreement == null)
             {
                 return NotFound(new { error = "Umowa handlowa nie została znaleziona." });
@@ -232,15 +216,15 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             tradeAgreement.Status = TradeStatus.Cancelled;
-            this._context.TradeAgreements.Update(tradeAgreement);
-            await this._context.SaveChangesAsync();
+            this.Context.TradeAgreements.Update(tradeAgreement);
+            await this.Context.SaveChangesAsync();
             return Ok(new { message = "Umowa handlowa została anulowana." });
         }
 
         [HttpPost("RejectTrade/{id}")]
         public async Task<IActionResult> RejectTrade(int id)
         {
-            var tradeAgreement = await this._context.TradeAgreements.FindAsync(id);
+            var tradeAgreement = await this.Context.TradeAgreements.FindAsync(id);
             if (tradeAgreement == null)
             {
                 return NotFound(new { error = "Umowa handlowa nie została znaleziona." });
@@ -252,14 +236,14 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             tradeAgreement.Status = TradeStatus.Rejected;
-            this._context.TradeAgreements.Update(tradeAgreement);
-            await this._context.SaveChangesAsync();
+            this.Context.TradeAgreements.Update(tradeAgreement);
+            await this.Context.SaveChangesAsync();
             return Ok(new { message = "Umowa handlowa została odrzucona." });
         }
         [HttpPut("EditTradeAgreement/{id}")]
         public async Task<IActionResult> EditTradeAgreement(int id, [FromBody] TradeAgreementInfoDTO updatedTradeAgreementDTO)
         {
-            var tradeAgreement = await this._context.TradeAgreements
+            var tradeAgreement = await this.Context.TradeAgreements
                 .Include(t => t.OfferedResources)
                 .Include(t => t.WantedResources)
                 .FirstOrDefaultAsync(t => t.Id == id);
@@ -278,7 +262,7 @@ namespace Wg_backend_api.Controllers.GameControllers
             tradeAgreement.Description = updatedTradeAgreementDTO.Description ?? tradeAgreement.Description;
             tradeAgreement.Duration = updatedTradeAgreementDTO.Duration;
 
-            this._context.OfferedResources.RemoveRange(tradeAgreement.OfferedResources);
+            this.Context.OfferedResources.RemoveRange(tradeAgreement.OfferedResources);
             tradeAgreement.OfferedResources = [.. updatedTradeAgreementDTO.OfferedResources.Select(r => new OfferedResource
             {
                 ResourceId = r.ResourceId,
@@ -286,7 +270,7 @@ namespace Wg_backend_api.Controllers.GameControllers
                 Quantity = r.Amount
             })];
 
-            this._context.WantedResources.RemoveRange(tradeAgreement.WantedResources);
+            this.Context.WantedResources.RemoveRange(tradeAgreement.WantedResources);
             tradeAgreement.WantedResources = [.. updatedTradeAgreementDTO.RequestedResources.Select(r => new WantedResource
             {
                 ResourceId = r.ResourceId,
@@ -307,8 +291,8 @@ namespace Wg_backend_api.Controllers.GameControllers
             }
 
             // Zapisanie zmian w bazie danych
-            this._context.TradeAgreements.Update(tradeAgreement);
-            await this._context.SaveChangesAsync();
+            this.Context.TradeAgreements.Update(tradeAgreement);
+            await this.Context.SaveChangesAsync();
 
             return Ok(new { message = "Umowa handlowa została zaktualizowana." });
         }
